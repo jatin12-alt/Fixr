@@ -1,24 +1,11 @@
-import { PrismaClient } from '@prisma/client'
+import { drizzle } from 'drizzle-orm/neon-http'
+import { neon } from '@neondatabase/serverless'
+import * as schema from './db/index'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is required')
 }
 
-// Handle case where Prisma client isn't installed yet
-let prismaInstance: PrismaClient
-
-try {
-  prismaInstance = globalForPrisma.prisma ?? new PrismaClient({
-    log: ['query'],
-  })
-} catch (error) {
-  console.warn('Prisma client not available. Please run: npm install @prisma/client && npm run db:prisma:generate')
-  // Create a mock object to prevent runtime errors
-  prismaInstance = {} as PrismaClient
-}
-
-export const db = prismaInstance
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prismaInstance
-}
+const sql = neon(process.env.DATABASE_URL)
+export const db = drizzle(sql, { schema })
+export * from './db/index'

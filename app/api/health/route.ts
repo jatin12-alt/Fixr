@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { sql } from 'drizzle-orm'
 import { errorLogger } from '@/lib/error-logger'
 
 interface HealthStatus {
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
     // Check database connection
     const dbStartTime = Date.now()
     try {
-      await db.$queryRaw`SELECT 1`
+      await db.execute(sql`SELECT 1`)
       const dbResponseTime = Date.now() - dbStartTime
       healthStatus.checks.database = {
         status: 'healthy',
@@ -194,7 +195,7 @@ export async function GET(req: NextRequest) {
 export async function HEAD() {
   try {
     // Quick database check
-    await db.$queryRaw`SELECT 1`
+    await db.execute(sql`SELECT 1`)
     return new NextResponse(null, { status: 200 })
   } catch (error) {
     return new NextResponse(null, { status: 503 })

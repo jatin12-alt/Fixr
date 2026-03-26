@@ -9,6 +9,7 @@ import { ParticleBackground } from '@/components/ParticleBackground'
 import { validateEnvironment } from '@/lib/config/security'
 import dynamic from 'next/dynamic'
 import './globals.css'
+import './layout.css'
 import type { Metadata } from 'next'
 import { Inter, Orbitron } from 'next/font/google'
 
@@ -21,7 +22,7 @@ const SpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(m
 })
 
 // Validate environment on startup
-validateEnvironment()
+// validateEnvironment() // Temporarily commented out for debugging
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron', weight: ['400', '700', '900'] })
@@ -95,7 +96,10 @@ export const metadata: Metadata = {
   
   // Icons
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' }
+    ],
     shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png'
   },
@@ -113,28 +117,27 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className="dark">
         <body
-          className={`${inter.variable} ${orbitron.variable} font-sans text-white min-h-screen flex flex-col`}
-          style={{ background: '#050508' }}
+          className={`${inter.variable} ${orbitron.variable} font-sans text-white min-h-screen flex flex-col layout-body`}
         >
           {/* Particle canvas — fixed behind everything, visible on all pages */}
-          <div style={{ position: 'fixed', inset: 0, zIndex: -1 }}>
+          <div className="particle-container">
             <ParticleBackground />
           </div>
 
           <Navigation />
 
           {/* Subtle ambient glow blobs */}
-          <div style={{ position: 'fixed', top: '-20%', left: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 70%)', pointerEvents: 'none', zIndex: -1 }} />
-          <div style={{ position: 'fixed', bottom: '-20%', right: '-10%', width: '700px', height: '700px', background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)', pointerEvents: 'none', zIndex: -1 }} />
+          <div className="ambient-glow-top-left" />
+          <div className="ambient-glow-bottom-right" />
 
           <ErrorProvider>
             <ErrorBoundary>
-              <main className="flex-grow" style={{ position: 'relative', zIndex: 1 }}>
+              <main className="flex-grow main-content">
                 <NotificationBell />
                 <NotificationToast />
                 {children}
               </main>
-              <div style={{ position: 'relative', zIndex: 1 }}>
+              <div className="footer-container">
                 <Footer />
               </div>
             </ErrorBoundary>

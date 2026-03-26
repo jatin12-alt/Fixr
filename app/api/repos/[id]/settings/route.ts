@@ -20,7 +20,7 @@ export async function PATCH(
       return Response.json({ error: 'Invalid repository ID' }, { status: 400 })
     }
 
-    const { autoMode, isActive } = await req.json()
+    const { autoMode, isActive, autoFixEnabled } = await req.json()
 
     // Get user
     const user = await db
@@ -41,6 +41,9 @@ export async function PATCH(
     if (typeof isActive === 'boolean') {
       updateData.isActive = isActive
     }
+    if (typeof autoFixEnabled === 'boolean') {
+      updateData.autoFixEnabled = autoFixEnabled
+    }
 
     if (Object.keys(updateData).length === 0) {
       return Response.json({ error: 'No valid fields to update' }, { status: 400 })
@@ -50,7 +53,7 @@ export async function PATCH(
     const result = await db
       .update(repos)
       .set(updateData)
-      .where(and(eq(repos.id, repoId), eq(repos.userId, user[0].id)))
+      .where(and(eq(repos.id, repoId), eq(repos.userId, userId)))
       .returning()
 
     if (result.length === 0) {

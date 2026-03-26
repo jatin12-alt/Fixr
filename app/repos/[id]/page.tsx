@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { 
   ArrowLeft, GitBranch, Settings, Trash2, Play, Pause, 
   Clock, CheckCircle, AlertTriangle, BarChart3, ExternalLink,
-  Toggle, Shield, Zap, Bot
+  Shield, Zap, Bot
 } from 'lucide-react'
 import Link from 'next/link'
 

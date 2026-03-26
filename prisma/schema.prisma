@@ -7,64 +7,63 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id                String  @id @default(cuid())
-  email             String  @unique
-  name              String?
-  avatarUrl         String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
   repositories      Repository[]
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
   notificationPrefs NotificationPreferences?
   teamMemberships   TeamMember[]
-  createdTeams      Team[]       @relation("TeamCreator")
+  createdTeams      Team[]                   @relation("TeamCreator")
   auditLogs         AuditLog[]
-  
+
   @@map("users")
 }
 
 model Repository {
-  id          String   @id @default(cuid())
-  name        String
-  fullName    String
-  githubId    String   @unique
-  ownerId     String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  name      String
+  fullName  String
+  githubId  String   @unique
+  ownerId   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  owner       User     @relation(fields: [ownerId], references: [id])
-  teamId      String?
-  team        Team?    @relation(fields: [teamId], references: [id])
-  pipelines   Pipeline[]
+  owner         User           @relation(fields: [ownerId], references: [id])
+  teamId        String?
+  team          Team?          @relation(fields: [teamId], references: [id])
+  pipelines     Pipeline[]
   notifications Notification[]
-  auditLogs   AuditLog[]
-  
+  auditLogs     AuditLog[]
+
   @@index([ownerId])
   @@index([teamId])
   @@map("repositories")
 }
 
 model Pipeline {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   repoId      String
-  runId       String   @unique
-  status      String   // success, failure, pending
+  runId       String    @unique
+  status      String // success, failure, pending
   conclusion  String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   completedAt DateTime?
-  
+
   // Relations
-  repo        Repository @relation(fields: [repoId], references: [id])
-  
+  repo Repository @relation(fields: [repoId], references: [id])
+
   @@index([repoId])
   @@index([status])
   @@map("pipelines")
@@ -80,11 +79,11 @@ model Notification {
   repoId    String?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
-  
+
   // Relations
-  user      User             @relation(fields: [userId], references: [id])
-  repo      Repository?      @relation(fields: [repoId], references: [id])
-  
+  user User        @relation(fields: [userId], references: [id])
+  repo Repository? @relation(fields: [repoId], references: [id])
+
   @@index([userId, read])
   @@index([userId, createdAt])
   @@map("notifications")
@@ -93,27 +92,27 @@ model Notification {
 model PushSubscription {
   id           String   @id @default(cuid())
   userId       String
-  subscription Json     // PushSubscription object
+  subscription Json // PushSubscription object
   createdAt    DateTime @default(now())
-  
+
   // Relations
-  user         User     @relation(fields: [userId], references: [id])
-  
+  user User @relation(fields: [userId], references: [id])
+
   @@index([userId])
   @@map("push_subscriptions")
 }
 
 model NotificationPreferences {
-  id              String  @id @default(cuid())
-  userId          String  @unique
-  emailOnFailure  Boolean @default(true)
-  emailOnFix      Boolean @default(true)
-  weeklyDigest    Boolean @default(false)
-  pushEnabled     Boolean @default(false)
-  
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  emailOnFailure Boolean @default(true)
+  emailOnFix     Boolean @default(true)
+  weeklyDigest   Boolean @default(false)
+  pushEnabled    Boolean @default(false)
+
   // Relations
-  user            User    @relation(fields: [userId], references: [id])
-  
+  user User @relation(fields: [userId], references: [id])
+
   @@map("notification_preferences")
 }
 
@@ -126,53 +125,53 @@ enum NotificationType {
 }
 
 model Team {
-  id          String      @id @default(cuid())
-  name        String
-  slug        String      @unique
-  avatarUrl   String?
-  createdBy   String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  avatarUrl String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  creator     User?       @relation("TeamCreator", fields: [createdBy], references: [id])
-  members     TeamMember[]
-  invites     TeamInvite[]
-  repos       Repository[]
-  auditLogs   AuditLog[]
-  
+  creator   User?        @relation("TeamCreator", fields: [createdBy], references: [id])
+  members   TeamMember[]
+  invites   TeamInvite[]
+  repos     Repository[]
+  auditLogs AuditLog[]
+
   @@map("teams")
 }
 
 model TeamMember {
-  id       String     @id @default(cuid())
+  id       String   @id @default(cuid())
   teamId   String
   userId   String
-  role     TeamRole   @default(MEMBER)
-  joinedAt DateTime   @default(now())
-  
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
   // Relations
-  team     Team       @relation(fields: [teamId], references: [id])
-  user     User       @relation(fields: [userId], references: [id])
-  
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
   @@unique([teamId, userId])
   @@index([userId])
   @@map("team_members")
 }
 
 model TeamInvite {
-  id        String       @id @default(cuid())
-  teamId    String
-  email     String
-  role      TeamRole     @default(MEMBER)
-  token     String       @unique @default(cuid())
-  expiresAt DateTime
+  id         String    @id @default(cuid())
+  teamId     String
+  email      String
+  role       TeamRole  @default(MEMBER)
+  token      String    @unique @default(cuid())
+  expiresAt  DateTime
   acceptedAt DateTime?
-  createdAt DateTime     @default(now())
-  
+  createdAt  DateTime  @default(now())
+
   // Relations
-  team      Team         @relation(fields: [teamId], references: [id])
-  
+  team Team @relation(fields: [teamId], references: [id])
+
   @@index([email])
   @@index([token])
   @@map("team_invites")
@@ -189,17 +188,19 @@ model AuditLog {
   id           String   @id @default(cuid())
   teamId       String?
   userId       String
-  action       String   // "repo.connected", "member.invited", "fix.applied"
-  resourceType String?  // "repository", "member", "pipeline"
+  action       String // "repo.connected", "member.invited", "fix.applied"
+  resourceType String? // "repository", "member", "pipeline"
   resourceId   String?
-  metadata     Json?    // extra context
+  metadata     Json? // extra context
   ipAddress    String?
   createdAt    DateTime @default(now())
-  
+
   // Relations
-  team         Team?    @relation(fields: [teamId], references: [id])
-  user         User     @relation(fields: [userId], references: [id])
-  
+  team         Team?       @relation(fields: [teamId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
+  repository   Repository? @relation(fields: [repositoryId], references: [id])
+  repositoryId String?
+
   @@index([teamId, createdAt])
   @@index([userId, createdAt])
   @@map("audit_logs")

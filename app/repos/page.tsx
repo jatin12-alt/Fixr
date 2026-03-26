@@ -2,206 +2,302 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Navigation } from '@/components/Navigation'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { Github, Star, Lock, Globe, Search, 
+         CheckCircle, Plus, Loader2 } from 'lucide-react'
 
 interface GitHubRepo {
   id: number
   name: string
-  full_name: string
+  fullName: string
   description: string | null
+  url: string
   private: boolean
-  updated_at: string
-  has_workflows: boolean
+  language: string | null
+  stars: number
+  updatedAt: string
+}
+
+interface MonitoredRepo {
+  githubRepoId: string
 }
 
 export default function ReposPage() {
-  const [repos, setRepos] = useState<GitHubRepo[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [connecting, setConnecting] = useState<number | null>(null)
   const router = useRouter()
+  const [connected, setConnected] = useState<boolean | null>(null)
+  const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([])
+  const [monitoredRepos, setMonitoredRepos] = useState<MonitoredRepo[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [adding, setAdding] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchRepositories()
+    checkGitHubStatus()
   }, [])
 
-  const fetchRepositories = async () => {
+  async function checkGitHubStatus() {
     try {
-      setLoading(true)
-      setError(null)
+      console.log('Repos page: Checking GitHub status...')
       
-      const response = await fetch('/api/repos')
+      // Check if GitHub is connected
+      const statusRes = await fetch('/api/auth/github/status')
+      console.log('Repos page: Status response status:', statusRes.status)
       
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/api/auth/github')
-          return
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      if (!statusRes.ok) {
+        const errorText = await statusRes.text()
+        console.error('Repos page: Status API error:', statusRes.status, errorText)
+        throw new Error(`Status API failed: ${statusRes.status}`)
       }
       
-      const data = await response.json()
-      setRepos(data)
+      const status = await statusRes.json()
+      console.log('Repos page: GitHub status:', status)
+      setConnected(status.connected)
+
+      if (status.connected) {
+        console.log('Repos page: GitHub connected, fetching repos...')
+        
+        // Fetch GitHub repos and monitored repos in parallel
+        const [githubRes, monitoredRes] = await Promise.all([
+          fetch('/api/github/repos'),
+          fetch('/api/repos'),
+        ])
+        
+        console.log('Repos page: GitHub repos response:', githubRes.status)
+        console.log('Repos page: Monitored repos response:', monitoredRes.status)
+        
+        if (!githubRes.ok) {
+          const errorText = await githubRes.text()
+          console.error('Repos page: GitHub repos API error:', githubRes.status, errorText)
+          throw new Error(`GitHub repos API failed: ${githubRes.status}`)
+        }
+        
+        if (!monitoredRes.ok) {
+          const errorText = await monitoredRes.text()
+          console.error('Repos page: Monitored repos API error:', monitoredRes.status, errorText)
+        }
+        
+        const githubData = await githubRes.json()
+        const monitoredData = await monitoredRes.json()
+        
+        console.log('Repos page: GitHub repos data:', githubData)
+        console.log('Repos page: Monitored repos data:', monitoredData)
+
+        if (githubData.repos) setGithubRepos(githubData.repos)
+        if (monitoredData.repos) setMonitoredRepos(monitoredData.repos)
+      }
     } catch (err) {
-      console.error('Failed to fetch repositories:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch repositories')
+      console.error('Repos page: checkGitHubStatus error:', err)
+      setError(`Failed to load: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
   }
 
-  const connectRepository = async (repo: GitHubRepo) => {
+  async function addRepo(repo: GitHubRepo) {
+    setAdding(repo.id)
     try {
-      setConnecting(repo.id)
-      
-      const response = await fetch('/api/repos/connect', {
+      const res = await fetch('/api/repos', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          githubId: repo.id.toString(),
+          githubRepoId: String(repo.id),
           name: repo.name,
-          fullName: repo.full_name,
+          fullName: repo.fullName,
+          url: repo.url,
+          language: repo.language,
+          private: repo.private,
         }),
       })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        const serverError = errorData?.error || 'Failed to connect repository'
-        
-        if (response.status === 409) {
-          // Repo is already connected! Let's gracefully proceed to dashboard.
-          router.push('/dashboard')
-          return
-        }
-        
-        alert(`Error: ${serverError}`)
-        return
+      if (res.ok) {
+        setMonitoredRepos(prev => [
+          ...prev,
+          { githubRepoId: String(repo.id) }
+        ])
       }
-
-      router.push('/dashboard')
     } catch (err) {
-      console.error('Failed to connect repository:', err)
-      alert('Network or client error. Please try again.')
+      console.error('Failed to add repo:', err)
     } finally {
-      setConnecting(null)
+      setAdding(null)
     }
   }
 
+  const filteredRepos = githubRepos.filter(repo =>
+    repo.fullName.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const isMonitored = (repoId: number) =>
+    monitoredRepos.some(r => r.githubRepoId === String(repoId))
+
+  // LOADING STATE
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading your repositories...</p>
-          </div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          <p className="text-gray-400">Loading your repositories...</p>
         </div>
       </div>
     )
   }
 
-  if (error) {
+  // NOT CONNECTED STATE
+  if (!connected) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <Navigation />
-        <div className="container mx-auto px-6 py-8">
-          <Card className="bg-gray-900 border-red-700">
-            <CardHeader>
-              <CardTitle className="text-red-400">Error Loading Repositories</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-300 mb-4">{error}</p>
-              <div className="space-x-2">
-                <Button onClick={fetchRepositories}>
-                  Retry
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => router.push('/api/auth/github')}
-                >
-                  Reconnect GitHub
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center"
+        >
+          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Github className="w-10 h-10 text-gray-300" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-3">
+            Connect GitHub
+          </h1>
+          <p className="text-gray-400 mb-8">
+            Connect your GitHub account to start monitoring 
+            your CI/CD pipelines with AI.
+          </p>
+          
+          <Link 
+            href="/api/auth/github"
+            className="inline-flex items-center gap-3 bg-white text-black 
+                       font-semibold px-6 py-3 rounded-xl hover:bg-gray-100 
+                       transition-colors"
+          >
+            <Github className="w-5 h-5" />
+            Connect with GitHub
+          </Link>
+          {error && (
+            <p className="mt-4 text-red-400 text-sm">{error}</p>
+          )}
+        </motion.div>
       </div>
     )
   }
 
+  // CONNECTED - SHOW REPOS
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navigation />
-      
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-gray-950 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Select Repositories</h1>
-            <p className="text-gray-400">Choose which repositories you want Fixr to monitor</p>
+            <h1 className="text-2xl font-bold text-white">
+              Your Repositories
+            </h1>
+            <p className="text-gray-400 mt-1">
+              {githubRepos.length} repos found · 
+              {monitoredRepos.length} monitored
+            </p>
           </div>
-          <Button 
-            variant="outline" 
+          <button
             onClick={() => router.push('/dashboard')}
+            className="text-gray-400 hover:text-white transition-colors text-sm"
           >
-            Back to Dashboard
-          </Button>
+            ← Back to Dashboard
+          </button>
         </div>
 
-        {repos.length === 0 ? (
-          <Card className="bg-gray-900 border-gray-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-gray-400 mb-4">
-                No repositories found. Make sure you have repositories with GitHub Actions workflows.
-              </p>
-              <Button onClick={fetchRepositories}>
-                Refresh
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {repos.map((repo) => (
-              <Card 
-                key={repo.id}
-                className="bg-gray-900 border-gray-700 hover:border-cyan-500 transition-colors cursor-pointer"
-                onClick={() => {
-                  if (isConnected) {
-                    router.push(`/repos/${repo.id}`)
-                  } else {
-                    !isConnecting && connectRepository(repo)
-                  }
-                }}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    <span className="truncate">{repo.name}</span>
-                    {repo.private && (
-                      <span className="text-xs bg-yellow-600 px-2 py-1 rounded">Private</span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">
-                    {repo.description || 'No description available'}
-                  </p>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Updated {new Date(repo.updated_at).toLocaleDateString()}
-                  </p>
-                  <Button
-                    onClick={() => connectRepository(repo)}
-                    disabled={connecting === repo.id}
-                    className="w-full"
+        {/* Search */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 
+                             w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search repositories..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-gray-900 border border-gray-700 rounded-xl 
+                       pl-10 pr-4 py-3 text-white placeholder-gray-500 
+                       focus:outline-none focus:border-blue-500 transition-colors"
+          />
+        </div>
+
+        {/* Repo Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRepos.map((repo, i) => (
+            <motion.div
+              key={repo.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-gray-900 border border-gray-800 rounded-xl p-5 
+                         hover:border-gray-600 transition-all group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {repo.private ? (
+                    <Lock className="w-4 h-4 text-yellow-400" />
+                  ) : (
+                    <Globe className="w-4 h-4 text-green-400" />
+                  )}
+                  <Link
+                    href={repo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white font-medium hover:text-blue-400 
+                               transition-colors truncate max-w-[160px]"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {connecting === repo.id ? 'Connecting...' : 'Connect Repository'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    {repo.name}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-gray-400 text-sm">
+                    <Star className="w-3 h-3" />
+                    {repo.stars}
+                  </div>
+                </div>
+              </div>
+
+              {repo.description && (
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                  {repo.description}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between">
+                {repo.language && (
+                  <span className="text-xs text-gray-500 bg-gray-800 
+                                   px-2 py-1 rounded-full">
+                    {repo.language}
+                  </span>
+                )}
+                
+                {isMonitored(repo.id) ? (
+                  <span className="flex items-center gap-1 text-green-400 
+                                   text-sm font-medium ml-auto">
+                    <CheckCircle className="w-4 h-4" />
+                    Monitoring
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => addRepo(repo)}
+                    disabled={adding === repo.id}
+                    className="ml-auto flex items-center gap-1 bg-blue-600 
+                               hover:bg-blue-500 disabled:opacity-50 text-white 
+                               text-sm px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    {adding === repo.id ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Plus className="w-3 h-3" />
+                    )}
+                    Monitor
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {filteredRepos.length === 0 && (
+          <div className="text-center py-16 text-gray-400">
+            No repositories found matching "{search}"
           </div>
         )}
       </div>

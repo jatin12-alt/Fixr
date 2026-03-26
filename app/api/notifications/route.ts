@@ -1,101 +1,52 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
+import { notifications } from '@/lib/db'
+import { eq, desc } from 'drizzle-orm'
 
-export async function GET(req: NextRequest) {
-  const { userId } = getAuth(req)
-  
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { searchParams } = new URL(req.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '20')
-  const unreadOnly = searchParams.get('unreadOnly') === 'true'
-  const offset = (page - 1) * limit
-
+export async function GET(request: NextRequest) {
   try {
-    // Get notifications
-    const where = {
-      userId,
-      ...(unreadOnly && { read: false }),
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [notifications, totalCount] = await Promise.all([
-      db.notification.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: offset,
-        take: limit,
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          message: true,
-          repoName: true,
-          repoId: true,
-          read: true,
-          createdAt: true,
-        },
-      }),
-      db.notification.count({ where }),
-    ])
+    const limit = parseInt(
+      request.nextUrl.searchParams.get('limit') || '50'
+    )
 
-    // Get unread count
-    const unreadCount = await db.notification.count({
-      where: { userId, read: false },
-    })
+    const userNotifications = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit)
 
-    return Response.json({
-      notifications,
+    const unreadCount = userNotifications.filter(n => !n.read).length
+
+    return NextResponse.json({
+      notifications: userNotifications,
       unreadCount,
-      hasMore: offset + notifications.length < totalCount,
     })
   } catch (error) {
-    console.error('Failed to fetch notifications:', error)
-    return Response.json(
-      { error: 'Failed to fetch notifications' },
+    console.error('Notifications error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
 
-export async function PATCH(req: NextRequest) {
-  const { userId } = getAuth(req)
-  
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+export async function PATCH(request: NextRequest) {
   try {
-    const body = await req.json()
-    const { ids, all } = body
-
-    if (all) {
-      // Mark all notifications as read
-      await db.notification.updateMany({
-        where: { userId, read: false },
-        data: { read: true },
-      })
-    } else if (Array.isArray(ids) && ids.length > 0) {
-      // Mark specific notifications as read
-      await db.notification.updateMany({
-        where: {
-          id: { in: ids },
-          userId,
-        },
-        data: { read: true },
-      })
-    } else {
-      return Response.json({ error: 'Invalid request' }, { status: 400 })
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    return Response.json({ success: true })
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Failed to update notifications:', error)
-    return Response.json(
-      { error: 'Failed to update notifications' },
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

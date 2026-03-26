@@ -1,0 +1,47 @@
+/* Layout-specific styles for particle background and ambient effects */
+
+/* Main body background */
+.layout-body {
+  background: #050508;
+}
+
+/* Particle canvas container */
+.particle-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+/* Ambient glow blobs */
+.ambient-glow-top-left {
+  position: fixed;
+  top: -20%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ambient-glow-bottom-right {
+  position: fixed;
+  bottom: -20%;
+  right: -10%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Main content positioning */
+.main-content {
+  position: relative;
+  z-index: 1;
+}
+
+.footer-container {
+  position: relative;
+  z-index: 1;
+}

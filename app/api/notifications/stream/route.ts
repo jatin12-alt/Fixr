@@ -46,7 +46,8 @@ export async function GET(req: NextRequest) {
       })
     },
     cancel() {
-      notificationEmitter.unsubscribe(userId, controller)
+      // Controller is not available here, just cleanup the subscription
+      notificationEmitter.unsubscribe(userId)
     }
   })
 

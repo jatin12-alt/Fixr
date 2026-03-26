@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { formatDistanceToNow } from 'date-fns'
+// import { formatDistanceToNow } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/hooks/useNotifications'
 import { 
@@ -107,7 +107,7 @@ export function NotificationItem({ notification, onItemClick }: NotificationItem
           
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-gray-500">
-              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+              {new Date(notification.createdAt).toLocaleDateString()}
             </span>
             
             <ExternalLink className="h-3 w-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />

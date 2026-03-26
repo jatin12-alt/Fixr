@@ -1,0 +1,175 @@
+import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
+import { db, repos, pipelineRuns, users, githubTokens } from '@/lib/db'
+import { eq } from 'drizzle-orm'
+import { headers } from 'next/headers'
+
+// Webhook secret for GitHub signature verification
+const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET || 'fixr-webhook-secret'
+
+export async function POST(req: NextRequest) {
+  try {
+    console.log("🎣 WEBHOOK_RECEIVED: Processing GitHub webhook")
+    
+    const headersList = headers()
+    const signature = headersList.get('x-hub-signature-256')
+    const eventType = headersList.get('x-github-event')
+    
+    console.log("🎣 WEBHOOK_DETAILS:", { 
+      hasSignature: !!signature, 
+      eventType,
+      userAgent: headersList.get('user-agent')
+    })
+    
+    if (!signature) {
+      console.log("🎣 WEBHOOK_REJECTED: No signature provided")
+      return NextResponse.json(
+        { error: 'No signature provided' },
+        { status: 401 }
+      )
+    }
+
+    const body = await req.text()
+    console.log("🎣 WEBHOOK_BODY_LENGTH:", body.length)
+    
+    const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET)
+    hmac.update(body)
+    const expectedSignature = `sha256=${hmac.digest('hex')}`
+
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      console.log("🎣 WEBHOOK_REJECTED: Invalid signature")
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 401 }
+      )
+    }
+
+    console.log("🎣 WEBHOOK_VERIFIED: Signature valid, processing event:", eventType)
+    
+    const payload = JSON.parse(body)
+    
+    // Handle different event types
+    switch (eventType) {
+      case 'push':
+        console.log("🎣 PROCESSING_PUSH_EVENT")
+        await handlePushEvent(payload)
+        break
+      case 'pull_request':
+        console.log("🎣 PROCESSING_PR_EVENT")
+        await handlePullRequestEvent(payload)
+        break
+      case 'workflow_run':
+        console.log("🎣 PROCESSING_WORKFLOW_RUN_EVENT")
+        await handleWorkflowRunEvent(payload)
+        break
+      default:
+        console.log("🎣 UNHANDLED_EVENT:", eventType)
+    }
+
+    console.log("🎣 WEBHOOK_PROCESSED_SUCCESSFULLY")
+    return NextResponse.json({ received: true })
+    
+  } catch (error) {
+    console.error("🎣 WEBHOOK_ERROR:", error)
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    )
+  }
+}
+
+// Event handlers
+async function handlePushEvent(payload: any) {
+  console.log("🎣 PUSH_EVENT:", {
+    ref: payload.ref,
+    repo: payload.repository?.full_name,
+    pusher: payload.pusher?.name,
+    commits: payload.commits?.length || 0
+  })
+  
+  // TODO: Handle push events - trigger analysis if needed
+}
+
+async function handlePullRequestEvent(payload: any) {
+  console.log("🎣 PR_EVENT:", {
+    action: payload.action,
+    repo: payload.repository?.full_name,
+    number: payload.number,
+    title: payload.pull_request?.title
+  })
+  
+  // TODO: Handle pull request events
+}
+
+async function handleWorkflowRunEvent(payload: any) {
+  console.log("🎣 WORKFLOW_RUN_EVENT:", {
+    action: payload.action,
+    repo: payload.repository?.full_name,
+    workflow: payload.workflow?.name,
+    status: payload.workflow_run?.conclusion,
+    runId: payload.workflow_run?.id
+  })
+  
+  // TODO: Handle workflow run events - check for failures
+  if (payload.workflow_run?.conclusion === 'failure') {
+    console.log("🚨 WORKFLOW_FAILURE_DETECTED")
+    
+    try {
+      // Find the repo in our database
+      const repoFullName = payload.repository?.full_name
+      if (!repoFullName) {
+        console.log("🎣 NO_REPO_NAME: Cannot process failure")
+        return
+      }
+      
+      const repoData = await db
+        .select()
+        .from(repos)
+        .where(eq(repos.fullName, repoFullName))
+        .limit(1)
+      
+      if (repoData.length === 0) {
+        console.log("🎣 REPO_NOT_FOUND: Repo not being monitored")
+        return
+      }
+      
+      const repo = repoData[0]
+      const runId = payload.workflow_run?.id.toString()
+      const workflowName = payload.workflow?.name || 'Unknown Workflow'
+      
+      console.log("🎣 SAVING_PIPELINE_FAILURE:", { repoId: repo.id, runId })
+      
+      // Save pipeline failure to database
+      const [pipelineRun] = await db.insert(pipelineRuns).values({
+        repoId: repo.id,
+        githubRunId: runId,
+        status: 'failed',
+        errorMessage: `${workflowName} failed - AI analysis queued`,
+      }).returning()
+      
+      console.log("🎣 PIPELINE_FAILURE_SAVED:", { pipelineRunId: pipelineRun.id })
+      
+      // TODO: Trigger AI analysis asynchronously
+      console.log("🎣 AI_ANALYSIS_QUEUED: Would trigger AI analysis here")
+      
+    } catch (error) {
+      console.error("🎣 FAILURE_PROCESSING_ERROR:", error)
+    }
+  }
+}
+
+// Helper function to get GitHub token for user
+async function getGitHubTokenForUser(userId: string): Promise<string | null> {
+  try {
+    const tokenRecord = await db
+      .select()
+      .from(githubTokens)
+      .where(eq(githubTokens.userId, userId))
+      .limit(1)
+    
+    return tokenRecord.length > 0 ? tokenRecord[0].encryptedToken : null
+  } catch (error) {
+    console.error('Failed to get GitHub token:', error)
+    return null
+  }
+}

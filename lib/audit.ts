@@ -1,9 +1,10 @@
 import { db } from '@/lib/db'
-import { AuditLog, TeamMember } from '@prisma/client'
+import { AuditLog, TeamMember, auditLogs, users, teams } from '@/lib/db'
+import { eq, and, desc, gte, lte, count } from 'drizzle-orm'
 
 interface CreateAuditLogData {
-  teamId?: string
-  userId: string
+  teamId?: number
+  userId: number
   action: string
   resourceType?: string
   resourceId?: string
@@ -13,32 +14,15 @@ interface CreateAuditLogData {
 
 export async function createAuditLog(data: CreateAuditLogData): Promise<AuditLog> {
   try {
-    const auditLog = await db.auditLog.create({
-      data: {
-        teamId: data.teamId,
-        userId: data.userId,
-        action: data.action,
-        resourceType: data.resourceType,
-        resourceId: data.resourceId,
-        metadata: data.metadata,
-        ipAddress: data.ipAddress,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        team: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    })
+    const [auditLog] = await db.insert(auditLogs).values({
+      teamId: data.teamId,
+      userId: data.userId,
+      action: data.action,
+      resourceType: data.resourceType,
+      resourceId: data.resourceId,
+      metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      ipAddress: data.ipAddress,
+    }).returning()
 
     return auditLog
   } catch (error) {
@@ -49,8 +33,8 @@ export async function createAuditLog(data: CreateAuditLogData): Promise<AuditLog
 
 // Specific audit log helpers
 export async function logTeamCreated(
-  userId: string,
-  teamId: string,
+  userId: number,
+  teamId: number,
   teamName: string,
   ipAddress?: string
 ) {
@@ -59,15 +43,15 @@ export async function logTeamCreated(
     userId,
     action: 'team.created',
     resourceType: 'team',
-    resourceId: teamId,
+    resourceId: teamId.toString(),
     metadata: { teamName },
     ipAddress,
   })
 }
 
 export async function logMemberInvited(
-  userId: string,
-  teamId: string,
+  userId: number,
+  teamId: number,
   inviteeEmail: string,
   role: string,
   ipAddress?: string
@@ -83,8 +67,8 @@ export async function logMemberInvited(
 }
 
 export async function logMemberJoined(
-  userId: string,
-  teamId: string,
+  userId: number,
+  teamId: number,
   inviteId: string,
   ipAddress?: string
 ) {
@@ -93,16 +77,16 @@ export async function logMemberJoined(
     userId,
     action: 'member.joined',
     resourceType: 'member',
-    resourceId: userId,
+    resourceId: userId.toString(),
     metadata: { inviteId },
     ipAddress,
   })
 }
 
 export async function logMemberRemoved(
-  userId: string,
-  teamId: string,
-  removedUserId: string,
+  userId: number,
+  teamId: number,
+  removedUserId: number,
   removedUserName: string,
   ipAddress?: string
 ) {
@@ -111,16 +95,16 @@ export async function logMemberRemoved(
     userId,
     action: 'member.removed',
     resourceType: 'member',
-    resourceId: removedUserId,
+    resourceId: removedUserId.toString(),
     metadata: { removedUserId, removedUserName },
     ipAddress,
   })
 }
 
 export async function logRoleChanged(
-  userId: string,
-  teamId: string,
-  targetUserId: string,
+  userId: number,
+  teamId: number,
+  targetUserId: number,
   oldRole: string,
   newRole: string,
   ipAddress?: string
@@ -130,16 +114,16 @@ export async function logRoleChanged(
     userId,
     action: 'member.role_changed',
     resourceType: 'member',
-    resourceId: targetUserId,
+    resourceId: targetUserId.toString(),
     metadata: { targetUserId, oldRole, newRole },
     ipAddress,
   })
 }
 
 export async function logRepoConnected(
-  userId: string,
-  teamId: string,
-  repoId: string,
+  userId: number,
+  teamId: number,
+  repoId: number,
   repoName: string,
   ipAddress?: string
 ) {
@@ -148,16 +132,16 @@ export async function logRepoConnected(
     userId,
     action: 'repo.connected',
     resourceType: 'repository',
-    resourceId: repoId,
+    resourceId: repoId.toString(),
     metadata: { repoName },
     ipAddress,
   })
 }
 
 export async function logRepoDisconnected(
-  userId: string,
-  teamId: string,
-  repoId: string,
+  userId: number,
+  teamId: number,
+  repoId: number,
   repoName: string,
   ipAddress?: string
 ) {
@@ -166,16 +150,16 @@ export async function logRepoDisconnected(
     userId,
     action: 'repo.disconnected',
     resourceType: 'repository',
-    resourceId: repoId,
+    resourceId: repoId.toString(),
     metadata: { repoName },
     ipAddress,
   })
 }
 
 export async function logFixApplied(
-  userId: string,
-  teamId: string,
-  repoId: string,
+  userId: number,
+  teamId: number,
+  repoId: number,
   fixDescription: string,
   ipAddress?: string
 ) {
@@ -184,18 +168,18 @@ export async function logFixApplied(
     userId,
     action: 'fix.applied',
     resourceType: 'pipeline',
-    resourceId: repoId,
+    resourceId: repoId.toString(),
     metadata: { repoId, fixDescription },
     ipAddress,
   })
 }
 
 export async function getTeamAuditLogs(
-  teamId: string,
+  teamId: number,
   options: {
     limit?: number
     offset?: number
-    userId?: string
+    userId?: number
     action?: string
     startDate?: Date
     endDate?: Date
@@ -203,33 +187,57 @@ export async function getTeamAuditLogs(
 ) {
   const { limit = 50, offset = 0, userId, action, startDate, endDate } = options
 
-  const where = {
-    teamId,
-    ...(userId && { userId }),
-    ...(action && { action }),
-    ...(startDate && { createdAt: { gte: startDate } }),
-    ...(endDate && { createdAt: { lte: endDate } }),
+  const conditions = [eq(auditLogs.teamId, teamId)]
+  
+  if (userId) {
+    conditions.push(eq(auditLogs.userId, userId))
+  }
+  if (action) {
+    conditions.push(eq(auditLogs.action, action))
+  }
+  if (startDate) {
+    conditions.push(gte(auditLogs.createdAt, startDate))
+  }
+  if (endDate) {
+    conditions.push(lte(auditLogs.createdAt, endDate))
   }
 
-  const [logs, totalCount] = await Promise.all([
-    db.auditLog.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
-        },
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+
+  const logs = await db
+    .select({
+      id: auditLogs.id,
+      teamId: auditLogs.teamId,
+      userId: auditLogs.userId,
+      action: auditLogs.action,
+      resourceType: auditLogs.resourceType,
+      resourceId: auditLogs.resourceId,
+      metadata: auditLogs.metadata,
+      ipAddress: auditLogs.ipAddress,
+      createdAt: auditLogs.createdAt,
+      user: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        avatarUrl: users.avatarUrl,
       },
-      orderBy: { createdAt: 'desc' },
-      skip: offset,
-      take: limit,
-    }),
-    db.auditLog.count({ where }),
-  ])
+      team: {
+        id: teams.id,
+        name: teams.name,
+      },
+    })
+    .from(auditLogs)
+    .leftJoin(users, eq(auditLogs.userId, users.id))
+    .leftJoin(teams, eq(auditLogs.teamId, teams.id))
+    .where(where)
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(limit)
+    .offset(offset)
+
+  const [{ totalCount }] = await db
+    .select({ totalCount: count() })
+    .from(auditLogs)
+    .where(where)
 
   return {
     logs,

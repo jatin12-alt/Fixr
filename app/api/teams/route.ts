@@ -3,7 +3,8 @@ import { getAuth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
 import { hasPermission } from '@/lib/permissions'
-import { TeamRole } from '@prisma/client'
+import { TeamRole, teams, teamMembers, users, repos } from '@/lib/db'
+import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const { userId } = getAuth(req)
@@ -13,57 +14,55 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Get all teams where user is a member
-    const teams = await db.team.findMany({
-      where: {
-        members: {
-          some: {
-            userId,
-          },
-        },
-      },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-        repositories: {
-          select: {
-            id: true,
-            name: true,
-            fullName: true,
-            isActive: true,
-          },
-        },
-        _count: {
-          select: {
-            members: true,
-            repositories: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+    // Get user's clerk ID to find their database user ID
+    const [user] = await db.select().from(users).where(eq(users.clerkId, userId))
+    
+    if (!user) {
+      return Response.json({ error: 'User not found' }, { status: 404 })
+    }
 
-    // Add user's role in each team
-    const teamsWithUserRole = teams.map(team => {
-      const userMembership = team.members.find(m => m.userId === userId)
-      return {
-        ...team,
-        userRole: userMembership?.role || null,
-        userJoinedAt: userMembership?.joinedAt || null,
+    // Get all teams where user is a member
+    const userTeams = await db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        slug: teams.slug,
+        avatarUrl: teams.avatarUrl,
+        createdBy: teams.createdBy,
+        createdAt: teams.createdAt,
+        memberRole: teamMembers.role,
+        memberJoinedAt: teamMembers.joinedAt,
+      })
+      .from(teams)
+      .leftJoin(teamMembers, eq(teams.id, teamMembers.teamId))
+      .where(eq(teamMembers.userId, user.id))
+      .orderBy(teams.createdAt)
+
+    // Group by team and add user role info
+    const teamMap = new Map()
+    
+    userTeams.forEach(row => {
+      if (!teamMap.has(row.id)) {
+        teamMap.set(row.id, {
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          avatarUrl: row.avatarUrl,
+          createdBy: row.createdBy,
+          createdAt: row.createdAt,
+          members: [],
+          repositories: [],
+          _count: {
+            members: 0,
+            repositories: 0,
+          },
+          userRole: row.memberRole,
+          userJoinedAt: row.memberJoinedAt,
+        })
       }
     })
 
-    return Response.json(teamsWithUserRole)
+    return Response.json(Array.from(teamMap.values()))
   } catch (error) {
     console.error('Failed to fetch teams:', error)
     return Response.json(
@@ -99,10 +98,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Get user's clerk ID to find their database user ID
+    const [user] = await db.select().from(users).where(eq(users.clerkId, userId))
+    
+    if (!user) {
+      return Response.json({ error: 'User not found' }, { status: 404 })
+    }
+
     // Check if slug is already taken
-    const existingTeam = await db.team.findUnique({
-      where: { slug },
-    })
+    const [existingTeam] = await db.select().from(teams).where(eq(teams.slug, slug))
 
     if (existingTeam) {
       return Response.json(
@@ -112,46 +116,34 @@ export async function POST(req: NextRequest) {
     }
 
     // Create team
-    const team = await db.team.create({
-      data: {
-        name,
-        slug,
-        createdBy: userId,
-        members: {
-          create: {
-            userId,
-            role: 'OWNER',
-          },
-        },
-      },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-      },
+    const [newTeam] = await db.insert(teams).values({
+      name,
+      slug,
+      createdBy: user.id,
+    }).returning()
+
+    // Add creator as owner
+    await db.insert(teamMembers).values({
+      teamId: newTeam.id,
+      userId: user.id,
+      role: 'OWNER',
     })
 
     // Log team creation
     await createAuditLog({
-      teamId: team.id,
-      userId,
+      teamId: newTeam.id,
+      userId: user.id,
       action: 'team.created',
       resourceType: 'team',
-      resourceId: team.id,
+      resourceId: newTeam.id.toString(),
       metadata: { teamName: name },
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
     })
 
-    return Response.json(team, { status: 201 })
+    return Response.json({
+      ...newTeam,
+      userRole: 'OWNER',
+      userJoinedAt: new Date(),
+    }, { status: 201 })
   } catch (error) {
     console.error('Failed to create team:', error)
     return Response.json(

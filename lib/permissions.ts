@@ -1,4 +1,4 @@
-import { TeamRole } from '@prisma/client'
+import { TeamRole } from '@/lib/db'
 
 export const roleHierarchy: Record<TeamRole, number> = {
   OWNER: 100,
@@ -69,7 +69,7 @@ export function hasPermission(
 }
 
 export function getRoleLabel(role: TeamRole): string {
-  const labels = {
+  const labels: Record<TeamRole, string> = {
     OWNER: 'Owner',
     ADMIN: 'Admin',
     MEMBER: 'Member',
@@ -79,7 +79,7 @@ export function getRoleLabel(role: TeamRole): string {
 }
 
 export function getRoleDescription(role: TeamRole): string {
-  const descriptions = {
+  const descriptions: Record<TeamRole, string> = {
     OWNER: 'Full control over team and all resources',
     ADMIN: 'Can manage members, repositories, and view analytics',
     MEMBER: 'Can manage repositories and view analytics',
