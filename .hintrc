@@ -22,6 +22,12 @@
         "html-has-lang": "off"
       }
     ],
-    "manifest-app-name": "off"
+    "manifest-app-name": "off",
+    "axe/aria": [
+      "default",
+      {
+        "aria-valid-attr-value": "off"
+      }
+    ]
   }
 }

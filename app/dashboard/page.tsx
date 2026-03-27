@@ -1,394 +1,463 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useMemo } from 'react'
+import useSWR from 'swr'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { GitBranch, Clock, CheckCircle, AlertTriangle, Plus, Github, Loader2, BarChart3, Zap } from 'lucide-react'
+import { 
+  GitBranch, Clock, CheckCircle, AlertTriangle, 
+  Plus, Github, Loader2, BarChart3, Zap, 
+  ExternalLink, ArrowRight, Bot, Cpu, Activity,
+  TrendingUp, DollarSign, Search, Command
+} from 'lucide-react'
 import type { DashboardData } from '@/types'
 import RepoManagementModal from '@/components/RepoManagementModal'
+import { AnimatedCounter } from '@/components/AnimatedCounter'
+import dynamic from 'next/dynamic'
+
+// Dynamic import for AnalyticsChart to prevent hydration errors
+const AnalyticsChart = dynamic(() => import('@/components/AnalyticsChart').then(mod => ({ default: mod.AnalyticsChart })), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full mt-4 flex items-center justify-center text-muted-foreground">Loading chart...</div>
+})
+
+const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [data, setData] = useState<DashboardData>({
-    repos: [],
-    recentRuns: [],
-    stats: { activeRepos: 0, fixesApplied: 0, timeSaved: 0, totalRuns: 0 }
+  const { data, error, isLoading, mutate } = useSWR<DashboardData & { analytics: any[] }>('/api/dashboard', fetcher, {
+    refreshInterval: 30000 // Real-time: 30s
   })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+
+  const [hoveredRun, setHoveredRun] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   
   // Modal state
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
+  // Calculations for the "Money Shot"
+  const roi = useMemo(() => {
+    if (!data?.stats) return { devHours: 0, dollars: 0 }
+    const devHours = data.stats.fixesApplied * 1.5 // 1.5h per fix
+    const dollars = devHours * 80 // $80/hr premium rate
+    return { devHours: devHours.toFixed(1), dollars: dollars.toLocaleString() }
+  }, [data])
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const response = await fetch('/api/dashboard')
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data')
+  const filteredRuns = useMemo(() => {
+    if (!data?.recentRuns) return []
+    return data.recentRuns.filter(run => 
+      run.repo?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      run.status.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [data, searchQuery])
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
       }
-      
-      const dashboardData = await response.json()
-      setData(dashboardData)
-    } catch (error) {
-      console.error('Dashboard error:', error)
-      setError(error instanceof Error ? error.message : 'Failed to load dashboard')
-    } finally {
-      setLoading(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          </div>
-        </div>
-      </div>
-    )
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5
+      }
+    }
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-            <p className="text-gray-400 mb-4">{error}</p>
-            <Button onClick={fetchDashboardData} variant="outline">
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+  const breathAnimation = {
+    scale: [1, 1.05, 1],
+    opacity: [0.8, 1, 0.8],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
   }
 
-  // Empty state - no repos connected
-  if (data.repos.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <div className="mb-8">
-              <Github className="w-24 h-24 text-gray-600 mx-auto mb-4" />
-              <h1 className="text-4xl font-bold mb-4">Welcome to Fixr</h1>
-              <p className="text-xl text-gray-400 mb-8">
-                Connect your GitHub repositories to start monitoring and fixing CI/CD pipeline failures with AI
-              </p>
-            </div>
+  if (isLoading) return <DashboardSkeleton />
 
-            <Card className="bg-gray-900 border-gray-800 max-w-2xl mx-auto">
-              <CardContent className="p-8">
-                <h2 className="text-2xl font-semibold mb-6">Getting Started</h2>
-                <div className="space-y-4 text-left">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold mt-0.5">1</div>
-                    <div>
-                      <h3 className="font-semibold">Connect GitHub</h3>
-                      <p className="text-gray-400 text-sm">Authorize Fixr to access your repositories</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold mt-0.5">2</div>
-                    <div>
-                      <h3 className="font-semibold">Add Repositories</h3>
-                      <p className="text-gray-400 text-sm">Select which repositories to monitor</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold mt-0.5">3</div>
-                    <div>
-                      <h3 className="font-semibold">Set Up Webhooks</h3>
-                      <p className="text-gray-400 text-sm">Enable automatic pipeline monitoring</p>
-                    </div>
-                  </div>
-                </div>
+  if (!data || data.repos.length === 0) return <DashboardEmptyState />
 
-                <div className="mt-8">
-                  <Link href="/repos">
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-5 h-5 mr-2" />
-                      Connect Your First Repository
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </div>
-    )
-  }
-
-  function getStatusIcon(status: string) {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'fixed':
-        return <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+      case 'FIXED_AND_MERGED':
+        return <CheckCircle className="w-5 h-5 text-green-400" />
       case 'failed':
-        return <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+      case 'analysis_failed':
+        return <AlertTriangle className="w-5 h-5 text-red-500" />
       case 'running':
-        return <Loader2 className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5 animate-spin" />
+      case 'PR_CREATED_WAITING_REVIEW':
+        return <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+      case 'DIAGNOSTIC_REPORT_READY':
+        return <Bot className="w-5 h-5 text-purple-400" />
       default:
-        return <Clock className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+        return <Clock className="w-5 h-5 text-muted-foreground" />
     }
   }
 
-  function getStatusBadge(status: string) {
-    const styles = {
-      fixed: 'bg-green-500/10 text-green-400 border-green-500/20',
-      failed: 'bg-red-500/10 text-red-400 border-red-500/20',
-      running: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-      pending: 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'FIXED_AND_MERGED': 'Auto-Fixed',
+      'PR_CREATED_WAITING_REVIEW': 'Pending Review',
+      'DIAGNOSTIC_REPORT_READY': 'Diagnostic Ready',
+      'analysis_failed': 'Engine Error',
+      'failed': 'CI Failure',
+      'fixed': 'Fixed'
     }
-    
-    return (
-      <span className={`px-2 py-1 text-xs rounded-full border ${styles[status as keyof typeof styles] || styles.pending}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    )
+    return labels[status] || status.replace(/_/g, ' ')
   }
 
-  // Dashboard with repos
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen pt-24 pb-12 px-6 bg-background">
       <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-          <p className="text-gray-400">Monitor your CI/CD pipeline health and AI fixes</p>
-        </motion.div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
           >
-            <Card className="bg-gray-900 border-gray-800">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">Active Repos</p>
-                    <p className="text-3xl font-bold">{data.stats.activeRepos}</p>
-                  </div>
-                  <GitBranch className="w-8 h-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-2 mb-2">
+              <motion.div 
+                className="w-2 h-2 rounded-full bg-green-500"
+                animate={breathAnimation}
+              />
+              <motion.span 
+                className="text-xs font-display text-green-500/80 tracking-widest uppercase"
+                animate={breathAnimation}
+              >
+                Autonomous Engine Active
+              </motion.span>
+            </div>
+            <h1 className="text-5xl font-black text-foreground tracking-tight">
+              Executive <span className="neon-text">Analytics</span>
+            </h1>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="bg-gray-900 border-gray-800">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">Fixes Applied</p>
-                    <p className="text-3xl font-bold">{data.stats.fixesApplied}</p>
-                  </div>
-                  <Zap className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          {/* Search Bar */}
+          <div className="relative group max-w-sm w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search failures, repos..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-border/10 rounded-lg py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-border/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+            />
+            <Command className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          </div>
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="bg-gray-900 border-gray-800">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">Time Saved</p>
-                    <p className="text-3xl font-bold">{data.stats.timeSaved}h</p>
-                  </div>
-                  <Clock className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="bg-gray-900 border-gray-800">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">Total Runs</p>
-                    <p className="text-3xl font-bold">{data.stats.totalRuns}</p>
-                  </div>
-                  <BarChart3 className="w-8 h-8 text-orange-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+        {/* Global ROI Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <ROICard 
+            label="AUTO-FIXES" 
+            value={<AnimatedCounter value={data.stats.fixesApplied} />} 
+            icon={Zap} 
+            color="text-green-400" 
+            sub="Successful merges"
+          />
+          <ROICard 
+            label="TIME RECLAIMED" 
+            value={<AnimatedCounter value={parseFloat(roi.devHours)} suffix="h" />} 
+            icon={Clock} 
+            color="text-blue-400" 
+            sub="Developer bandwidth"
+          />
+          <ROICard 
+            label="TOTAL SAVINGS" 
+            value={<AnimatedCounter value={data.stats.savings} prefix="$" />} 
+            icon={DollarSign} 
+            color="text-purple-400" 
+            sub="Estimated value"
+          />
+          <ROICard 
+            label="ACTIVE REPOS" 
+            value={<AnimatedCounter value={data.stats.activeRepos} />} 
+            icon={GitBranch} 
+            color="text-primary" 
+            sub="Monitored"
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Repositories */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="lg:col-span-2"
-          >
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
+          
+          {/* Main Visuals: Performance Chart & Recent Activity */}
+          <div className="lg:col-span-2 space-y-8">
+            <Card className="glass border-white/5 overflow-hidden">
+              <CardHeader className="border-b border-white/5">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center">
-                    <GitBranch className="w-5 h-5 mr-2" />
-                    Your Repositories
-                  </CardTitle>
-                  <Link href="/repos">
-                    <Button variant="outline" size="sm">
-                      View All
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-base uppercase tracking-widest text-muted-foreground">Success Rate (7d)</CardTitle>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px] uppercase font-bold">
+                    <span className="flex items-center gap-1.5 text-red-400"><div className="w-2 h-2 rounded-full bg-red-400" /> Failures</span>
+                    <span className="flex items-center gap-1.5 text-green-400"><div className="w-2 h-2 rounded-full bg-green-400" /> Auto-Fixes</span>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {data.repos.slice(0, 5).map((repo) => (
-                    <div
-                      key={repo.id}
-                      className="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
-                      onClick={() => {
-                        setSelectedRepoId(repo.id)
-                        setIsModalOpen(true)
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <GitBranch className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="font-semibold">{repo.name}</p>
-                          <p className="text-sm text-gray-400">{repo.fullName}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${repo.isActive ? 'bg-green-500' : 'bg-gray-500'}`} />
-                        <span className="text-sm text-gray-400">
-                          {repo.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="p-0">
+                <AnalyticsChart data={data.analytics} />
               </CardContent>
             </Card>
-          </motion.div>
 
-          {/* Recent Pipeline Runs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <h2 className="text-2xl font-bold mb-6 text-blue-400">Recent Pipeline Activity</h2>
-            <Card className="bg-gray-900 border-gray-700 hover:border-cyan-500 transition-colors">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {data.recentRuns.map((run) => (
-                    <div key={run.id} className="flex items-start gap-3 p-3 bg-gray-800/50 rounded">
-                      {getStatusIcon(run.status)}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-white">{run.repo?.name}</span>
-                          {getStatusBadge(run.status)}
-                          {run.confidence && (
-                            <span className="text-xs text-gray-400">({run.confidence}% confidence)</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-400 mb-1">{run.errorMessage}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(run.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Live <span className="text-primary">Pulse</span>
+                </h2>
+              </div>
+
+              <div className="space-y-4">
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <AnimatePresence mode="popLayout">
+                    {filteredRuns.map((run, index) => (
+                      <motion.div
+                        key={run.id}
+                        layout
+                        variants={itemVariants}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onMouseEnter={() => setHoveredRun(run.id)}
+                        onMouseLeave={() => setHoveredRun(null)}
+                      >
+                      <Card className={`glass border-white/5 overflow-hidden transition-all duration-300 ${hoveredRun === run.id ? 'border-border/50 bg-white/[0.04]' : ''}`}>
+                         <div className="p-5">
+                            <div className="flex items-center justify-between mb-4">
+                               <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded bg-white/5 ${run.status === 'failed' ? 'text-red-400' : 'text-green-400'}`}>
+                                     <Github size={18} />
+                                  </div>
+                                  <div>
+                                     <h3 className="text-sm font-bold text-foreground mb-0.5">{run.repo?.name}</h3>
+                                     <p className="text-[10px] text-muted-foreground font-mono tracking-tighter">REF: {run.githubRunId}</p>
+                                  </div>
+                               </div>
+                               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/5">
+                                  {getStatusIcon(run.status)}
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{getStatusLabel(run.status)}</span>
+                               </div>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-6">
+                               <div className="space-y-2 min-w-0">
+                                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Analysis</span>
+                                  <p className="text-xs text-blue-100/60 leading-relaxed italic break-words">
+                                     {run.aiExplanation || "Engine is analyzing system logs..."}
+                                  </p>
+                               </div>
+                               <div className="flex flex-col justify-end items-end gap-2 min-w-0">
+                                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold text-right">Engine Confidence</span>
+                                  <div className="flex items-center gap-3 w-full max-w-[140px]">
+                                     <span className="text-xs font-black text-foreground truncate">{run.aiConfidence || run.confidence || 0}%</span>
+                                     <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden min-w-0">
+                                        <div 
+                                          className={`h-full transition-all duration-1000 ${
+                                            (run.aiConfidence || run.confidence || 0) > 80 ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
+                                            (run.aiConfidence || run.confidence || 0) > 50 ? 'bg-primary' : 'bg-red-500'
+                                          }`}
+                                          style={{ width: `${run.aiConfidence || run.confidence || 0}%` }}
+                                        />
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+                         </div>
+                      </Card>
+                    </motion.div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+                </AnimatePresence>
+                </motion.div>
+              </div>
+            </div>
+          </div>
 
-        {/* Empty State */}
-        {data.repos.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="bg-gray-900 border-gray-700 hover:border-cyan-500 transition-colors text-center p-12">
-              <CardContent>
-                <GitBranch className="h-16 w-16 text-gray-500 mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-gray-300 mb-4">No Repositories Connected</h3>
-                <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                  Connect your GitHub repositories to start monitoring your CI/CD pipelines with AI-powered analysis.
-                </p>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-left max-w-md mx-auto">
-                    <div className="w-8 h-8 bg-blue-600/20 rounded-full flex items-center justify-center text-sm font-bold text-blue-400">1</div>
-                    <span className="text-gray-300">Connect your GitHub account</span>
+          {/* Sidebar: Repo Health & Engine Status */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-400" />
+              Source <span className="text-blue-400">Health</span>
+            </h2>
+
+            <div className="space-y-4">
+              {data.repos.map((repo, i) => (
+                <RepoHealthCard 
+                  key={repo.id} 
+                  repo={repo} 
+                  onClick={() => {
+                    setSelectedRepoId(repo.id)
+                    setIsModalOpen(true)
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* AI Capability Card */}
+            <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/10 border-border/20 shadow-2xl overflow-hidden relative group">
+               <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+               <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-primary rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                      <Bot className="h-5 w-5 text-foreground" />
+                    </div>
+                    <span className="font-bold text-foreground">Quantum Engine</span>
                   </div>
-                  <div className="flex items-center gap-3 text-left max-w-md mx-auto">
-                    <div className="w-8 h-8 bg-gray-600/20 rounded-full flex items-center justify-center text-sm font-bold text-gray-400">2</div>
-                    <span className="text-gray-300">Select repositories to monitor</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-left max-w-md mx-auto">
-                    <div className="w-8 h-8 bg-gray-600/20 rounded-full flex items-center justify-center text-sm font-bold text-gray-400">3</div>
-                    <span className="text-gray-300">Enable auto-fix mode</span>
-                  </div>
-                </div>
-                <Link href="/repos">
-                  <Button variant="outline" size="lg" className="mt-8">
-                    Connect GitHub Repository
+                  <p className="text-xs text-cyan-100/60 leading-relaxed mb-6">
+                    Autonomous recovery handling 85%+ of failure patterns. 
+                    Real-time Groq analysis active.
+                  </p>
+                  <Button size="sm" variant="ghost" className="w-full text-xs text-primary hover:text-cyan-300 hover:bg-primary/10">
+                    Engine Log History <ArrowRight size={12} className="ml-2" />
                   </Button>
-                </Link>
-              </CardContent>
+               </CardContent>
             </Card>
-          </motion.div>
-        )}
+          </div>
+        </div>
       </div>
 
-      {/* Repo Management Modal */}
       <RepoManagementModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
           setSelectedRepoId(null)
+          mutate() 
         }}
         repoId={selectedRepoId}
       />
+    </div>
+  )
+}
+
+function ROICard({ label, value, icon: Icon, color, sub, highlight = false }: any) {
+  return (
+    <Card className={`glass border-white/5 overflow-hidden group hover:border-white/10 transition-all ${highlight ? 'bg-primary/5 border-border/20' : ''}`}>
+      <CardContent className="p-6 relative">
+        <div className={`absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-all ${color}`}>
+          <Icon size={120} />
+        </div>
+        <p className="text-[10px] font-black tracking-widest text-muted-foreground mb-1">{label}</p>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-3xl font-black ${color} tracking-tighter`}>{value}</p>
+          <span className="text-[10px] text-muted-foreground font-medium">{sub}</span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function RepoHealthCard({ repo, onClick }: any) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="cursor-pointer"
+      onClick={onClick}
+    >
+      <Card className="glass border-white/5 group transition-all hover:bg-white/[0.03]">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-blue-400 group-hover:bg-blue-500/20 transition-all">
+                <GitBranch size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-foreground">{repo.name}</h4>
+                <p className="text-[9px] text-muted-foreground font-mono italic">Protected</p>
+              </div>
+            </div>
+            <div className={`h-2 w-2 rounded-full ${repo.isActive ? 'bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]' : 'bg-card'}`} />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[8px] font-black tracking-widest text-muted-foreground">
+               <span>HEALTH LEVEL</span>
+               <span className="text-primary">OPTIMAL</span>
+            </div>
+            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+               <motion.div 
+                 initial={{ width: 0 }}
+                 animate={{ width: '100%' }}
+                 className="h-full bg-gradient-to-r from-blue-500 to-cyan-400" 
+               />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen pt-24 pb-12 px-6 bg-background">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between mb-10">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-12 w-64" />
+          </div>
+          <Skeleton className="h-10 w-48" />
+        </div>
+        <div className="grid grid-cols-4 gap-6 mb-12">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 w-full" />)}
+        </div>
+        <div className="grid grid-cols-3 gap-8">
+           <div className="col-span-2 space-y-8">
+              <Skeleton className="h-[300px] w-full" />
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full" />)}
+              </div>
+           </div>
+           <div className="space-y-4">
+             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DashboardEmptyState() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6 bg-background">
+       <motion.div 
+         initial={{ opacity: 0, y: 20 }}
+         animate={{ opacity: 1, y: 0 }}
+         className="text-center max-w-md"
+       >
+          <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-8 relative">
+             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+             <Github className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <h2 className="text-3xl font-black text-foreground mb-4">No Sources Detected</h2>
+          <p className="text-muted-foreground mb-8 leading-relaxed">
+             Connect your first GitHub repository to initialize the Fixr Engine and start saving developer hours automatically.
+          </p>
+          <Link href="/repos">
+            <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-6 rounded-xl font-bold hover:shadow-[0_0_30px_rgba(0,212,255,0.4)] transition-all">
+              Initialize Repository <Plus className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+       </motion.div>
     </div>
   )
 }

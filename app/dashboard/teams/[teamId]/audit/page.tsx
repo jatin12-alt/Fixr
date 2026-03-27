@@ -147,7 +147,7 @@ export default function TeamAuditPage() {
     if (action.includes('created') || action.includes('joined')) return 'text-green-400'
     if (action.includes('removed') || action.includes('disconnected')) return 'text-red-400'
     if (action.includes('role_changed') || action.includes('updated')) return 'text-yellow-400'
-    return 'text-cyan-400'
+    return 'text-primary'
   }
 
   const formatAction = (action: string) => {
@@ -169,11 +169,11 @@ export default function TeamAuditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-gray-300 py-8">
+      <div className="min-h-screen bg-black text-muted-foreground py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-800 rounded w-1/4 mb-8"></div>
-            <div className="h-96 bg-gray-900/50 border border-gray-800 rounded-xl"></div>
+            <div className="h-8 bg-card rounded w-1/4 mb-8"></div>
+            <div className="h-96 bg-muted/50 border border-gray-800 rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -182,41 +182,41 @@ export default function TeamAuditPage() {
 
   if (!team || !team.userPermissions.canViewAuditLogs) {
     return (
-      <div className="min-h-screen bg-black text-gray-300 py-8 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-muted-foreground py-8 flex items-center justify-center">
         <div className="text-center">
           <Clock className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400">Access denied</p>
+          <p className="text-muted-foreground">Access denied</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-300 py-8">
+    <div className="min-h-screen bg-black text-muted-foreground py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push(`/dashboard/teams/${teamId}`)}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Team
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-white">Audit Logs</h1>
-              <p className="text-gray-400">{team.name} • {totalCount} events</p>
+              <h1 className="text-3xl font-bold text-foreground">Audit Logs</h1>
+              <p className="text-muted-foreground">{team.name} • {totalCount} events</p>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 mb-6">
+        <div className="bg-muted/50 border border-gray-800 rounded-xl p-4 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
               >
                 <Filter className="h-4 w-4" />
                 <span>Filters</span>
@@ -226,14 +226,14 @@ export default function TeamAuditPage() {
               {(filters.action || filters.user || filters.startDate || filters.endDate) && (
                 <button
                   onClick={clearFilters}
-                  className="text-cyan-400 hover:text-cyan-300 text-sm"
+                  className="text-primary hover:text-cyan-300 text-sm"
                 >
                   Clear all
                 </button>
               )}
             </div>
 
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Showing {logs.length} of {totalCount} events
             </div>
           </div>
@@ -245,12 +245,12 @@ export default function TeamAuditPage() {
               className="grid grid-cols-1 md:grid-cols-4 gap-4"
             >
               <div>
-                <label htmlFor="action-filter" className="block text-sm font-medium text-gray-300 mb-1">Action</label>
+                <label htmlFor="action-filter" className="block text-sm font-medium text-muted-foreground mb-1">Action</label>
                 <select
                   id="action-filter"
                   value={filters.action}
                   onChange={(e) => handleFilterChange('action', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
                   aria-label="Filter by action"
                 >
                   <option value="">All actions</option>
@@ -266,38 +266,38 @@ export default function TeamAuditPage() {
               </div>
 
               <div>
-                <label htmlFor="user-filter" className="block text-sm font-medium text-gray-300 mb-1">User</label>
+                <label htmlFor="user-filter" className="block text-sm font-medium text-muted-foreground mb-1">User</label>
                 <input
                   id="user-filter"
                   type="text"
                   value={filters.user}
                   onChange={(e) => handleFilterChange('user', e.target.value)}
                   placeholder="Search by name or email"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-cyan-500"
                   aria-label="Search by user"
                 />
               </div>
 
               <div>
-                <label htmlFor="start-date-filter" className="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
+                <label htmlFor="start-date-filter" className="block text-sm font-medium text-muted-foreground mb-1">Start Date</label>
                 <input
                   id="start-date-filter"
                   type="date"
                   value={filters.startDate}
                   onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
                   aria-label="Start date filter"
                 />
               </div>
 
               <div>
-                <label htmlFor="end-date-filter" className="block text-sm font-medium text-gray-300 mb-1">End Date</label>
+                <label htmlFor="end-date-filter" className="block text-sm font-medium text-muted-foreground mb-1">End Date</label>
                 <input
                   id="end-date-filter"
                   type="date"
                   value={filters.endDate}
                   onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
                   aria-label="End date filter"
                 />
               </div>
@@ -305,7 +305,7 @@ export default function TeamAuditPage() {
               <div className="md:col-span-4 flex justify-end">
                 <button
                   onClick={applyFilters}
-                  className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+                  className="px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
                 >
                   Apply Filters
                 </button>
@@ -318,8 +318,8 @@ export default function TeamAuditPage() {
         {logs.length === 0 ? (
           <div className="text-center py-12">
             <Clock className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No audit logs found</h3>
-            <p className="text-gray-400">
+            <h3 className="text-lg font-semibold text-foreground mb-2">No audit logs found</h3>
+            <p className="text-muted-foreground">
               {filters.action || filters.user || filters.startDate || filters.endDate
                 ? 'Try adjusting your filters'
                 : 'Audit logs will appear here as team activities occur'
@@ -333,27 +333,27 @@ export default function TeamAuditPage() {
                 key={log.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-colors"
+                className="bg-muted/50 border border-gray-800 rounded-xl p-6 hover:border-cyan-500/50 transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-4">
-                    <div className={`p-2 rounded-lg bg-gray-800 ${getActionColor(log.action)}`}>
+                    <div className={`p-2 rounded-lg bg-card ${getActionColor(log.action)}`}>
                       {getActionIcon(log.action)}
                     </div>
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-white font-medium">
+                        <h3 className="text-foreground font-medium">
                           {formatAction(log.action)}
                         </h3>
                         {log.resourceType && (
-                          <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
+                          <span className="text-xs text-muted-foreground bg-card px-2 py-1 rounded">
                             {log.resourceType}
                           </span>
                         )}
                       </div>
                       
-                      <div className="flex items-center space-x-4 text-sm text-gray-400 mb-2">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
                         <div className="flex items-center space-x-2">
                           {log.user.avatarUrl ? (
                             <img
@@ -363,7 +363,7 @@ export default function TeamAuditPage() {
                             />
                           ) : (
                             <div className="w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white">
+                              <span className="text-xs text-foreground">
                                 {(log.user.name || log.user.email).charAt(0).toUpperCase()}
                               </span>
                             </div>
@@ -383,7 +383,7 @@ export default function TeamAuditPage() {
                       </div>
                       
                       {formatMetadata(log.metadata) && (
-                        <div className="text-sm text-gray-300 bg-gray-800 rounded p-2">
+                        <div className="text-sm text-muted-foreground bg-card rounded p-2">
                           {formatMetadata(log.metadata)}
                         </div>
                       )}
@@ -398,7 +398,7 @@ export default function TeamAuditPage() {
               <div className="text-center">
                 <button
                   onClick={loadMore}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Load More
                 </button>

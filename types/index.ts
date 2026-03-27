@@ -1,11 +1,12 @@
 export interface Repository {
   id: number
-  userId: number
+  userId: string
   githubId: string
   name: string
   fullName: string
   isActive: boolean
   autoMode: boolean
+  autoFixEnabled: boolean
   webhookId: string | null
   createdAt: Date
 }
@@ -14,14 +15,19 @@ export interface PipelineRun {
   id: number
   repoId: number
   githubRunId: string
-  status: 'failed' | 'pending_fix' | 'fixed' | 'analysis_failed'
+  status: 'failed' | 'pending_fix' | 'fixed' | 'analysis_failed' | 'FIXED_AND_MERGED' | 'PR_CREATED_WAITING_REVIEW' | 'DIAGNOSTIC_REPORT_READY'
   errorMessage: string | null
   fixApplied: string | null
   confidence: number | null
+  aiConfidence?: number | null
   createdAt: Date
+  aiExplanation?: string | null
+  aiFixSuggestion?: string | null
+  aiCodeFix?: string | null
 }
 
 export interface DashboardStats {
+  savings: string | number
   activeRepos: number
   fixesApplied: number
   timeSaved: number

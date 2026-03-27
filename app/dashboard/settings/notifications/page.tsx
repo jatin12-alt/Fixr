@@ -95,74 +95,74 @@ export default function NotificationSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Notification Settings</h1>
-        <p className="text-gray-400">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Notification Settings</h1>
+        <p className="text-muted-foreground">
           Configure how and when you receive notifications from Fixr.
         </p>
       </div>
 
       <div className="space-y-6">
         {/* Email Notifications */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+        <div className="bg-muted/50 border border-border rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <Mail className="h-5 w-5 text-cyan-400 mr-3" />
-            <h2 className="text-xl font-semibold text-white">Email Notifications</h2>
+            <Mail className="h-5 w-5 text-primary mr-3" />
+            <h2 className="text-xl font-semibold text-foreground">Email Notifications</h2>
           </div>
 
           <div className="space-y-4">
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-white font-medium">Pipeline Failures</p>
-                <p className="text-sm text-gray-400">Get notified when a pipeline fails</p>
+                <p className="text-foreground font-medium">Pipeline Failures</p>
+                <p className="text-sm text-muted-foreground">Get notified when a pipeline fails</p>
               </div>
               <input
                 type="checkbox"
                 checked={preferences.emailOnFailure}
                 onChange={(e) => updatePreferences({ emailOnFailure: e.target.checked })}
-                className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+                className="w-4 h-4 text-muted-foreground bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
               />
             </label>
 
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-white font-medium">AI Fixes Applied</p>
-                <p className="text-sm text-gray-400">Get notified when AI applies a fix</p>
+                <p className="text-foreground font-medium">AI Fixes Applied</p>
+                <p className="text-sm text-muted-foreground">Get notified when AI applies a fix</p>
               </div>
               <input
                 type="checkbox"
                 checked={preferences.emailOnFix}
                 onChange={(e) => updatePreferences({ emailOnFix: e.target.checked })}
-                className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+                className="w-4 h-4 text-muted-foreground bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
               />
             </label>
 
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-white font-medium">Weekly Digest</p>
-                <p className="text-sm text-gray-400">Summary of your pipeline health</p>
+                <p className="text-foreground font-medium">Weekly Digest</p>
+                <p className="text-sm text-muted-foreground">Summary of your pipeline health</p>
               </div>
               <input
                 type="checkbox"
                 checked={preferences.weeklyDigest}
                 onChange={(e) => updatePreferences({ weeklyDigest: e.target.checked })}
-                className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+                className="w-4 h-4 text-muted-foreground bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
               />
             </label>
           </div>
         </div>
 
         {/* Push Notifications */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+        <div className="bg-muted/50 border border-border rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <Bell className="h-5 w-5 text-cyan-400 mr-3" />
-            <h2 className="text-xl font-semibold text-white">Push Notifications</h2>
+            <Bell className="h-5 w-5 text-primary mr-3" />
+            <h2 className="text-xl font-semibold text-foreground">Push Notifications</h2>
           </div>
 
           <div className="space-y-4">
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-white font-medium">Browser Push Notifications</p>
-                <p className="text-sm text-gray-400">
+                <p className="text-foreground font-medium">Browser Push Notifications</p>
+                <p className="text-sm text-muted-foreground">
                   Receive notifications in your browser even when Fixr is closed
                 </p>
               </div>
@@ -170,20 +170,20 @@ export default function NotificationSettingsPage() {
                 type="checkbox"
                 checked={preferences.pushEnabled}
                 onChange={togglePushNotifications}
-                className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+                className="w-4 h-4 text-muted-foreground bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
               />
             </label>
           </div>
         </div>
 
         {/* Test Notifications */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+        <div className="bg-muted/50 border border-border rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <TestTube className="h-5 w-5 text-cyan-400 mr-3" />
-            <h2 className="text-xl font-semibold text-white">Test Notifications</h2>
+            <TestTube className="h-5 w-5 text-primary mr-3" />
+            <h2 className="text-xl font-semibold text-foreground">Test Notifications</h2>
           </div>
 
-          <p className="text-gray-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             Send a test notification to verify your settings are working correctly.
           </p>
 
@@ -191,7 +191,7 @@ export default function NotificationSettingsPage() {
             <button
               onClick={sendTestNotification}
               disabled={testLoading}
-              className="flex items-center px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4 mr-2" />
               {testLoading ? 'Sending...' : 'Send Test Notification'}
@@ -200,20 +200,20 @@ export default function NotificationSettingsPage() {
         </div>
 
         {/* Current Status */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+        <div className="bg-muted/50 border border-border rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <Settings className="h-5 w-5 text-cyan-400 mr-3" />
-            <h2 className="text-xl font-semibold text-white">Current Status</h2>
+            <Settings className="h-5 w-5 text-primary mr-3" />
+            <h2 className="text-xl font-semibold text-foreground">Current Status</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-sm text-gray-400 mb-1">Unread Notifications</p>
-              <p className="text-2xl font-bold text-white">{unreadCount}</p>
+            <div className="bg-card rounded-lg p-4">
+              <p className="text-sm text-muted-foreground mb-1">Unread Notifications</p>
+              <p className="text-2xl font-bold text-foreground">{unreadCount}</p>
             </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-sm text-gray-400 mb-1">Push Status</p>
-              <p className="text-2xl font-bold text-white">
+            <div className="bg-card rounded-lg p-4">
+              <p className="text-sm text-muted-foreground mb-1">Push Status</p>
+              <p className="text-2xl font-bold text-foreground">
                 {preferences.pushEnabled ? 'Enabled' : 'Disabled'}
               </p>
             </div>

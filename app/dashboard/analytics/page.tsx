@@ -11,6 +11,23 @@ import { RepoTable } from '@/components/analytics/RepoTable'
 import { FixTimeline } from '@/components/analytics/FixTimeline'
 import { DateRangePicker } from '@/components/analytics/DateRangePicker'
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.35, ease: "easeOut" as const } 
+  }
+}
+
 interface AnalyticsData {
   kpis: {
     totalRuns: number
@@ -101,16 +118,16 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-gray-300 py-8">
+      <div className="min-h-screen bg-black text-muted-foreground py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-800 rounded w-1/4 mb-8"></div>
+            <div className="h-8 bg-card rounded w-1/4 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 h-32"></div>
+                <div key={i} className="bg-muted/50 border border-border rounded-xl p-6 h-32"></div>
               ))}
             </div>
-            <div className="h-96 bg-gray-900/50 border border-gray-800 rounded-xl mb-8"></div>
+            <div className="h-96 bg-muted/50 border border-border rounded-xl mb-8"></div>
           </div>
         </div>
       </div>
@@ -119,23 +136,23 @@ export default function AnalyticsPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-black text-gray-300 py-8 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-muted-foreground py-8 flex items-center justify-center">
         <div className="text-center">
           <BarChart3 className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400">Failed to load analytics data</p>
+          <p className="text-muted-foreground">Failed to load analytics data</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-300 py-8">
+    <motion.div className="min-h-screen bg-black text-muted-foreground py-8" variants={containerVariants} initial="hidden" animate="visible">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <motion.div className="flex items-center justify-between mb-8" variants={itemVariants}>
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1>
-            <p className="text-gray-400">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Analytics Dashboard</h1>
+            <p className="text-muted-foreground">
               Monitor your pipeline health and AI performance
             </p>
           </div>
@@ -143,10 +160,10 @@ export default function AnalyticsPage() {
             value={dateRange}
             onChange={handleDateRangePickerChange}
           />
-        </div>
+        </motion.div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" variants={itemVariants}>
           <KPICard
             title="Total Runs"
             value={data.kpis.totalRuns}
@@ -173,53 +190,53 @@ export default function AnalyticsPage() {
             unit="hrs"
             icon={<Clock className="h-5 w-5" />}
           />
-        </div>
+        </motion.div>
 
         {/* Pipeline Health Trend */}
-        <div className="mb-8">
+        <motion.div className="mb-8" variants={itemVariants}>
           <TrendChart
             data={data.trend}
             dateRange="30"
             onDateRangeChange={handleDateRangeChange}
           />
-        </div>
+        </motion.div>
 
         {/* Error Breakdown and Repo Leaderboard */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" variants={itemVariants}>
           <ErrorPieChart
             data={data.errorBreakdown}
             onErrorTypeClick={setSelectedErrorType}
           />
           <RepoTable data={data.repoLeaderboard} />
-        </div>
+        </motion.div>
 
         {/* Failure Heatmap */}
-        <div className="mb-8">
+        <motion.div className="mb-8" variants={itemVariants}>
           <HeatmapGrid data={data.heatmap} />
-        </div>
+        </motion.div>
 
         {/* Recent AI Fixes Timeline */}
-        <div>
+        <motion.div variants={itemVariants}>
           <FixTimeline fixes={data.recentFixes} />
-        </div>
+        </motion.div>
 
         {/* Selected Error Type Filter */}
         {selectedErrorType && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-4 right-4 bg-gray-900 border border-gray-800 rounded-lg p-4 shadow-xl z-50"
+            className="fixed bottom-4 right-4 bg-muted border border-border rounded-lg p-4 shadow-xl z-50"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white font-medium">Filtered by: {selectedErrorType}</p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-foreground font-medium">Filtered by: {selectedErrorType}</p>
+                <p className="text-muted-foreground text-sm">
                   Showing analytics for this error type
                 </p>
               </div>
               <button
                 onClick={() => setSelectedErrorType(null)}
-                className="ml-4 text-gray-400 hover:text-white"
+                className="ml-4 text-muted-foreground hover:text-foreground"
               >
                 Clear
               </button>
@@ -227,6 +244,6 @@ export default function AnalyticsPage() {
           </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }

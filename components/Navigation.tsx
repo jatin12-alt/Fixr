@@ -6,14 +6,21 @@ import { UserButton, useUser } from '@clerk/nextjs'
 import { dark } from '@clerk/themes'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp } from 'lucide-react'
+import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp, Sun, Moon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 export function Navigation() {
   const { isSignedIn } = useUser()
+  const { theme, setTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [atTop, setAtTop] = useState(true)
   const [showBackToTop, setShowBackToTop] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const { scrollY } = useScroll()
 
@@ -71,17 +78,32 @@ export function Navigation() {
             {/* Logo */}
             <Link href="/">
               <motion.div
+                className="relative cursor-pointer select-none"
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-black cursor-pointer"
-                style={{
-                  background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '0.05em',
-                  filter: 'drop-shadow(0 0 10px rgba(0,212,255,0.4))',
-                }}
+                style={{ perspective: "500px" }}
               >
-                FIXR
+                <motion.span
+                  className="text-xl font-black tracking-widest"
+                  style={{
+                    background: "linear-gradient(135deg, #00d4ff 0%, #0066ff 50%, #00d4ff 100%)",
+                    backgroundSize: "200% 200%",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    textShadow: "none",
+                    filter: "drop-shadow(0 0 8px #00d4ff88)",
+                    display: "inline-block",
+                  }}
+                  animate={{
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                    rotateY: [0, 8, -8, 0],
+                  }}
+                  transition={{
+                    backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
+                    rotateY: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                  }}
+                >
+                  FIXR
+                </motion.span>
               </motion.div>
             </Link>
 
@@ -99,8 +121,22 @@ export function Navigation() {
               ))}
             </div>
 
-            {/* Auth */}
+            {/* Auth + Theme Toggle */}
             <div className="hidden md:flex items-center gap-3">
+              {/* Theme Toggle */}
+              {mounted && (
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                  aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                </button>
+              )}
               {isSignedIn ? (
                 <>
                   <Link href="/dashboard">
@@ -164,6 +200,28 @@ export function Navigation() {
                     </Link>
                   ))}
                   <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    {/* Theme Toggle Mobile */}
+                    {mounted && (
+                      <button
+                        onClick={() => {
+                          setTheme(theme === 'dark' ? 'light' : 'dark')
+                          setMobileMenuOpen(false)
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {theme === 'dark' ? (
+                          <>
+                            <Sun className="h-4 w-4" />
+                            Light Mode
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="h-4 w-4" />
+                            Dark Mode
+                          </>
+                        )}
+                      </button>
+                    )}
                     {isSignedIn ? (
                       <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" size="sm" className="w-full">Dashboard</Button>

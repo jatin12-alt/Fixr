@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
-import { db, users, repos, pipelineRuns } from '@/lib/db'
-import { eq, desc, sql } from 'drizzle-orm'
+import { db, repos, pipelineRuns, users } from '@/lib/db'
+import { eq, desc, and, gte, sql } from 'drizzle-orm'
 import type { Repo } from '@/lib/db'
 
 // Fallback data structure when database fails
@@ -21,6 +21,9 @@ type RecentRun = {
   errorMessage: string | null
   confidence: number | null
   createdAt: Date | null
+  aiFixSuggestion?: string | null
+  aiExplanation?: string | null
+  aiCodeFix?: string | null
   repo: {
     name: string
     fullName: string
@@ -47,12 +50,13 @@ export async function GET() {
         .from(repos)
         .where(eq(repos.userId, userId))
       
-      // Calculate stats from repos
-      stats = {
+      // Calculate stats from repos and pipeline runs
+      const stats = {
         activeRepos: userRepos.filter(repo => repo.isActive).length,
-        fixesApplied: 0,
-        timeSaved: 0,
-        totalRuns: 0
+        fixesApplied: 0, // Will be updated from pipeline runs
+        timeSaved: 0, // Will be calculated from fixesApplied
+        totalRuns: 0, // Will be updated from pipeline runs
+        savings: 0 // Will be calculated from timeSaved
       }
       
       console.log("📊 DASHBOARD_REPOS_FOUND:", userRepos.length, "repos")
@@ -77,6 +81,9 @@ export async function GET() {
           errorMessage: pipelineRuns.errorMessage,
           confidence: pipelineRuns.confidence,
           createdAt: pipelineRuns.createdAt,
+          aiFixSuggestion: pipelineRuns.aiFixSuggestion,
+          aiExplanation: pipelineRuns.aiExplanation,
+          aiCodeFix: pipelineRuns.aiCodeFix,
           repo: {
             name: repos.name,
             fullName: repos.fullName
@@ -90,35 +97,91 @@ export async function GET() {
 
       // Update stats with pipeline run data
       const totalRuns = recentRuns.length
-      const fixesApplied = recentRuns.filter(run => run.status === 'fixed').length
-      const timeSaved = fixesApplied * 2 // Estimate 2 hours per fix
+      const fixesApplied = recentRuns.filter(run => run.status === 'fixed_and_merged').length
+      const timeSaved = fixesApplied * 0.5 // 0.5 hours per fix as specified
+      const savings = timeSaved * 50 // $50 per hour as specified
+
+      console.log("📊 DASHBOARD_ANALYTICS_CALCULATED:", {
+        totalRuns,
+        fixesApplied,
+        timeSaved,
+        savings,
+        recentRunsStatuses: recentRuns.map(r => ({ id: r.id, status: r.status }))
+      })
 
       stats = {
         ...stats,
         totalRuns,
         fixesApplied,
-        timeSaved
+        timeSaved,
+        savings
       }
     } catch (runsError) {
       console.error('Dashboard API - Pipeline runs query failed:', runsError)
       // Continue with empty runs, keep repo stats
     }
 
+    // 3. New analytics: Last 7 days failure vs fix
+    const last7Days: { date: string; failures: number; fixes: number }[] = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      last7Days.push({
+        date: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        failures: 0,
+        fixes: 0
+      })
+    }
+
+    // Populate analytics from recentRuns with proper failure/fix counting
+    try {
+      // Get all runs from the last 7 days for accurate analytics
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      
+      const allRunsLast7Days = await db
+        .select({
+          status: pipelineRuns.status,
+          createdAt: pipelineRuns.createdAt
+        })
+        .from(pipelineRuns)
+        .leftJoin(repos, eq(pipelineRuns.repoId, repos.id))
+        .where(and(
+          eq(repos.userId, userId),
+          gte(pipelineRuns.createdAt, sevenDaysAgo)
+        ))
+        .orderBy(desc(pipelineRuns.createdAt))
+
+      // Group by date and count failures vs fixes
+      allRunsLast7Days.forEach(run => {
+        const runDate = new Date(run.createdAt)
+        const dayIndex = 6 - Math.floor((new Date().getTime() - runDate.getTime()) / (1000 * 60 * 60 * 24))
+        
+        if (dayIndex >= 0 && dayIndex < 7) {
+          if (run.status === 'failure' || run.status === 'failed') {
+            last7Days[dayIndex].failures++
+          } else if (run.status === 'fixed_and_merged' || run.status === 'fixed') {
+            last7Days[dayIndex].fixes++
+          }
+        }
+      })
+
+      console.log("📈 7-DAY_ANALYTICS_CALCULATED:", {
+        totalRuns: allRunsLast7Days.length,
+        failures: last7Days.reduce((sum, day) => sum + day.failures, 0),
+        fixes: last7Days.reduce((sum, day) => sum + day.fixes, 0),
+        dailyBreakdown: last7Days
+      })
+    } catch (e) {
+      console.error("Failed to fetch 7-day stats:", e)
+    }
+
     const responseData = {
       repos: userRepos,
       recentRuns,
-      stats
+      stats,
+      analytics: last7Days
     }
-
-    console.log("📤 DASHBOARD_SENDING_RESPONSE:", {
-      reposCount: responseData.repos.length,
-      runsCount: responseData.recentRuns.length,
-      hasActiveRepos: responseData.stats.activeRepos > 0,
-      sampleRepo: responseData.repos[0] ? {
-        id: responseData.repos[0].id,
-        name: responseData.repos[0].name
-      } : null
-    })
 
     return Response.json(responseData)
 

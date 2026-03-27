@@ -97,6 +97,7 @@ export default function HomePage() {
             <span style={glowText}>Never Broken Again.</span>
           </motion.h1>
 
+
           {/* Subheadline */}
           <motion.p variants={fadeUp} className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             Fixr monitors your GitHub Actions 24/7, uses AI to diagnose failures instantly,

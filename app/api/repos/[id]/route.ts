@@ -104,12 +104,18 @@ const getHandler = secureAPIRoute(
 
       // Get latest pipeline runs (last 5) - resilient to missing columns
       let runs: {
-        aiCategory: null
-        aiSeverity: null
-        aiCodeFix: null
-        aiFixSuggestion: null
-        aiExplanation: null id: number; status: string; errorMessage: string | null; fixApplied: string | null; confidence: number | null; createdAt: Date | null 
-}[] = [];
+        aiCategory?: string | null;
+        id: number; 
+        status: string; 
+        errorMessage: string | null; 
+        fixApplied: string | null; 
+        confidence: number | null; 
+        createdAt: Date | null;
+        aiExplanation?: string | null;
+        aiFixSuggestion?: string | null;
+        aiCodeFix?: string | null;
+        aiSeverity?: string | null;
+      }[] = [];
       try {
         runs = await db
           .select()

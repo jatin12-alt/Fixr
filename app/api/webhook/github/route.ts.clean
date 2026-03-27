@@ -19,7 +19,6 @@ export async function GET() {
   return new Response("ROUTE_IS_VISIBLE_AND_WORKING");
 }
 
-// Internal developer route to trigger a test notification/logic run
 export async function PUT(req: Request) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') || 'test';
@@ -32,97 +31,56 @@ export async function POST(req: Request) {
   console.log("🚀 WEBHOOK RECEIVED! 🚀 ROUTE HIT SUCCESSFULLY! 🚀")
   
   try {
-    console.log("📥 WEBHOOK_TRIGGERED: ", "GitHub Webhook Received")
-    
     const headersList = headers()
     const signature = headersList.get('x-hub-signature-256')
     const eventType = headersList.get('x-github-event')
     
     console.log("📥 RECEIVED EVENT:", eventType)
-    console.log("🔑 SIGNATURE_PRESENT:", !!signature)
     
     if (!signature) {
       console.log("🎣 WEBHOOK_REJECTED: No signature provided")
-      return NextResponse.json(
-        { error: 'No signature provided' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'No signature provided' }, { status: 401 })
     }
 
     const body = await req.text()
-    console.log("🎣 WEBHOOK_BODY_LENGTH:", body.length)
-    
     const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET)
     hmac.update(body)
     const expectedSignature = `sha256=${hmac.digest('hex')}`
 
     if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
       console.log("🎣 WEBHOOK_REJECTED: Invalid signature")
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
-    console.log("🎣 WEBHOOK_VERIFIED: Signature valid, processing event:", eventType)
-    
+    console.log("🎣 WEBHOOK_VERIFIED: Processing event:", eventType)
     const payload = JSON.parse(body)
     
     console.log("🔍 REPO ID FROM GITHUB:", payload.repository?.id)
-    console.log("🔍 REPO NAME FROM GITHUB:", payload.repository?.full_name)
-    console.log("🔍 EVENT ACTION:", payload.action)
+    console.log("🔄 WORKFLOW CONCLUSION:", payload.workflow_run?.conclusion)
     
-    // Process event in the background to prevent GitHub timeouts
-    process.nextTick(() => {
-      (async () => {
-        try {
-          // Route to appropriate handler
-          switch (eventType) {
-            case 'push':
-              console.log("🎣 PROCESSING_PUSH_EVENT")
-              await handlePushEvent(payload)
-              break
-            case 'pull_request':
-              console.log("🎣 PROCESSING_PR_EVENT")
-              await handlePullRequestEvent(payload)
-              break
-            case 'workflow_run':
-              console.log("🎣 PROCESSING_WORKFLOW_RUN_EVENT")
-              console.log("🔄 WORKFLOW STATUS:", payload.workflow_run?.status)
-              console.log("🔄 WORKFLOW CONCLUSION:", payload.workflow_run?.conclusion)
-              await handleWorkflowRunEvent(payload)
-              break
-            default:
-              console.log("🎣 UNHANDLED_EVENT:", eventType)
-          }
-          console.log("🎣 WEBHOOK_BACKGROUND_PROCESSING_COMPLETE")
-        } catch (bgError) {
-          console.error("❌ BACKGROUND_PROCESSING_ERROR:", bgError)
-        }
-      })()
-    })
+    switch (eventType) {
+      case 'push':
+        await handlePushEvent(payload)
+        break
+      case 'pull_request':
+        await handlePullRequestEvent(payload)
+        break
+      case 'workflow_run':
+        await handleWorkflowRunEvent(payload)
+        break
+      default:
+        console.log("🎣 UNHANDLED_EVENT:", eventType)
+    }
 
-    console.log("🎣 WEBHOOK_ACCEPTED_IMMEDIATELY")
-    return NextResponse.json({ received: true }, { 
-      status: 202,
-      headers: {
-        'ngrok-skip-browser-warning': 'true',
-        'Cache-Control': 'no-cache'
-      }
-    })
-    
+    return NextResponse.json({ success: true, eventType })
+
   } catch (error) {
-    console.error("🎣 WEBHOOK_ERROR:", error)
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
-    )
+    console.error('❌ WEBHOOK_PROCESSING_ERROR:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// Event handlers
 async function handlePushEvent(payload: any) {
-  // Loop-Breaker: Ignore pushes that contain AI-generated fixes
   const aiCommits = payload.commits?.filter((commit: any) => 
     commit.message?.includes('🤖 AI Fix') || commit.author?.name === 'fixr-ai[bot]'
   )
@@ -131,56 +89,31 @@ async function handlePushEvent(payload: any) {
     console.log("⚠️ LOOP_BREAKER: Push contains AI fixes. Ignoring.")
     return
   }
-
-  console.log("🎣 PUSH_EVENT:", {
-    ref: payload.ref,
-    repo: payload.repository?.full_name,
-    pusher: payload.pusher?.name,
-    commits: payload.commits?.length || 0
-  })
+  console.log("🎣 PUSH_EVENT:", { ref: payload.ref, repo: payload.repository?.full_name })
 }
 
 async function handlePullRequestEvent(payload: any) {
-  console.log("🎣 PR_EVENT:", {
-    action: payload.action,
-    repo: payload.repository?.full_name,
-    number: payload.pull_request?.number
-  })
+  console.log("🎣 PR_EVENT:", { action: payload.action, repo: payload.repository?.full_name })
 }
 
-// Workflow Run Event Handler with AI Analysis
 async function handleWorkflowRunEvent(payload: any) {
   console.log("🔄 WORKFLOW_RUN_EVENT_START")
   
-  console.log("🔄 WORKFLOW_RUN_EVENT:", {
-    action: payload.action,
-    status: payload.workflow_run?.conclusion,
-    repo: payload.repository?.full_name,
-    runId: payload.workflow_run?.id,
-    headBranch: payload.workflow_run?.head_branch
-  })
-
   const { workflow_run, repository } = payload
-  
-  // ABSOLUTE LOGGING - Force terminal output for failures
-  if (workflow_run?.conclusion === 'failure') {
-    console.log("❌ FAILURE_DETECTED for: ", workflow_run.name)
-    console.log("🤖 CALLING_GROQ_NOW...")
-  }
   
   // Only process failed workflows
   if (workflow_run?.conclusion !== 'failure') {
-    console.log("✅ WORKFLOW_SUCCESS - No analysis needed. Status:", workflow_run?.conclusion)
+    console.log("✅ WORKFLOW_SUCCESS - No analysis needed")
     return
   }
 
+  console.log("❌ FAILURE_DETECTED for: ", workflow_run.name)
   console.log("🔍 STARTING_FAILURE_ANALYSIS...")
 
   try {
-    // CRITICAL FIX: Use GitHub repository ID to find our internal repo record
-    const githubRepoId = repository.id.toString() // GitHub's ID (e.g., "1182288720")
+    // Step 1: Find repository
+    const githubRepoId = repository.id.toString()
     console.log("🔍 LOOKING_FOR_REPO_BY_GITHUB_ID:", githubRepoId)
-    console.log("🔍 GITHUB_REPO_TYPE:", typeof repository.id, "VALUE:", repository.id)
     
     const repoRecord = await db
       .select()
@@ -188,77 +121,41 @@ async function handleWorkflowRunEvent(payload: any) {
       .where(eq(repos.githubId, githubRepoId))
       .limit(1)
 
-    console.log("📋 DB REPO_DATA:", repoRecord)
-    console.log("📋 DB_REPO_COUNT:", repoRecord.length)
-
     if (repoRecord.length === 0) {
-      console.log("❌ REPO_NOT_FOUND_BY_GITHUB_ID:", { 
-        githubId: githubRepoId, 
-        fullName: repository.full_name 
-      })
-      
-      // Fallback: try to find by full_name (for debugging)
-      console.log("🔄 TRYING_FALLBACK_SEARCH_BY_FULLNAME...")
-      const fallbackRepo = await db
-        .select()
-        .from(repos)
-        .where(eq(repos.fullName, repository.full_name))
-        .limit(1)
-      
-      console.log("📋 FALLBACK_SEARCH_RESULT:", fallbackRepo)
-      
-      if (fallbackRepo.length > 0) {
-        console.log("⚠️ FOUND_BY_FULLNAME_BUT_NOT_GITHUBID:", {
-          fullName: repository.full_name,
-          ourGithubId: fallbackRepo[0].githubId,
-          ourGithubIdType: typeof fallbackRepo[0].githubId,
-          expectedGithubId: githubRepoId,
-          expectedGithubIdType: typeof githubRepoId
-        })
-      }
-      
+      console.log("❌ REPO_NOT_FOUND_BY_GITHUB_ID:", { githubId: githubRepoId, fullName: repository.full_name })
       return
     }
 
     const repo = repoRecord[0]
-    console.log("✅ REPO_FOUND_BY_GITHUB_ID:", { 
-      ourInternalId: repo.id, 
-      githubId: repo.githubId,
-      autoFixEnabled: repo.autoFixEnabled 
-    })
+    console.log("✅ REPO_FOUND:", { id: repo.id, autoFixEnabled: repo.autoFixEnabled })
 
     // Check for existing runs to prevent duplicates
-    console.log("🔍 CHECKING_EXISTING_RUNS...")
     const existingRun = await db
       .select()
       .from(pipelineRuns)
       .where(eq(pipelineRuns.githubRunId, workflow_run.id.toString()))
       .limit(1)
 
-    console.log("📋 EXISTING_RUNS:", existingRun.length)
-
     if (existingRun.length > 0 && existingRun[0].status === 'fixed_and_merged') {
-      console.log("⚠️ LOOP_BREAKER: Run already successfully fixed and merged. Stopping.")
+      console.log("⚠️ LOOP_BREAKER: Run already fixed and merged")
       return
     }
 
-    // Get GitHub token for log fetching
-    console.log("🔍 FETCHING_GITHUB_TOKEN...")
+    // Get GitHub token
     const githubToken = await getGitHubTokenForUser(repo.userId)
     if (!githubToken) {
-      console.log("❌ NO_GITHUB_TOKEN - Cannot fetch logs")
+      console.log("❌ NO_GITHUB_TOKEN")
       return
     }
 
-    console.log("✅ GITHUB_TOKEN_FOUND")
-
-    // Initialize Octokit
-    console.log("🔧 INITIALIZING_OCTOKIT...")
     const octokit = new Octokit({ auth: githubToken })
     console.log("✅ OCTOKIT_INITIALIZED")
 
-    // Fetch workflow logs (last 100 lines)
+    // Step 2: Fetch logs (wait 3s for GitHub)
     console.log("📋 FETCHING_WORKFLOW_LOGS...")
+    console.log("⏳ Waiting 3 seconds for logs to become available...")
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    
     let logs = ''
     try {
       const logsResponse = await octokit.actions.listJobsForWorkflowRun({
@@ -274,7 +171,6 @@ async function handleWorkflowRunEvent(payload: any) {
           const failedStep = job.steps.find(step => step.conclusion === 'failure')
           if (failedStep) {
             logs = `Failed step: ${failedStep.name}\nExit: ${failedStep.conclusion}\n\nRecent logs:\n`
-            // Try to get actual logs (this might require additional API calls)
             logs += `Step: ${failedStep.name} - Status: ${failedStep.conclusion}`
           }
         }
@@ -335,6 +231,7 @@ async function handleWorkflowRunEvent(payload: any) {
         hasFixSuggestion: !!aiAnalysis.fixSuggestion,
         confidence: aiAnalysis.confidence
       })
+      
       await performAutoFixProductMode(repo, workflow_run, repository, aiAnalysis, githubToken, octokit)
       console.log("✅ AUTO_FIX_COMPLETED")
     } else {
@@ -353,7 +250,6 @@ async function handleWorkflowRunEvent(payload: any) {
   }
 }
 
-// Product-grade Fixr Product Engine
 async function performAutoFixProductMode(
   repo: any, 
   workflowRun: any, 
@@ -365,18 +261,17 @@ async function performAutoFixProductMode(
   const runIdStr = workflowRun.id.toString();
   
   try {
-    // 0. Loop-Breaker
+    // Loop-Breaker check
     const headCommitMessage = workflowRun.head_commit?.message || '';
     if (headCommitMessage.includes('🤖 AI Fix') || workflowRun.head_branch?.startsWith('fixr/ai-fix-')) {
-      console.log("⚠️ LOOP_BREAKER: Skipping AI-triggered run.");
+      console.log("⚠️ LOOP_BREAKER: Skipping AI-triggered run");
       return;
     }
 
-    console.log(`🚀 Fixr Engine: Starting analysis in ${aiAnalysis.confidence > 80 ? 'AUTO-PILOT' : 'CO-PILOT'} mode (Confidence: ${aiAnalysis.confidence}%)`);
+    console.log(`🚀 Fixr Engine: Starting in ${aiAnalysis.confidence > 80 ? 'AUTO-PILOT' : 'CO-PILOT'} mode (Confidence: ${aiAnalysis.confidence}%)`);
 
-    // 1. DECIDE: Full Auto-Pilot vs. Diagnostic Co-Pilot
     if (aiAnalysis.confidence > 80 && aiAnalysis.codeFix) {
-      // --- MODE: FULL AUTO-PILOT ---
+      // AUTO-PILOT MODE
       const defaultBranch = repository.default_branch || 'main';
       const branchName = `fixr/ai-fix-${workflowRun.id}`;
 
@@ -387,54 +282,29 @@ async function performAutoFixProductMode(
           repo: repository.name,
           ref: `heads/${branchName}`
         });
-      } catch (e) {}
+      } catch (e) {
+        // Branch might not exist, continue
+      }
 
-      // Get SHA and Create Branch
-      const { data: refData } = await octokit.rest.repos.getBranch({
-        owner: repository.owner.login,
-        repo: repository.name,
-        branch: defaultBranch
-      });
-
+      // Create branch
       await octokit.rest.git.createRef({
         owner: repository.owner.login,
         repo: repository.name,
         ref: `refs/heads/${branchName}`,
-        sha: refData.commit.sha
+        sha: workflowRun.head_commit.id
       });
 
-      // APPLY COMMIT (Conventional Commits)
-      const path = 'test-fail.js'; // Targeting the core failure file
-      try {
-        const { data: fileData } = await octokit.rest.repos.getContent({
-          owner: repository.owner.login,
-          repo: repository.name,
-          path: path,
-          ref: defaultBranch
-        });
+      // Create diagnostic file with fix
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner: repository.owner.login,
+        repo: repository.name,
+        path: 'FIXR_DIAGNOSTIC.md',
+        message: 'chore(auto): add Fixr diagnostic report',
+        content: Buffer.from(`## 🤖 Fixr Diagnostic\n\n${aiAnalysis.explanation}\n\n**Suggested Fix:**\n\`\`\`\n${aiAnalysis.codeFix}\n\`\`\``).toString('base64'),
+        branch: branchName
+      });
 
-        await octokit.rest.repos.createOrUpdateFileContents({
-          owner: repository.owner.login,
-          repo: repository.name,
-          path: path,
-          message: `fix(auto): resolve CI failure in ${workflowRun.name}`,
-          content: Buffer.from(aiAnalysis.codeFix).toString('base64'),
-          branch: branchName,
-          sha: (fileData as any).sha
-        });
-      } catch (commitErr: any) {
-        console.warn("⚠️ Targeted file commit failed, creating diagnostic file.");
-        await octokit.rest.repos.createOrUpdateFileContents({
-          owner: repository.owner.login,
-          repo: repository.name,
-          path: 'FIXR_DIAGNOSTIC.md',
-          message: 'chore(auto): add Fixr diagnostic report',
-          content: Buffer.from(`## 🤖 Fixr Diagnostic\n\n${aiAnalysis.explanation}`).toString('base64'),
-          branch: branchName
-        });
-      }
-
-      // CREATE PULL REQUEST
+      // Create pull request
       const pr = await octokit.rest.pulls.create({
         owner: repository.owner.login,
         repo: repository.name,
@@ -444,11 +314,12 @@ async function performAutoFixProductMode(
         body: `### 🤖 Fixr AI Analysis\n\n**Root Cause:** ${aiAnalysis.explanation}\n\n**Confidence:** ${aiAnalysis.confidence}%\n\n---\n*Automated fix generated by Fixr Product Engine.*`
       });
 
-      // AUTO-MERGE Logic
+      await db.update(pipelineRuns).set({ status: 'PR_CREATED_WAITING_REVIEW' }).where(eq(pipelineRuns.githubRunId, runIdStr));
+      console.log("✅ PR_CREATED:", pr.data.html_url);
+
+      // Auto-merge if very high confidence
       if (aiAnalysis.confidence > 95) {
         try {
-          console.log("🔀 HIGHEST_CONFIDENCE: Attempting Auto-Merge...");
-          await new Promise(r => setTimeout(r, 3000));
           await octokit.rest.pulls.merge({
             owner: repository.owner.login,
             repo: repository.name,
@@ -456,37 +327,22 @@ async function performAutoFixProductMode(
             merge_method: 'squash'
           });
           await db.update(pipelineRuns).set({ status: 'FIXED_AND_MERGED' }).where(eq(pipelineRuns.githubRunId, runIdStr));
-          console.log("✅ FIXED_AND_MERGED");
+          console.log("✅ AUTO-MERGED");
 
-          // NOTIFICATION: Auto-Fix Merged
           await notifyAutoFixApplied(
             repo.userId,
             repo.name,
             repo.id,
             `Successfully merged fix for ${aiAnalysis.category} (Confidence: ${aiAnalysis.confidence}%)`
           );
-        } catch (mErr) {
-          await db.update(pipelineRuns).set({ status: 'PR_CREATED_WAITING_REVIEW' }).where(eq(pipelineRuns.githubRunId, runIdStr));
-          console.log("⚠️ Merge failed, left for Human Review");
-
-          // NOTIFICATION: PR Created
-          await createNotification({
-            userId: repo.userId,
-            type: 'AUTO_FIX_APPLIED',
-            title: 'Auto-Fix PR Created',
-            message: `Created a fix for ${repo.name}, awaiting manual merge approval.`,
-            repoName: repo.name,
-            repoId: repo.id,
-          });
+        } catch (mergeErr: any) {
+          console.log("⚠️ Auto-merge failed, PR created for review");
         }
-      } else {
-        await db.update(pipelineRuns).set({ status: 'PR_CREATED_WAITING_REVIEW' }).where(eq(pipelineRuns.githubRunId, runIdStr));
-        console.log("🕒 PR created, awaiting Developer Review (Confidence < 95%)");
       }
 
     } else {
-      // --- MODE: CO-PILOT (Diagnostic) ---
-      console.log("📋 Confidence low or no codeFix. Creating Diagnostic Issue.");
+      // CO-PILOT MODE: Create diagnostic issue
+      console.log("🔍 COPILOT_MODE: Creating diagnostic issue");
       
       const issue = await octokit.rest.issues.create({
         owner: repository.owner.login,
@@ -496,19 +352,19 @@ async function performAutoFixProductMode(
       });
 
       await db.update(pipelineRuns).set({ status: 'DIAGNOSTIC_REPORT_READY' }).where(eq(pipelineRuns.githubRunId, runIdStr));
-      console.log(`✅ DIAGNOSTIC_ISSUE_CREATED: ${issue.data.html_url}`);
-
-      // NOTIFICATION: Diagnostic Ready
-      await notifyAIAnalysisComplete(
-        repo.userId,
-        repo.name,
-        repo.id,
-        "Confidence low. Diagnostic report created as a GitHub Issue."
-      );
+      console.log("✅ DIAGNOSTIC_ISSUE_CREATED:", issue.data.html_url);
     }
 
-  } catch (error) {
-    console.error("❌ PRODUCT_ENGINE_CRASH:", error);
+    // Notify completion
+    await notifyAIAnalysisComplete(
+      repo.userId,
+      repo.name,
+      repo.id,
+      aiAnalysis.confidence > 80 ? 'Auto-fix created' : 'Diagnostic report created'
+    );
+
+  } catch (error: any) {
+    console.error("💀 AUTO_FIX_ERROR:", error.message || error);
     await db.update(pipelineRuns).set({ status: 'analysis_failed' }).where(eq(pipelineRuns.githubRunId, runIdStr));
   }
 }
@@ -516,7 +372,7 @@ async function performAutoFixProductMode(
 async function getGitHubTokenForUser(userId: string): Promise<string | null> {
   try {
     const tokenRecord = await db
-      .select()
+      .select({ encryptedToken: githubTokens.encryptedToken })
       .from(githubTokens)
       .where(eq(githubTokens.userId, userId))
       .limit(1)

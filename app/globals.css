@@ -13,6 +13,29 @@
   --neon-green:  #00ff88;
   --neon-purple: #8b5cf6;
   --neon-pink:   #ff006e;
+
+  /* Theme CSS Variables */
+  --background: 0 0% 100%;
+  --foreground: 222 84% 5%;
+  --card: 0 0% 98%;
+  --card-foreground: 222 84% 5%;
+  --muted: 210 40% 94%;
+  --muted-foreground: 215 16% 47%;
+  --primary: 186 100% 50%;
+  --primary-foreground: 222 84% 5%;
+  --border: 214 32% 91%;
+}
+
+.dark {
+  --background: 240 33% 3%;
+  --foreground: 0 0% 98%;
+  --card: 240 20% 6%;
+  --card-foreground: 0 0% 98%;
+  --muted: 240 10% 10%;
+  --muted-foreground: 215 20% 65%;
+  --primary: 186 100% 50%;
+  --primary-foreground: 240 33% 3%;
+  --border: 240 10% 12%;
 }
 
 * {

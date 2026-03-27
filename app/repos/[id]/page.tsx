@@ -39,6 +39,9 @@ interface PipelineRun {
   fixApplied: string | null
   confidence: number | null
   createdAt: string
+  aiExplanation?: string | null
+  aiFixSuggestion?: string | null
+  aiCodeFix?: string | null
 }
 
 interface RepoStats {
@@ -383,6 +386,22 @@ export default function RepositoryDetailPage({
                               <p className="text-xs text-green-400">
                                 Fix applied: {run.fixApplied}
                               </p>
+                            )}
+                            {run.aiExplanation && (
+                              <div className="mt-2 text-sm text-blue-300 bg-blue-900/20 p-2 rounded">
+                                <span className="font-semibold text-blue-400">AI Analysis: </span>
+                                {run.aiExplanation}
+                              </div>
+                            )}
+                            {(run.aiFixSuggestion || run.aiCodeFix) && (
+                              <div className="mt-2 bg-gray-900 rounded border border-gray-700 overflow-hidden">
+                                <div className="bg-gray-800 px-3 py-1 text-xs font-mono text-gray-400 border-b border-gray-700">Recommended Fix</div>
+                                <pre className="p-3 text-xs text-gray-300 font-mono whitespace-pre-wrap overflow-x-auto">
+                                  <code>
+                                    {run.aiCodeFix || run.aiFixSuggestion}
+                                  </code>
+                                </pre>
+                              </div>
                             )}
                             <p className="text-xs text-gray-500 mt-2">
                               {new Date(run.createdAt).toLocaleString()}

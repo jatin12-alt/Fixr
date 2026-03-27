@@ -106,10 +106,10 @@ export default function TeamDetailPage() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'OWNER': return 'text-purple-400 bg-purple-900/20'
-      case 'ADMIN': return 'text-cyan-400 bg-cyan-900/20'
+      case 'ADMIN': return 'text-primary bg-cyan-900/20'
       case 'MEMBER': return 'text-blue-400 bg-blue-900/20'
-      case 'VIEWER': return 'text-gray-400 bg-gray-900/20'
-      default: return 'text-gray-400 bg-gray-900/20'
+      case 'VIEWER': return 'text-muted-foreground bg-muted/20'
+      default: return 'text-muted-foreground bg-muted/20'
     }
   }
 
@@ -125,11 +125,11 @@ export default function TeamDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-gray-300 py-8">
+      <div className="min-h-screen bg-black text-muted-foreground py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-800 rounded w-1/4 mb-8"></div>
-            <div className="h-96 bg-gray-900/50 border border-gray-800 rounded-xl"></div>
+            <div className="h-8 bg-card rounded w-1/4 mb-8"></div>
+            <div className="h-96 bg-muted/50 border border-gray-800 rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -138,10 +138,10 @@ export default function TeamDetailPage() {
 
   if (!team) {
     return (
-      <div className="min-h-screen bg-black text-gray-300 py-8 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-muted-foreground py-8 flex items-center justify-center">
         <div className="text-center">
           <Users className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400">Team not found</p>
+          <p className="text-muted-foreground">Team not found</p>
         </div>
       </div>
     )
@@ -158,14 +158,14 @@ export default function TeamDetailPage() {
   })
 
   return (
-    <div className="min-h-screen bg-black text-gray-300 py-8">
+    <div className="min-h-screen bg-black text-muted-foreground py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link 
               href="/dashboard/teams"
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Teams
             </Link>
@@ -178,14 +178,14 @@ export default function TeamDetailPage() {
                 />
               ) : (
                 <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
+                  <span className="text-foreground font-bold text-lg">
                     {team.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-white">{team.name}</h1>
-                <p className="text-gray-400">/{team.slug}</p>
+                <h1 className="text-3xl font-bold text-foreground">{team.name}</h1>
+                <p className="text-muted-foreground">/{team.slug}</p>
               </div>
             </div>
           </div>
@@ -199,15 +199,15 @@ export default function TeamDetailPage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 mb-8 bg-gray-900/50 p-1 rounded-lg w-fit">
+        <div className="flex space-x-1 mb-8 bg-muted/50 p-1 rounded-lg w-fit">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-cyan-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-primary text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.icon}
@@ -222,28 +222,28 @@ export default function TeamDetailPage() {
             {/* Stats */}
             <div className="lg:col-span-2 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Team Members</h3>
-                    <Users className="h-5 w-5 text-cyan-400" />
+                    <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
+                    <Users className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-3xl font-bold text-white">{team._count.members}</p>
-                  <p className="text-sm text-gray-400 mt-2">Active collaborators</p>
+                  <p className="text-3xl font-bold text-foreground">{team._count.members}</p>
+                  <p className="text-sm text-muted-foreground mt-2">Active collaborators</p>
                 </div>
                 
-                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Repositories</h3>
-                    <GitBranch className="h-5 w-5 text-cyan-400" />
+                    <h3 className="text-lg font-semibold text-foreground">Repositories</h3>
+                    <GitBranch className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-3xl font-bold text-white">{team._count.repositories}</p>
-                  <p className="text-sm text-gray-400 mt-2">Connected repositories</p>
+                  <p className="text-3xl font-bold text-foreground">{team._count.repositories}</p>
+                  <p className="text-sm text-muted-foreground mt-2">Connected repositories</p>
                 </div>
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Recent Members</h3>
+              <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Recent Members</h3>
                 <div className="space-y-3">
                   {team.members.slice(0, 5).map((member) => (
                     <div key={member.id} className="flex items-center justify-between">
@@ -256,16 +256,16 @@ export default function TeamDetailPage() {
                           />
                         ) : (
                           <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white">
+                            <span className="text-xs text-foreground">
                               {(member.user.name || member.user.email).charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
                         <div>
-                          <p className="text-white font-medium">
+                          <p className="text-foreground font-medium">
                             {member.user.name || member.user.email}
                           </p>
-                          <p className="text-sm text-gray-400">{member.user.email}</p>
+                          <p className="text-sm text-muted-foreground">{member.user.email}</p>
                         </div>
                       </div>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center space-x-1 ${getRoleColor(member.role)}`}>
@@ -280,13 +280,13 @@ export default function TeamDetailPage() {
 
             {/* Quick Actions */}
             <div className="space-y-6">
-              <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+              <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   {team.userPermissions.canInviteMembers && (
                     <button
                       onClick={() => setShowInviteModal(true)}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Invite Member</span>
@@ -296,7 +296,7 @@ export default function TeamDetailPage() {
                   {team.userPermissions.canManageRepos && (
                     <Link
                       href="/dashboard/repos/new"
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <GitBranch className="h-4 w-4" />
                       <span>Connect Repository</span>
@@ -306,7 +306,7 @@ export default function TeamDetailPage() {
                   {team.userPermissions.canViewAnalytics && (
                     <Link
                       href={`/dashboard/analytics?team=${teamId}`}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
                     >
                       <FileText className="h-4 w-4" />
                       <span>View Analytics</span>
@@ -315,17 +315,17 @@ export default function TeamDetailPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Team Info</h3>
+              <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Team Info</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-gray-400">Created</p>
-                    <p className="text-white">
+                    <p className="text-sm text-muted-foreground">Created</p>
+                    <p className="text-foreground">
                       {new Date(team.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Your Role</p>
+                    <p className="text-sm text-muted-foreground">Your Role</p>
                     <div className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(team.userRole)}`}>
                       {getRoleIcon(team.userRole)}
                       <span>{getRoleLabel(team.userRole)}</span>
@@ -400,10 +400,10 @@ function MembersSection({
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'OWNER': return 'text-purple-400 bg-purple-900/20'
-      case 'ADMIN': return 'text-cyan-400 bg-cyan-900/20'
+      case 'ADMIN': return 'text-primary bg-cyan-900/20'
       case 'MEMBER': return 'text-blue-400 bg-blue-900/20'
-      case 'VIEWER': return 'text-gray-400 bg-gray-900/20'
-      default: return 'text-gray-400 bg-gray-900/20'
+      case 'VIEWER': return 'text-muted-foreground bg-muted/20'
+      default: return 'text-muted-foreground bg-muted/20'
     }
   }
 
@@ -420,11 +420,11 @@ function MembersSection({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Team Members</h2>
+        <h2 className="text-xl font-semibold text-foreground">Team Members</h2>
         {team.userPermissions.canInviteMembers && (
           <button
             onClick={onInvite}
-            className="flex items-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
           >
             <Plus className="h-4 w-4" />
             <span>Invite Member</span>
@@ -433,18 +433,18 @@ function MembersSection({
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search members..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+          className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-cyan-500"
         />
       </div>
 
-      <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-sm font-medium text-gray-400">
+      <div className="bg-muted/50 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-sm font-medium text-muted-foreground">
           <div className="col-span-6">Member</div>
           <div className="col-span-2">Role</div>
           <div className="col-span-2">Joined</div>
@@ -453,7 +453,7 @@ function MembersSection({
         
         <div className="divide-y divide-gray-800">
           {filteredMembers.map((member) => (
-            <div key={member.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-800/50 transition-colors">
+            <div key={member.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-card/50 transition-colors">
               <div className="col-span-6 flex items-center space-x-3">
                 {member.user.avatarUrl ? (
                   <img
@@ -463,16 +463,16 @@ function MembersSection({
                   />
                 ) : (
                   <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white">
+                    <span className="text-xs text-foreground">
                       {(member.user.name || member.user.email).charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
                 <div>
-                  <p className="text-white font-medium">
+                  <p className="text-foreground font-medium">
                     {member.user.name || member.user.email}
                   </p>
-                  <p className="text-sm text-gray-400">{member.user.email}</p>
+                  <p className="text-sm text-muted-foreground">{member.user.email}</p>
                 </div>
               </div>
               
@@ -483,13 +483,13 @@ function MembersSection({
                 </span>
               </div>
               
-              <div className="col-span-2 text-sm text-gray-400">
+              <div className="col-span-2 text-sm text-muted-foreground">
                 {new Date(member.joinedAt).toLocaleDateString()}
               </div>
               
               <div className="col-span-2">
                 {team.userPermissions.canRemoveMembers && member.user.id !== team.userRole && (
-                  <button className="text-gray-400 hover:text-red-400 transition-colors">
+                  <button className="text-muted-foreground hover:text-red-400 transition-colors">
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
                 )}
@@ -507,11 +507,11 @@ function RepositoriesSection({ team }: { team: Team }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Repositories</h2>
+        <h2 className="text-xl font-semibold text-foreground">Repositories</h2>
         {team.userPermissions.canManageRepos && (
           <Link
             href="/dashboard/repos/new"
-            className="flex items-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
           >
             <Plus className="h-4 w-4" />
             <span>Connect Repository</span>
@@ -522,14 +522,14 @@ function RepositoriesSection({ team }: { team: Team }) {
       {team.repositories.length === 0 ? (
         <div className="text-center py-12">
           <GitBranch className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">No repositories connected</h3>
-          <p className="text-gray-400 mb-6">
+          <h3 className="text-lg font-semibold text-foreground mb-2">No repositories connected</h3>
+          <p className="text-muted-foreground mb-6">
             Connect your first repository to start monitoring your pipelines
           </p>
           {team.userPermissions.canManageRepos && (
             <Link
               href="/dashboard/repos/new"
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
             >
               <Plus className="h-4 w-4" />
               <span>Connect Repository</span>
@@ -537,8 +537,8 @@ function RepositoriesSection({ team }: { team: Team }) {
           )}
         </div>
       ) : (
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-sm font-medium text-gray-400">
+        <div className="bg-muted/50 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-sm font-medium text-muted-foreground">
             <div className="col-span-6">Repository</div>
             <div className="col-span-2">Status</div>
             <div className="col-span-2">Connected</div>
@@ -547,30 +547,30 @@ function RepositoriesSection({ team }: { team: Team }) {
           
           <div className="divide-y divide-gray-800">
             {team.repositories.map((repo) => (
-              <div key={repo.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-800/50 transition-colors">
+              <div key={repo.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-card/50 transition-colors">
                 <div className="col-span-6">
-                  <p className="text-white font-medium">{repo.name}</p>
-                  <p className="text-sm text-gray-400">{repo.fullName}</p>
+                  <p className="text-foreground font-medium">{repo.name}</p>
+                  <p className="text-sm text-muted-foreground">{repo.fullName}</p>
                 </div>
                 
                 <div className="col-span-2">
                   <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
                     repo.isActive 
                       ? 'bg-green-900/20 text-green-400' 
-                      : 'bg-gray-900/20 text-gray-400'
+                      : 'bg-muted/20 text-muted-foreground'
                   }`}>
                     {repo.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 
-                <div className="col-span-2 text-sm text-gray-400">
+                <div className="col-span-2 text-sm text-muted-foreground">
                   {new Date(repo.createdAt).toLocaleDateString()}
                 </div>
                 
                 <div className="col-span-2">
                   <Link
                     href={`/dashboard/repos/${repo.id}`}
-                    className="text-cyan-400 hover:text-cyan-300 text-sm"
+                    className="text-primary hover:text-cyan-300 text-sm"
                   >
                     View Details
                   </Link>
@@ -614,12 +614,12 @@ function SettingsSection({ team, onUpdate }: { team: Team; onUpdate: () => void 
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Team Settings</h3>
+      <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Team Settings</h3>
         
         <div className="space-y-4">
           <div>
-            <label htmlFor="team-name" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="team-name" className="block text-sm font-medium text-muted-foreground mb-1">
               Team Name
             </label>
             <input
@@ -627,20 +627,20 @@ function SettingsSection({ team, onUpdate }: { team: Team; onUpdate: () => void 
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
               aria-label="Team name"
             />
           </div>
 
           <div className="flex items-center justify-between pt-4">
             <div>
-              <p className="text-sm text-gray-400">Team Slug</p>
-              <p className="text-white">/{team.slug}</p>
+              <p className="text-sm text-muted-foreground">Team Slug</p>
+              <p className="text-foreground">/{team.slug}</p>
             </div>
             <button
               onClick={handleSave}
               disabled={loading || name === team.name}
-              className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
@@ -651,10 +651,10 @@ function SettingsSection({ team, onUpdate }: { team: Team; onUpdate: () => void 
       {team.userRole === 'OWNER' && (
         <div className="bg-red-900/20 border border-red-800 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-red-400 mb-4">Danger Zone</h3>
-          <p className="text-gray-300 mb-4">
+          <p className="text-muted-foreground mb-4">
             Once you delete a team, there is no going back. Please be certain.
           </p>
-          <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+          <button className="px-4 py-2 bg-red-600 text-foreground rounded-lg hover:bg-red-700 transition-colors">
             Delete Team
           </button>
         </div>
@@ -711,13 +711,13 @@ function InviteMemberModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-md w-full"
+        className="bg-muted border border-gray-800 rounded-xl p-6 max-w-md w-full"
       >
-        <h2 className="text-xl font-bold text-white mb-4">Invite Team Member</h2>
+        <h2 className="text-xl font-bold text-foreground mb-4">Invite Team Member</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Email Address
             </label>
             <input
@@ -725,19 +725,19 @@ function InviteMemberModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="colleague@example.com"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-cyan-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Role
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
             >
               <option value="VIEWER">Viewer - Read-only access</option>
               <option value="MEMBER">Member - Can manage repositories</option>
@@ -749,14 +749,14 @@ function InviteMemberModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+              className="flex-1 px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 transition-colors"
+              className="flex-1 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Inviting...' : 'Send Invite'}
             </button>

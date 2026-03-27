@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const [newRepo] = await db
       .insert(repos)
       .values({
-        userId: user[0].id,
+        userId: user[0].clerkId,
         githubId,
         name,
         fullName,

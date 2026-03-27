@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs'
+import { ThemeProvider } from 'next-themes'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ErrorProvider } from '@/lib/providers/ErrorProvider'
 import { Footer } from '@/components/Footer'
@@ -115,10 +116,11 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className="dark">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${inter.variable} ${orbitron.variable} font-sans text-white min-h-screen flex flex-col layout-body`}
         >
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {/* Particle canvas — fixed behind everything, visible on all pages */}
           <div className="particle-container">
             <ParticleBackground />
@@ -142,6 +144,7 @@ export default function RootLayout({
               </div>
             </ErrorBoundary>
           </ErrorProvider>
+          </ThemeProvider>
           
           {/* Analytics - with error handling */}
           {process.env.NODE_ENV === 'production' && (
