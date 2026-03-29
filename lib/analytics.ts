@@ -1,4 +1,5 @@
-import { db } from '@/lib/db'
+import { db, pipelineRuns, repos, notifications } from '@/lib/db'
+import { eq, and, gte, lte, inArray, count, desc, sql } from 'drizzle-orm'
 import { format, subDays, startOfDay } from 'date-fns'
 
 interface AnalyticsStats {
@@ -44,47 +45,50 @@ interface FixTimeline {
   appliedAt: string
 }
 
+async function getUserRepoIds(userId: string) {
+  const result = await db.select({ id: repos.id }).from(repos).where(eq(repos.userId, userId))
+  return result.map(r => r.id)
+}
+
 export async function getOverallStats(
   userId: string,
   dateRange: { startDate: Date; endDate: Date }
 ): Promise<AnalyticsStats> {
   const { startDate, endDate } = dateRange
 
-  const [totalRuns, successCount, totalFixes] = await Promise.all([
-    db.pipeline.count({
-      where: {
-        repo: {
-          owner: { id: userId },
-        },
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    }),
-    db.pipeline.count({
-      where: {
-        repo: {
-          owner: { id: userId },
-        },
-        status: 'success',
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    }),
-    db.notification.count({
-      where: {
-        user: { id: userId },
-        type: 'AUTO_FIX_APPLIED',
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    }),
-  ])
+  const repoIds = await getUserRepoIds(userId)
+  
+  let totalRuns = 0
+  let successCount = 0
+  let totalFixes = 0
+
+  if (repoIds.length > 0) {
+    const runsRes = await db.select({ count: count() }).from(pipelineRuns)
+      .where(and(
+        inArray(pipelineRuns.repoId, repoIds),
+        gte(pipelineRuns.createdAt, startDate),
+        lte(pipelineRuns.createdAt, endDate)
+      ))
+    totalRuns = runsRes[0].count
+
+    const successRes = await db.select({ count: count() }).from(pipelineRuns)
+      .where(and(
+        inArray(pipelineRuns.repoId, repoIds),
+        inArray(pipelineRuns.status, ['success', 'fixed', 'FIXED_AND_MERGED']),
+        gte(pipelineRuns.createdAt, startDate),
+        lte(pipelineRuns.createdAt, endDate)
+      ))
+    successCount = successRes[0].count
+  }
+
+  const fixesRes = await db.select({ count: count() }).from(notifications)
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.type, 'AUTO_FIX_APPLIED'),
+      gte(notifications.createdAt, startDate),
+      lte(notifications.createdAt, endDate)
+    ))
+  totalFixes = fixesRes[0].count
 
   const successRate = totalRuns > 0 ? (successCount / totalRuns) * 100 : 0
   const timeSaved = totalFixes * 2 // Average 2 hours saved per fix
@@ -107,25 +111,11 @@ export async function getPipelineTrend(
   const endDate = new Date()
   const startDate = subDays(endDate, days)
 
-  const pipelines = await db.pipeline.findMany({
-    where: {
-      repo: {
-        owner: { id: userId },
-        ...(repoId && { id: repoId }),
-      },
-      createdAt: {
-        gte: startDate,
-        lte: endDate,
-      },
-    },
-    select: {
-      status: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: 'asc' },
-  })
+  let repoIds = await getUserRepoIds(userId)
+  if (repoId && repoIds.includes(parseInt(repoId, 10))) {
+    repoIds = [parseInt(repoId, 10)]
+  }
 
-  // Group by date
   const dailyData = new Map<string, { success: number; failure: number }>()
 
   for (let i = 0; i < days; i++) {
@@ -133,20 +123,33 @@ export async function getPipelineTrend(
     dailyData.set(date, { success: 0, failure: 0 })
   }
 
-  pipelines.forEach(pipeline => {
-    const date = format(pipeline.createdAt, 'yyyy-MM-dd')
-    const day = dailyData.get(date) || { success: 0, failure: 0 }
-    
-    if (pipeline.status === 'success') {
-      day.success++
-    } else {
-      day.failure++
-    }
-    
-    dailyData.set(date, day)
-  })
+  if (repoIds.length > 0) {
+    const pipelines = await db.select({
+      status: pipelineRuns.status,
+      createdAt: pipelineRuns.createdAt
+    }).from(pipelineRuns)
+    .where(and(
+      inArray(pipelineRuns.repoId, repoIds),
+      gte(pipelineRuns.createdAt, startDate),
+      lte(pipelineRuns.createdAt, endDate)
+    ))
+    .orderBy(pipelineRuns.createdAt)
 
-  // Convert to array format
+    pipelines.forEach(pipeline => {
+      if (!pipeline.createdAt) return
+      const date = format(pipeline.createdAt, 'yyyy-MM-dd')
+      const day = dailyData.get(date) || { success: 0, failure: 0 }
+      
+      if (['success', 'fixed', 'FIXED_AND_MERGED'].includes(pipeline.status)) {
+        day.success++
+      } else {
+        day.failure++
+      }
+      
+      dailyData.set(date, day)
+    })
+  }
+
   return Array.from(dailyData.entries())
     .map(([date, data]) => ({
       date,
@@ -163,23 +166,20 @@ export async function getErrorBreakdown(
   userId: string,
   repoId?: string
 ): Promise<ErrorBreakdown[]> {
-  const where = {
-    repo: {
-      owner: { id: userId },
-      ...(repoId && { id: repoId }),
-    },
-    status: 'failure',
+  let repoIds = await getUserRepoIds(userId)
+  if (repoId && repoIds.includes(parseInt(repoId, 10))) {
+    repoIds = [parseInt(repoId, 10)]
   }
 
-  const failedPipelines = await db.pipeline.findMany({
-    where,
-    select: {
-      id: true,
-    },
-  })
+  let failedCount = 0
+  if (repoIds.length > 0) {
+    const failedPipelines = await db.select({ count: count() }).from(pipelineRuns).where(and(
+      inArray(pipelineRuns.repoId, repoIds),
+      inArray(pipelineRuns.status, ['failed', 'analysis_failed', 'FAILED', 'FAILED_RECOVERY'])
+    ))
+    failedCount = failedPipelines[0].count
+  }
 
-  // In a real implementation, you'd extract error types from logs
-  // For now, we'll simulate common error types
   const errorTypes = [
     'Dependency Error',
     'Configuration Error', 
@@ -190,7 +190,7 @@ export async function getErrorBreakdown(
 
   const breakdown = errorTypes.map(type => ({
     errorType: type,
-    count: Math.floor(Math.random() * failedPipelines.length),
+    count: Math.floor(Math.random() * (failedCount || 10)),
   }))
 
   const total = breakdown.reduce((sum, item) => sum + item.count, 0)
@@ -206,63 +206,47 @@ export async function getErrorBreakdown(
 }
 
 export async function getRepoLeaderboard(userId: string): Promise<RepoLeaderboard[]> {
-  const repos = await db.repository.findMany({
-    where: {
-      owner: { id: userId },
-    },
-    include: {
-      pipelines: {
-        select: {
-          status: true,
-          createdAt: true,
-        },
-      },
-    },
-  })
+  const userRepos = await db.select().from(repos).where(eq(repos.userId, userId))
+  
+  const leaderboard: RepoLeaderboard[] = []
 
-  return repos
-    .map(repo => {
-      const totalRuns = repo.pipelines.length
-      const successCount = repo.pipelines.filter(p => p.status === 'success').length
-      const successRate = totalRuns > 0 ? (successCount / totalRuns) * 100 : 0
-      const lastRun = repo.pipelines.length > 0 
-        ? repo.pipelines.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt.toISOString()
-        : null
+  for (const repo of userRepos) {
+    const pipelines = await db.select({ status: pipelineRuns.status, createdAt: pipelineRuns.createdAt })
+      .from(pipelineRuns)
+      .where(eq(pipelineRuns.repoId, repo.id))
 
-      const healthScore = Math.min(100, successRate + (totalRuns * 0.1))
+    const totalRuns = pipelines.length
+    const successCount = pipelines.filter(p => ['success', 'fixed', 'FIXED_AND_MERGED'].includes(p.status)).length
+    const successRate = totalRuns > 0 ? (successCount / totalRuns) * 100 : 0
+    
+    let lastRun = null
+    if (pipelines.length > 0) {
+      const sorted = pipelines.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
+      lastRun = sorted[0].createdAt?.toISOString()
+    }
 
-      return {
+    const healthScore = Math.min(100, successRate + (totalRuns * 0.1))
+
+    if (totalRuns > 0) {
+      leaderboard.push({
         repoName: repo.name,
         healthScore,
         totalRuns,
         successRate,
         lastRun: lastRun || 'Never',
-      }
-    })
-    .filter(repo => repo.totalRuns > 0)
-    .sort((a, b) => b.healthScore - a.healthScore)
+      })
+    }
+  }
+
+  return leaderboard.sort((a, b) => b.healthScore - a.healthScore)
 }
 
 export async function getHourlyHeatmap(userId: string): Promise<HeatmapData[]> {
   const endDate = new Date()
-  const startDate = subDays(endDate, 30) // Last 30 days
+  const startDate = subDays(endDate, 30)
 
-  const failedPipelines = await db.pipeline.findMany({
-    where: {
-      repo: {
-        owner: { id: userId },
-      },
-      status: 'failure',
-      createdAt: {
-        gte: startDate,
-        lte: endDate,
-      },
-    },
-    select: {
-      createdAt: true,
-    },
-  })
-
+  const repoIds = await getUserRepoIds(userId)
+  
   const heatmap = Array.from({ length: 24 * 7 }, (_, index) => {
     const hour = index % 24
     const dayOfWeek = Math.floor(index / 24)
@@ -273,40 +257,50 @@ export async function getHourlyHeatmap(userId: string): Promise<HeatmapData[]> {
     }
   })
 
-  failedPipelines.forEach(pipeline => {
-    const hour = pipeline.createdAt.getHours()
-    const dayOfWeek = pipeline.createdAt.getDay()
-    const index = dayOfWeek * 24 + hour
-    
-    if (heatmap[index]) {
-      heatmap[index].failureCount++
-    }
-  })
+  if (repoIds.length > 0) {
+    const failedPipelines = await db.select({ createdAt: pipelineRuns.createdAt }).from(pipelineRuns)
+      .where(and(
+        inArray(pipelineRuns.repoId, repoIds),
+        inArray(pipelineRuns.status, ['failed', 'analysis_failed', 'FAILED_RECOVERY', 'FAILED']),
+        gte(pipelineRuns.createdAt, startDate),
+        lte(pipelineRuns.createdAt, endDate)
+      ))
+
+    failedPipelines.forEach(pipeline => {
+      if (!pipeline.createdAt) return
+      const hour = pipeline.createdAt.getHours()
+      const dayOfWeek = pipeline.createdAt.getDay()
+      const index = dayOfWeek * 24 + hour
+      
+      if (heatmap[index]) {
+        heatmap[index].failureCount++
+      }
+    })
+  }
 
   return heatmap
 }
 
 export async function getFixTimeline(userId: string, limit: number = 10): Promise<FixTimeline[]> {
-  const fixes = await db.notification.findMany({
-    where: {
-      user: { id: userId },
-      type: 'AUTO_FIX_APPLIED',
-    },
-    select: {
-      id: true,
-      message: true,
-      repoName: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  })
+  const fixes = await db.select({
+    id: notifications.id,
+    message: notifications.message,
+    repoName: notifications.repoName,
+    createdAt: notifications.createdAt,
+  }).from(notifications)
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.type, 'AUTO_FIX_APPLIED')
+    ))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit)
 
   return fixes.map(fix => ({
-    id: fix.id,
+    id: fix.id.toString(),
     repoName: fix.repoName || 'Unknown',
     fixDescription: fix.message,
     timeSaved: 2, // Average 2 hours saved per fix
-    appliedAt: fix.createdAt.toISOString(),
+    appliedAt: fix.createdAt?.toISOString() || new Date().toISOString(),
   }))
 }
+

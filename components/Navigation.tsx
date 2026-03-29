@@ -6,12 +6,10 @@ import { UserButton, useUser } from '@clerk/nextjs'
 import { dark } from '@clerk/themes'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp, Sun, Moon } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp } from 'lucide-react'
 
 export function Navigation() {
   const { isSignedIn } = useUser()
-  const { theme, setTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [atTop, setAtTop] = useState(true)
@@ -121,22 +119,8 @@ export function Navigation() {
               ))}
             </div>
 
-            {/* Auth + Theme Toggle */}
+            {/* Auth Toggle */}
             <div className="hidden md:flex items-center gap-3">
-              {/* Theme Toggle */}
-              {mounted && (
-                <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-                  aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="h-5 w-5" />
-                  ) : (
-                    <Moon className="h-5 w-5" />
-                  )}
-                </button>
-              )}
               {isSignedIn ? (
                 <>
                   <Link href="/dashboard">
@@ -200,28 +184,6 @@ export function Navigation() {
                     </Link>
                   ))}
                   <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    {/* Theme Toggle Mobile */}
-                    {mounted && (
-                      <button
-                        onClick={() => {
-                          setTheme(theme === 'dark' ? 'light' : 'dark')
-                          setMobileMenuOpen(false)
-                        }}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {theme === 'dark' ? (
-                          <>
-                            <Sun className="h-4 w-4" />
-                            Light Mode
-                          </>
-                        ) : (
-                          <>
-                            <Moon className="h-4 w-4" />
-                            Dark Mode
-                          </>
-                        )}
-                      </button>
-                    )}
                     {isSignedIn ? (
                       <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" size="sm" className="w-full">Dashboard</Button>

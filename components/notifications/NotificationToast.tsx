@@ -4,15 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
-import { X } from 'lucide-react'
+import { X, AlertCircle, CheckCircle, Bot, Wrench, Package } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
-import { 
-  AlertCircle, 
-  CheckCircle, 
-  Bot, 
-  Wrench, 
-  Package 
-} from 'lucide-react'
 
 const iconMap = {
   PIPELINE_FAILED: AlertCircle,
@@ -23,113 +16,85 @@ const iconMap = {
 }
 
 const colorMap = {
-  PIPELINE_FAILED: 'bg-red-900/20 border-red-800 text-red-400',
-  PIPELINE_RECOVERED: 'bg-green-900/20 border-green-800 text-green-400',
-  AI_ANALYSIS_COMPLETE: 'bg-blue-900/20 border-blue-800 text-blue-400',
-  AUTO_FIX_APPLIED: 'bg-cyan-900/20 border-cyan-800 text-cyan-400',
-  REPO_CONNECTED: 'bg-purple-900/20 border-purple-800 text-purple-400',
-}
-
-interface ToastProps {
-  notification: {
-    id: string
-    type: string
-    title: string
-    message: string
-    repoName?: string
-    repoId?: string
-    createdAt: string
-  }
-  onDismiss: () => void
-}
-
-function Toast({ notification, onDismiss }: ToastProps) {
-  const router = useRouter()
-  const Icon = iconMap[notification.type as keyof typeof iconMap] || AlertCircle
-  const colorClass = colorMap[notification.type as keyof typeof colorMap] || colorMap.PIPELINE_FAILED
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onDismiss()
-    }, 5000)
-
-    return () => clearTimeout(timer)
-  }, [onDismiss])
-
-  const handleClick = () => {
-    if (notification.repoId) {
-      router.push(`/dashboard/repos/${notification.repoId}`)
-    }
-    onDismiss()
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 50, scale: 0.9 }}
-      className={`max-w-sm w-full p-4 rounded-lg border ${colorClass} cursor-pointer shadow-lg`}
-      onClick={handleClick}
-    >
-      <div className="flex items-start space-x-3">
-        <Icon className="h-5 w-5 flex-shrink-0 mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-white text-sm">
-            {notification.title}
-          </p>
-          <p className="text-sm opacity-90 mt-1">
-            {notification.message}
-          </p>
-          <p className="text-xs opacity-75 mt-2">
-            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-          </p>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onDismiss()
-          }}
-          className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-    </motion.div>
-  )
+  PIPELINE_FAILED: 'bg-red-950/40 border-red-800/50 text-red-400',
+  PIPELINE_RECOVERED: 'bg-green-950/40 border-green-800/50 text-green-400',
+  AI_ANALYSIS_COMPLETE: 'bg-blue-950/40 border-blue-800/50 text-blue-400',
+  AUTO_FIX_APPLIED: 'bg-cyan-950/40 border-cyan-800/50 text-cyan-400',
+  REPO_CONNECTED: 'bg-purple-950/40 border-purple-800/50 text-purple-400',
 }
 
 export function NotificationToast() {
-  const { notifications } = useNotifications()
-  const [visibleToasts, setVisibleToasts] = useState<string[]>([])
+  const { notifications, dismissNotification } = useNotifications()
+  const router = useRouter()
+  
+  // Requirement: Max 1 notification visible at a time
+  const currentNotification = notifications.length > 0 ? notifications[0] : null
 
-  // Show toast for new notifications
+  // Requirement: Auto-dismiss after 3 seconds
   useEffect(() => {
-    const newNotifications = notifications.slice(0, 3).filter(n => !visibleToasts.includes(n.id))
-    
-    if (newNotifications.length > 0) {
-      setVisibleToasts(prev => [...newNotifications.map(n => n.id), ...prev].slice(0, 3))
+    if (currentNotification) {
+      const timer = setTimeout(() => {
+        dismissNotification(currentNotification.id)
+      }, 3000)
+      return () => clearTimeout(timer)
     }
-  }, [notifications, visibleToasts])
+  }, [currentNotification, dismissNotification])
 
-  const handleDismiss = (notificationId: string) => {
-    setVisibleToasts(prev => prev.filter(id => id !== notificationId))
+  if (!currentNotification) return null
+
+  const Icon = iconMap[currentNotification.type as keyof typeof iconMap] || AlertCircle
+  const colorClass = colorMap[currentNotification.type as keyof typeof colorMap] || colorMap.PIPELINE_FAILED
+
+  const handleToastClick = () => {
+    if (currentNotification.repoId) {
+      router.push(`/dashboard/repos/${currentNotification.repoId}`)
+    }
+    dismissNotification(currentNotification.id)
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-2">
-      <AnimatePresence>
-        {visibleToasts.map(id => {
-          const notification = notifications.find(n => n.id === id)
-          if (!notification) return null
-          
-          return (
-            <Toast
-              key={id}
-              notification={notification}
-              onDismiss={() => handleDismiss(id)}
-            />
-          )
-        })}
+    <div 
+      className="fixed bottom-6 right-6 z-[60] pointer-events-none" 
+      id="notification-toast-container"
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentNotification.id}
+          initial={{ opacity: 0, scale: 0.9, y: 20, x: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 10, transition: { duration: 0.2 } }}
+          className={`pointer-events-auto max-w-sm w-full p-4 rounded-xl border backdrop-blur-md shadow-2xl cursor-pointer ${colorClass} transition-shadow hover:shadow-cyan-500/10`}
+          onClick={handleToastClick}
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-1 p-1.5 rounded-lg bg-white/5 border border-white/10 shrink-0">
+              <Icon className="h-4 w-4" />
+            </div>
+            
+            <div className="flex-1 min-w-0 pr-2">
+              <h4 className="text-sm font-bold text-white tracking-tight mb-0.5 truncate">
+                {currentNotification.title}
+              </h4>
+              <p className="text-xs text-white/70 leading-relaxed line-clamp-2 mb-2">
+                {currentNotification.message}
+              </p>
+              <span className="text-[10px] font-medium opacity-50 uppercase tracking-widest">
+                {formatDistanceToNow(new Date(currentNotification.createdAt), { addSuffix: true })}
+              </span>
+            </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                dismissNotification(currentNotification.id)
+              }}
+              className="p-1 rounded-md hover:bg-white/10 transition-colors shrink-0"
+              aria-label="Dismiss"
+            >
+              <X className="h-3.5 w-3.5 opacity-60 hover:opacity-100" />
+            </button>
+          </div>
+        </motion.div>
       </AnimatePresence>
     </div>
   )

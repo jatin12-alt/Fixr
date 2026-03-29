@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart3, TrendingUp, Clock, Wrench } from 'lucide-react'
 import { KPICard } from '@/components/analytics/KPICard'
-import { TrendChart } from '@/components/analytics/TrendChart'
-import { ErrorPieChart } from '@/components/analytics/ErrorPieChart'
-import { HeatmapGrid } from '@/components/analytics/HeatmapGrid'
 import { RepoTable } from '@/components/analytics/RepoTable'
 import { FixTimeline } from '@/components/analytics/FixTimeline'
 import { DateRangePicker } from '@/components/analytics/DateRangePicker'
+import dynamic from 'next/dynamic'
+
+const TrendChart = dynamic(() => import('@/components/analytics/TrendChart').then(m => m.TrendChart), { ssr: false })
+const ErrorPieChart = dynamic(() => import('@/components/analytics/ErrorPieChart').then(m => m.ErrorPieChart), { ssr: false })
+const HeatmapGrid = dynamic(() => import('@/components/analytics/HeatmapGrid').then(m => m.HeatmapGrid), { ssr: false })
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -94,21 +96,27 @@ export default function AnalyticsPage() {
       })
 
       const response = await fetch(`/api/analytics?${params}`)
-      if (response.ok) {
-        const analyticsData = await response.json()
-        setData(analyticsData)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Analytics API error:', errorData)
+        setData(null)
+        return
       }
+      const analyticsData = await response.json()
+      setData(analyticsData)
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
+      setData(null)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDateRangeChange = (days: number) => {
+  const handleDateRangeChange = (days: string) => {
+    const parsedDays = parseInt(days, 10)
     const endDate = new Date()
     const startDate = new Date()
-    startDate.setDate(endDate.getDate() - days)
+    startDate.setDate(endDate.getDate() - parsedDays)
     setDateRange({ startDate, endDate })
   }
 
@@ -149,7 +157,7 @@ export default function AnalyticsPage() {
     <motion.div className="min-h-screen bg-black text-muted-foreground py-8" variants={containerVariants} initial="hidden" animate="visible">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <motion.div className="flex items-center justify-between mb-8" variants={itemVariants}>
+        <motion.div className="flex flex-col md:flex-row md:items-center items-start justify-between gap-4 mb-8" variants={itemVariants}>
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Analytics Dashboard</h1>
             <p className="text-muted-foreground">
@@ -193,7 +201,7 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Pipeline Health Trend */}
-        <motion.div className="mb-8" variants={itemVariants}>
+        <motion.div className="mb-8 min-w-0 w-full" variants={itemVariants}>
           <TrendChart
             data={data.trend}
             dateRange="30"
@@ -203,15 +211,19 @@ export default function AnalyticsPage() {
 
         {/* Error Breakdown and Repo Leaderboard */}
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8" variants={itemVariants}>
-          <ErrorPieChart
-            data={data.errorBreakdown}
-            onErrorTypeClick={setSelectedErrorType}
-          />
-          <RepoTable data={data.repoLeaderboard} />
+          <div className="min-w-0 overflow-hidden">
+            <ErrorPieChart
+              data={data.errorBreakdown}
+              onErrorTypeClick={setSelectedErrorType}
+            />
+          </div>
+          <div className="min-w-0 overflow-hidden">
+            <RepoTable data={data.repoLeaderboard} />
+          </div>
         </motion.div>
 
         {/* Failure Heatmap */}
-        <motion.div className="mb-8" variants={itemVariants}>
+        <motion.div className="mb-8 min-w-0 overflow-hidden w-full" variants={itemVariants}>
           <HeatmapGrid data={data.heatmap} />
         </motion.div>
 

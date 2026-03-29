@@ -18,6 +18,7 @@ import {
   Settings2
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface TeamMember {
   id: string
@@ -171,10 +172,13 @@ export default function TeamDetailPage() {
             </Link>
             <div className="flex items-center space-x-3">
               {team.avatarUrl ? (
-                <img
+                <Image
                   src={team.avatarUrl}
                   alt={team.name}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-lg"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -249,10 +253,13 @@ export default function TeamDetailPage() {
                     <div key={member.id} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         {member.user.avatarUrl ? (
-                          <img
+                          <Image
                             src={member.user.avatarUrl}
-                            alt={member.user.name}
+                            alt={member.user.name || 'User'}
+                            width={32}
+                            height={32}
                             className="w-8 h-8 rounded-full"
+                            loading="lazy"
                           />
                         ) : (
                           <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
@@ -456,10 +463,13 @@ function MembersSection({
             <div key={member.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-card/50 transition-colors">
               <div className="col-span-6 flex items-center space-x-3">
                 {member.user.avatarUrl ? (
-                  <img
+                  <Image
                     src={member.user.avatarUrl}
-                    alt={member.user.name}
+                    alt={member.user.name || 'User'}
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">

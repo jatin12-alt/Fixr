@@ -17,6 +17,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
 
   // Fetch initial notifications
@@ -123,6 +124,10 @@ export function useNotifications() {
     }
   }, [userId])
 
+  const dismissNotification = useCallback((id: string) => {
+    setDismissedIds(prev => new Set([...prev, id]))
+  }, [])
+
   // Initialize on mount
   useEffect(() => {
     if (isSignedIn && userId) {
@@ -138,11 +143,12 @@ export function useNotifications() {
   }, [isSignedIn, userId, fetchNotifications, connectStream])
 
   return {
-    notifications,
+    notifications: notifications.filter(n => !dismissedIds.has(n.id)),
     unreadCount,
     isConnected,
     markAsRead,
     markAllRead,
+    dismissNotification,
     refetch: fetchNotifications,
   }
 }

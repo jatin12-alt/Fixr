@@ -78,10 +78,10 @@ export function TrendChart({ data, dateRange, onDateRangeChange }: TrendChartPro
       animate={{ opacity: 1, y: 0 }}
       className="bg-gray-900/50 border border-gray-800 rounded-xl p-6"
     >
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <h3 className="text-lg font-semibold text-white">Pipeline Health Trend</h3>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Tab Toggle */}
           <div className="flex bg-gray-800 rounded-lg p-1">
             <button

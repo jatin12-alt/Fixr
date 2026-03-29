@@ -115,7 +115,9 @@ const getHandler = secureAPIRoute(
         aiFixSuggestion?: string | null;
         aiCodeFix?: string | null;
         aiSeverity?: string | null;
+        aiConfidence?: number | null;
       }[] = [];
+
       try {
         runs = await db
           .select()
@@ -221,8 +223,9 @@ const getHandler = secureAPIRoute(
           aiCodeFix: run.aiCodeFix || null,
           aiSeverity: run.aiSeverity || null,
           aiCategory: run.aiCategory || null,
-          aiConfidence: run.confidence || null,
+          aiConfidence: run.aiConfidence || null,
         })),
+
       }
 
       console.log("📤 SENDING_RESPONSE:", {

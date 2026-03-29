@@ -87,20 +87,23 @@ export function HeatmapGrid({ data }: HeatmapGridProps) {
         </p>
       </div>
 
-      {/* Hour labels */}
-      <div className="flex mb-2">
-        <div className="w-12"></div> {/* Spacer for day labels */}
-        <div className="flex-1 grid grid-cols-24 gap-1">
-          {hours.map(hour => (
-            <div 
-              key={hour} 
-              className="text-xs text-gray-500 text-center"
-            >
-              {hour % 6 === 0 ? hour.toString() : ''}
+      {/* Heatmap grid scroll container */}
+      <div className="overflow-x-auto pb-4">
+        <div className="min-w-[700px]">
+          {/* Hour labels */}
+          <div className="flex mb-2">
+            <div className="w-12 shrink-0"></div> {/* Spacer */}
+            <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
+              {hours.map(hour => (
+                <div 
+                  key={hour} 
+                  className="text-xs text-gray-500 text-center"
+                >
+                  {hour % 2 === 0 ? hour.toString() : ''}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
       {/* Heatmap grid */}
       <div className="flex">
@@ -119,7 +122,7 @@ export function HeatmapGrid({ data }: HeatmapGridProps) {
         {/* Grid cells */}
         <div className="flex-1">
           {days.map((_, dayIndex) => (
-            <div key={dayIndex} className="grid grid-cols-24 gap-1 mb-1">
+            <div key={dayIndex} className="grid gap-1 mb-1" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
               {hours.map(hour => {
                 const count = getCellData(hour, dayIndex)
                 const isHovered = hoveredCell?.hour === hour && hoveredCell?.dayOfWeek === dayIndex
@@ -141,6 +144,8 @@ export function HeatmapGrid({ data }: HeatmapGridProps) {
             </div>
           ))}
         </div>
+      </div>
+      </div>
       </div>
 
       {/* Legend */}

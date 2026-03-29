@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { 
   GitBranch, Clock, CheckCircle, AlertTriangle, 
   Plus, Github, Loader2, BarChart3, Zap, 
   ExternalLink, ArrowRight, Bot, Cpu, Activity,
-  TrendingUp, DollarSign, Search, Command
+  TrendingUp, DollarSign, Search, Command, ChevronDown
 } from 'lucide-react'
 import type { DashboardData } from '@/types'
-import RepoManagementModal from '@/components/RepoManagementModal'
 import { AnimatedCounter } from '@/components/AnimatedCounter'
 import dynamic from 'next/dynamic'
 
@@ -28,16 +28,14 @@ const AnalyticsChart = dynamic(() => import('@/components/AnalyticsChart').then(
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { data, error, isLoading, mutate } = useSWR<DashboardData & { analytics: any[] }>('/api/dashboard', fetcher, {
     refreshInterval: 30000 // Real-time: 30s
   })
 
   const [hoveredRun, setHoveredRun] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  
-  // Modal state
-  const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showPulseHistory, setShowPulseHistory] = useState(false)
 
   // Calculations for the "Money Shot"
   const roi = useMemo(() => {
@@ -52,6 +50,14 @@ export default function DashboardPage() {
     return data.recentRuns.filter(run => 
       run.repo?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       run.status.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [data, searchQuery])
+
+  const filteredRepos = useMemo(() => {
+    if (!data?.repos) return []
+    return data.repos.filter(repo => 
+      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      repo.fullName.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }, [data, searchQuery])
 
@@ -83,7 +89,7 @@ export default function DashboardPage() {
     transition: {
       duration: 2,
       repeat: Infinity,
-      ease: "easeInOut"
+      ease: "easeInOut" as const
     }
   }
 
@@ -170,6 +176,7 @@ export default function DashboardPage() {
             icon={Zap} 
             color="text-green-400" 
             sub="Successful merges"
+            tooltip="Number of pipeline failures resolved and merged by AI"
           />
           <ROICard 
             label="TIME RECLAIMED" 
@@ -177,6 +184,7 @@ export default function DashboardPage() {
             icon={Clock} 
             color="text-blue-400" 
             sub="Developer bandwidth"
+            tooltip="Developer hours saved based on 1.5h per fix"
           />
           <ROICard 
             label="TOTAL SAVINGS" 
@@ -184,6 +192,7 @@ export default function DashboardPage() {
             icon={DollarSign} 
             color="text-purple-400" 
             sub="Estimated value"
+            tooltip="Estimated financial ROI using average dev salary rates"
           />
           <ROICard 
             label="ACTIVE REPOS" 
@@ -191,6 +200,7 @@ export default function DashboardPage() {
             icon={GitBranch} 
             color="text-primary" 
             sub="Monitored"
+            tooltip="Total repositories currently being monitored by Fixr"
           />
         </div>
 
@@ -231,62 +241,59 @@ export default function DashboardPage() {
                   animate="visible"
                 >
                   <AnimatePresence mode="popLayout">
-                    {filteredRuns.map((run, index) => (
+                    {/* Latest Analysis */}
+                    {filteredRuns.length > 0 && (
+                      <PulseItem 
+                        run={filteredRuns[0]}
+                        isHovered={hoveredRun === filteredRuns[0].id}
+                        onHoverChange={(hover: boolean) => setHoveredRun(hover ? filteredRuns[0].id : null)}
+                        getStatusIcon={getStatusIcon}
+                        getStatusLabel={getStatusLabel}
+                      />
+                    )}
+
+                    {/* History Toggle */}
+                    {filteredRuns.length > 1 && (
+                      <div className="flex justify-center mt-6">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShowPulseHistory(!showPulseHistory)}
+                          className="h-10 px-6 flex items-center justify-center gap-2 border border-white/5 hover:bg-white/5 transition-all group"
+                        >
+                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">
+                             {showPulseHistory ? 'Collapse History' : `View Pulse History (${filteredRuns.length - 1})`}
+                           </span>
+                           <motion.div
+                              animate={{ rotate: showPulseHistory ? 180 : 0 }}
+                              transition={{ duration: 0.3 }}
+                           >
+                              <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground" />
+                           </motion.div>
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Historical Analysis */}
+                    {showPulseHistory && (
                       <motion.div
-                        key={run.id}
-                        layout
-                        variants={itemVariants}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onMouseEnter={() => setHoveredRun(run.id)}
-                        onMouseLeave={() => setHoveredRun(null)}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden space-y-4 pt-4"
                       >
-                      <Card className={`glass border-white/5 overflow-hidden transition-all duration-300 ${hoveredRun === run.id ? 'border-border/50 bg-white/[0.04]' : ''}`}>
-                         <div className="p-5">
-                            <div className="flex items-center justify-between mb-4">
-                               <div className="flex items-center gap-3">
-                                  <div className={`p-2 rounded bg-white/5 ${run.status === 'failed' ? 'text-red-400' : 'text-green-400'}`}>
-                                     <Github size={18} />
-                                  </div>
-                                  <div>
-                                     <h3 className="text-sm font-bold text-foreground mb-0.5">{run.repo?.name}</h3>
-                                     <p className="text-[10px] text-muted-foreground font-mono tracking-tighter">REF: {run.githubRunId}</p>
-                                  </div>
-                               </div>
-                               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/5">
-                                  {getStatusIcon(run.status)}
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{getStatusLabel(run.status)}</span>
-                               </div>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-2 gap-6">
-                               <div className="space-y-2 min-w-0">
-                                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Analysis</span>
-                                  <p className="text-xs text-blue-100/60 leading-relaxed italic break-words">
-                                     {run.aiExplanation || "Engine is analyzing system logs..."}
-                                  </p>
-                               </div>
-                               <div className="flex flex-col justify-end items-end gap-2 min-w-0">
-                                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold text-right">Engine Confidence</span>
-                                  <div className="flex items-center gap-3 w-full max-w-[140px]">
-                                     <span className="text-xs font-black text-foreground truncate">{run.aiConfidence || run.confidence || 0}%</span>
-                                     <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden min-w-0">
-                                        <div 
-                                          className={`h-full transition-all duration-1000 ${
-                                            (run.aiConfidence || run.confidence || 0) > 80 ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
-                                            (run.aiConfidence || run.confidence || 0) > 50 ? 'bg-primary' : 'bg-red-500'
-                                          }`}
-                                          style={{ width: `${run.aiConfidence || run.confidence || 0}%` }}
-                                        />
-                                     </div>
-                                  </div>
-                               </div>
-                            </div>
-                         </div>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                        {filteredRuns.slice(1).map((run) => (
+                          <PulseItem 
+                            key={run.id}
+                            run={run}
+                            isHovered={hoveredRun === run.id}
+                            onHoverChange={(hover: boolean) => setHoveredRun(hover ? run.id : null)}
+                            getStatusIcon={getStatusIcon}
+                            getStatusLabel={getStatusLabel}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               </div>
             </div>
@@ -300,22 +307,24 @@ export default function DashboardPage() {
             </h2>
 
             <div className="space-y-4">
-              {data.repos.map((repo, i) => (
+              {filteredRepos.map((repo, i) => (
                 <RepoHealthCard 
                   key={repo.id} 
                   repo={repo} 
-                  onClick={() => {
-                    setSelectedRepoId(repo.id)
-                    setIsModalOpen(true)
-                  }}
+                  onClick={() => router.push(`/dashboard/repos/${repo.id}`)}
                 />
               ))}
+              {filteredRepos.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground text-xs italic">
+                  No repositories match your search.
+                </div>
+              )}
             </div>
 
             {/* AI Capability Card */}
             <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/10 border-border/20 shadow-2xl overflow-hidden relative group">
-               <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-               <CardContent className="p-6">
+               <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+               <CardContent className="p-6 relative z-10">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-primary rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.5)]">
                       <Bot className="h-5 w-5 text-foreground" />
@@ -326,8 +335,15 @@ export default function DashboardPage() {
                     Autonomous recovery handling 85%+ of failure patterns. 
                     Real-time Groq analysis active.
                   </p>
-                  <Button size="sm" variant="ghost" className="w-full text-xs text-primary hover:text-cyan-300 hover:bg-primary/10">
-                    Engine Log History <ArrowRight size={12} className="ml-2" />
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="w-full text-xs text-primary hover:text-cyan-300 hover:bg-primary/10"
+                    asChild
+                  >
+                    <Link href="/dashboard/analytics">
+                      Engine Log History <ArrowRight size={12} className="ml-2" />
+                    </Link>
                   </Button>
                </CardContent>
             </Card>
@@ -335,22 +351,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <RepoManagementModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedRepoId(null)
-          mutate() 
-        }}
-        repoId={selectedRepoId}
-      />
     </div>
   )
 }
 
-function ROICard({ label, value, icon: Icon, color, sub, highlight = false }: any) {
+function ROICard({ label, value, icon: Icon, color, sub, highlight = false, tooltip }: any) {
   return (
-    <Card className={`glass border-white/5 overflow-hidden group hover:border-white/10 transition-all ${highlight ? 'bg-primary/5 border-border/20' : ''}`}>
+    <Card 
+      className={`glass border-white/5 overflow-hidden group hover:border-white/10 transition-all ${highlight ? 'bg-primary/5 border-border/20' : ''}`}
+      title={tooltip}
+    >
       <CardContent className="p-6 relative">
         <div className={`absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-all ${color}`}>
           <Icon size={120} />
@@ -362,6 +372,62 @@ function ROICard({ label, value, icon: Icon, color, sub, highlight = false }: an
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function PulseItem({ run, isHovered, onHoverChange, getStatusIcon, getStatusLabel }: any) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
+      <Card className={`glass border-white/5 overflow-hidden transition-all duration-300 ${isHovered ? 'border-border/50 bg-white/[0.04]' : ''}`}>
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded bg-white/5 ${run.status === 'failed' ? 'text-red-400' : 'text-green-400'}`}>
+                <Github size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground mb-0.5">{run.repo?.name}</h3>
+                <p className="text-[10px] text-muted-foreground font-mono tracking-tighter uppercase">REF: {run.githubRunId}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/5">
+              {getStatusIcon(run.status)}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{getStatusLabel(run.status)}</span>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2 min-w-0">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Analysis</span>
+              <p className="text-xs text-blue-100/60 leading-relaxed italic break-words">
+                {run.aiExplanation || "Engine is currently analyzing pipeline logs..."}
+              </p>
+            </div>
+            <div className="flex flex-col justify-end items-end gap-2 min-w-0">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold text-right">Engine Confidence</span>
+              <div className="flex items-center gap-3 w-full max-w-[140px]">
+                <span className="text-xs font-black text-foreground truncate">{run.aiConfidence || run.confidence || 0}%</span>
+                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden min-w-0">
+                  <div 
+                    className={`h-full transition-all duration-1000 ${
+                      (run.aiConfidence || run.confidence || 0) > 80 ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
+                      (run.aiConfidence || run.confidence || 0) > 50 ? 'bg-primary' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${run.aiConfidence || run.confidence || 0}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </motion.div>
   )
 }
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, Plus, Search, Filter } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Team {
   id: string
@@ -174,10 +175,13 @@ export default function TeamsPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       {team.avatarUrl ? (
-                        <img
+                        <Image
                           src={team.avatarUrl}
                           alt={team.name}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-lg"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -225,10 +229,13 @@ export default function TeamsPage() {
                             title={member.user.name || member.user.email}
                           >
                             {member.user.avatarUrl ? (
-                              <img
+                              <Image
                                 src={member.user.avatarUrl}
-                                alt={member.user.name}
+                                alt={member.user.name || 'User Avatar'}
+                                width={24}
+                                height={24}
                                 className="w-full h-full rounded-full"
+                                loading="lazy"
                               />
                             ) : (
                               <span className="text-xs text-foreground">
