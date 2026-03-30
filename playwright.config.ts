@@ -98,7 +98,9 @@ export default defineConfig({
       use: { 
         ...devices['Desktop Chrome'],
         headless: false,
-        slowMo: 100,
+        launchOptions: {
+          slowMo: 100,
+        },
       },
       testMatch: '**/*.debug.spec.ts',
     },
@@ -122,9 +124,6 @@ export default defineConfig({
 
   // Output directory
   outputDir: 'test-results',
-  
-  // Global setup options
-  globalSetup: path.join(__dirname, 'tests/e2e/global-setup.ts'),
   
   // Global teardown
   globalTeardown: path.join(__dirname, 'tests/e2e/global-teardown.ts'),

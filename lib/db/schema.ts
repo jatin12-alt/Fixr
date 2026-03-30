@@ -117,6 +117,23 @@ export const auditLogs = pgTable('audit_logs', {
   createdAt: timestamp('created_at').defaultNow(),
 })
 
+export const notificationPreferences = pgTable('notification_preferences', {
+  userId: text('user_id').primaryKey().references(() => users.clerkId),
+  emailOnFailure: boolean('email_on_failure').default(true),
+  emailOnFix: boolean('email_on_fix').default(true),
+  weeklyDigest: boolean('weekly_digest').default(false),
+  pushEnabled: boolean('push_enabled').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.clerkId),
+  subscription: text('subscription').notNull(), // JSON stringified PushSubscription
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -136,6 +153,10 @@ export type Notification = typeof notifications.$inferSelect
 export type NewNotification = typeof notifications.$inferInsert
 export type AuditLog = typeof auditLogs.$inferSelect
 export type NewAuditLog = typeof auditLogs.$inferInsert
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect
+export type NewNotificationPreferences = typeof notificationPreferences.$inferInsert
+export type PushSubscription = typeof pushSubscriptions.$inferSelect
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert
 
 // Enum types
 export type TeamRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER'

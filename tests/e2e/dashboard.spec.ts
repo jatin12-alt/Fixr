@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { authenticate } from '../helpers/auth';
+import { test, expect } from '@playwright/test'
+import { authenticate } from './helpers/auth';
 
 test.describe('Dashboard Features', () => {
   test.beforeEach(async ({ page }) => {

@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server'
 import { getAuth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
+import { db, teamMembers } from '@/lib/db'
 import { getTeamAuditLogs } from '@/lib/audit'
+import { eq, and } from 'drizzle-orm'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -13,7 +14,7 @@ export async function GET(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
   const { searchParams } = new URL(req.url)
   
   const limit = parseInt(searchParams.get('limit') || '50')
@@ -25,25 +26,23 @@ export async function GET(
 
   try {
     // Check if user is a member of the team
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership) {
+    if (!membership || membership.length === 0) {
       return Response.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get audit logs
-    const { logs, totalCount, hasMore } = await getTeamAuditLogs(teamId, {
+    const { logs, totalCount, hasMore } = await getTeamAuditLogs(parseInt(teamId), {
       limit,
       offset,
-      userId: userFilter,
-      action: actionFilter,
+      userId: userFilter || undefined,
+      action: actionFilter || undefined,
       startDate,
       endDate,
     })

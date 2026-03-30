@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { authenticate } from '../helpers/auth'
+import { authenticate } from '../e2e/helpers/auth'
 
 test.describe('Contact API', () => {
   const validContactData = {
@@ -10,7 +10,7 @@ test.describe('Contact API', () => {
     company: 'Acme Corp',
   }
 
-  test('POST /api/contact with valid data returns 200', async ({ request }) => {
+  test('POST /api/contact with valid data returns 200', async ({ request }: { request: any }) => {
     const response = await request.post('/api/contact', {
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +25,7 @@ test.describe('Contact API', () => {
     expect(data).toHaveProperty('message', 'Message sent successfully')
   })
 
-  test('POST /api/contact with missing required fields returns 400', async ({ request }) => {
+  test('POST /api/contact with missing required fields returns 400', async ({ request }: { request: any }) => {
     const invalidData = {
       name: '',
       email: 'invalid-email',
@@ -48,7 +48,7 @@ test.describe('Contact API', () => {
     expect(Array.isArray(data.details)).toBe(true)
   })
 
-  test('POST /api/contact enforces rate limiting', async ({ request }) => {
+  test('POST /api/contact enforces rate limiting', async ({ request }: { request: any }) => {
     // Make 3 requests quickly
     const requests = []
     for (let i = 0; i < 3; i++) {
@@ -83,7 +83,7 @@ test.describe('Contact API', () => {
     }
   })
 
-  test('POST /api/contact rejects honeypot filled submissions', async ({ request }) => {
+  test('POST /api/contact rejects honeypot filled submissions', async ({ request }: { request: any }) => {
     const dataWithHoneypot = {
       ...validContactData,
       website: 'spam-website.com', // Honeypot field
@@ -104,7 +104,7 @@ test.describe('Contact API', () => {
     // But no actual email should be sent (can't test this directly in E2E)
   })
 
-  test('POST /api/contact validates email format', async ({ request }) => {
+  test('POST /api/contact validates email format', async ({ request }: { request: any }) => {
     const invalidEmails = [
       'not-an-email',
       '@example.com',
@@ -136,7 +136,7 @@ test.describe('Contact API', () => {
     }
   })
 
-  test('POST /api/contact validates message length', async ({ request }) => {
+  test('POST /api/contact validates message length', async ({ request }: { request: any }) => {
     // Test too short message
     const shortResponse = await request.post('/api/contact', {
       headers: {
@@ -165,7 +165,7 @@ test.describe('Contact API', () => {
     expect(longResponse.status()).toBe(400)
   })
 
-  test('POST /api/contact validates name length', async ({ request }) => {
+  test('POST /api/contact validates name length', async ({ request }: { request: any }) => {
     const response = await request.post('/api/contact', {
       headers: {
         'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ test.describe('Contact API', () => {
     expect(response.status()).toBe(400)
   })
 
-  test('POST /api/contact handles XSS attempts', async ({ request }) => {
+  test('POST /api/contact handles XSS attempts', async ({ request }: { request: any }) => {
     const xssAttempt = {
       ...validContactData,
       message: '<script>alert("XSS")</script>',
@@ -199,7 +199,7 @@ test.describe('Contact API', () => {
     expect(data).toHaveProperty('success', true)
   })
 
-  test('POST /api/contact returns proper error messages', async ({ request }) => {
+  test('POST /api/contact returns proper error messages', async ({ request }: { request: any }) => {
     const response = await request.post('/api/contact', {
       headers: {
         'Content-Type': 'application/json',
@@ -225,7 +225,7 @@ test.describe('Contact API', () => {
     expect(messageError).toBeDefined()
   })
 
-  test('POST /api/contact with authenticated user includes user context', async ({ request }) => {
+  test('POST /api/contact with authenticated user includes user context', async ({ request }: { request: any }) => {
     await authenticate({ request } as any)
 
     const response = await request.post('/api/contact', {
@@ -243,7 +243,7 @@ test.describe('Contact API', () => {
     expect(data).toHaveProperty('success', true)
   })
 
-  test('POST /api/contact sets correct security headers', async ({ request }) => {
+  test('POST /api/contact sets correct security headers', async ({ request }: { request: any }) => {
     const response = await request.post('/api/contact', {
       headers: {
         'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ test.describe('Contact API', () => {
     expect(headers).toHaveProperty('x-frame-options', 'DENY')
   })
 
-  test('POST /api/contact requires Content-Type header', async ({ request }) => {
+  test('POST /api/contact requires Content-Type header', async ({ request }: { request: any }) => {
     const response = await request.post('/api/contact', {
       data: validContactData,
     })

@@ -6,13 +6,14 @@ import { ArrowLeft, Clock, Twitter, Linkedin, Link as LinkIcon } from 'lucide-re
 import { Button } from '@/components/ui/button'
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps) {
-  const post = getPostBySlug(params.slug)
+  const { slug } = await params
+  const post = getPostBySlug(slug)
   
   if (!post) {
     return {
@@ -26,8 +27,9 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
   }
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = getPostBySlug(params.slug)
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params
+  const post = getPostBySlug(slug)
   
   if (!post) {
     notFound()

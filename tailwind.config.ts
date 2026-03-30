@@ -38,6 +38,9 @@ const config: Config = {
         "neon-green":  "0 0 20px rgba(0, 255, 136, 0.5)",
         "neon-purple": "0 0 20px rgba(139, 92, 246, 0.5)",
       },
+      width: {
+        'confidence': 'var(--confidence-width)',
+      },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "float":      "float 6s ease-in-out infinite",

@@ -1,5 +1,6 @@
 // Push notification utilities
-import { db } from '@/lib/db'
+import { db, pushSubscriptions } from '@/lib/db'
+import { eq } from 'drizzle-orm'
 
 export async function requestPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) {
@@ -26,11 +27,9 @@ export async function subscribeToPush(userId: string): Promise<PushSubscription 
     })
 
     // Save subscription to database
-    await db.pushSubscription.create({
-      data: {
-        userId,
-        subscription: subscription as any,
-      },
+    await db.insert(pushSubscriptions).values({
+      userId,
+      subscription: subscription as any,
     })
 
     return subscription
@@ -68,9 +67,7 @@ export async function sendPushNotification(
 export async function unsubscribeFromPush(userId: string): Promise<void> {
   try {
     // Remove from database
-    await db.pushSubscription.deleteMany({
-      where: { userId },
-    })
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId))
 
     // Unsubscribe from service worker
     const registration = await navigator.serviceWorker.ready

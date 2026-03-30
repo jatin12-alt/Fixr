@@ -10,7 +10,7 @@ type NotificationData = {
   createdAt: string
 }
 
-type StreamController = ReadableStreamDefaultController<NotificationData>
+type StreamController = ReadableStreamDefaultController<Uint8Array>
 
 class NotificationEmitter {
   private connections = new Map<string, Set<StreamController>>()

@@ -1,5 +1,5 @@
-import { test, expect, devices } from '@playwright/test';
-import { authenticate } from '../helpers/auth';
+import { test, expect, devices } from '@playwright/test'
+import { authenticate } from './helpers/auth';
 
 test.describe('Mobile Responsiveness', () => {
   // Use iPhone 14 viewport

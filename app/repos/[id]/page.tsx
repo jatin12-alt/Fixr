@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -55,9 +55,10 @@ interface RepoStats {
 export default function RepositoryDetailPage({ 
   params 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }> 
 }) {
   const router = useRouter()
+  const { id } = use(params)
   const [repo, setRepo] = useState<RepoDetails | null>(null)
   const [runs, setRuns] = useState<PipelineRun[]>([])
   const [stats, setStats] = useState<RepoStats>({
@@ -74,14 +75,14 @@ export default function RepositoryDetailPage({
 
   useEffect(() => {
     fetchRepoDetails()
-  }, [params.id])
+  }, [id])
 
   const fetchRepoDetails = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/repos/${params.id}`)
+      const response = await fetch(`/api/repos/${id}`)
       
       if (!response.ok) {
         if (response.status === 404) {

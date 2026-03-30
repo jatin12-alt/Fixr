@@ -85,13 +85,13 @@ export function withSecurity(config: SecurityConfig = {}) {
 }
 
 // Helper function to apply security to API routes
-export function secureAPIRoute<T extends { params?: any }>(
-  handler: (req: NextRequest, context: T) => Promise<Response>,
+export function secureAPIRoute<T extends Record<string, string>>(
+  handler: (req: NextRequest, context: { params: Promise<T> }) => Promise<Response>,
   config: SecurityConfig = {}
 ) {
   const securityMiddleware = withSecurity(config)
   
-  return async (req: NextRequest, context: T) => {
+  return async (req: NextRequest, context: { params: Promise<T> }) => {
     // Create a wrapper function that only passes req to security middleware
     const wrappedHandler = async (request: NextRequest) => handler(request, context)
     return securityMiddleware(req, wrappedHandler)

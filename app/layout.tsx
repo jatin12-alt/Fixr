@@ -8,19 +8,11 @@ import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { NotificationToast } from '@/components/notifications/NotificationToast'
 import { ParticleBackground } from '@/components/ParticleBackground'
 import { validateEnvironment } from '@/lib/config/security'
-import dynamic from 'next/dynamic'
+import { AnalyticsWrapper } from '@/components/AnalyticsWrapper'
 import './globals.css'
 import './layout.css'
 import type { Metadata } from 'next'
 import { Inter, Orbitron } from 'next/font/google'
-
-// Dynamic imports for analytics to prevent build errors
-const Analytics = dynamic(() => import('@vercel/analytics/react').then(mod => ({ default: mod.Analytics })), {
-  ssr: false,
-})
-const SpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(mod => ({ default: mod.SpeedInsights })), {
-  ssr: false,
-})
 
 // Validate environment on startup
 // validateEnvironment() // Temporarily commented out for debugging
@@ -147,12 +139,7 @@ export default function RootLayout({
           </ThemeProvider>
           
           {/* Analytics - with error handling */}
-          {process.env.NODE_ENV === 'production' && (
-            <>
-              <Analytics />
-              <SpeedInsights />
-            </>
-          )}
+          <AnalyticsWrapper />
         </body>
       </html>
     </ClerkProvider>

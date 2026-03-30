@@ -5,7 +5,7 @@ import { eq, and } from 'drizzle-orm'
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = auth()
   
@@ -14,7 +14,8 @@ export async function PATCH(
   }
 
   try {
-    const repoId = parseInt(params.id)
+    const { id } = await params
+    const repoId = parseInt(id)
     
     if (isNaN(repoId)) {
       return Response.json({ error: 'Invalid repository ID' }, { status: 400 })

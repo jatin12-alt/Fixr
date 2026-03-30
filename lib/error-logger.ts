@@ -1,10 +1,10 @@
 // Optional Sentry integration - only available if installed
 let Sentry: any = null
 try {
-  Sentry = require('@sentry/nextjs')
+  // webpackIgnore tells the bundler to skip this require (Sentry is optional)
+  Sentry = require(/* webpackIgnore: true */ '@sentry/nextjs')
 } catch (error) {
   // Sentry not installed - error logging will work without it
-  console.log('Sentry not available - error logging will work without Sentry integration')
 }
 
 export interface ErrorContext {
@@ -18,6 +18,7 @@ export interface ErrorContext {
   method?: string
   statusCode?: number
   responseTime?: number
+  healthStatus?: any
   additionalData?: Record<string, any>
 }
 

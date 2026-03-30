@@ -1,8 +1,13 @@
+/* stylelint-disable at-rule-no-unknown */
+/* stylelint-disable block-no-empty */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable at-rule-no-unknown */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* eslint-enable at-rule-no-unknown */
 
 :root {
   --foreground-rgb: 255, 255, 255;
@@ -74,8 +79,8 @@ body {
   /* Glassmorphism */
   .glass {
     background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
@@ -155,6 +160,20 @@ body {
   }
 
   .text-balance {
-    text-wrap: balance;
+    /* stylelint-disable property-no-unknown */
+    /* eslint-disable property-no-unknown */
+    text-wrap: balance; /* @supports fallback for older browsers */
+    /* eslint-enable property-no-unknown */
+  }
+  
+  @supports not (text-wrap: balance) {
+    .text-balance {
+      /* Fallback for browsers that don't support text-wrap: balance */
+      text-align: center; /* Simple fallback for older browsers */
+    }
+  }
+
+  .confidence-bar {
+    width: var(--confidence-width, 0%);
   }
 }

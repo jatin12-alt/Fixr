@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server'
 import { getAuth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
+import { db, teamMembers, teamInvites, teams } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
+import { eq, and, gt, desc, isNull } from 'drizzle-orm'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -13,39 +14,46 @@ export async function GET(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
 
   try {
     // Check if user is a member of the team
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership) {
+    if (!membership || membership.length === 0) {
       return Response.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get pending invites
-    const invites = await db.teamInvite.findMany({
-      where: {
-        teamId,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      include: {
+    const invites = await db
+      .select({
+        id: teamInvites.id,
+        teamId: teamInvites.teamId,
+        email: teamInvites.email,
+        role: teamInvites.role,
+        token: teamInvites.token,
+        expiresAt: teamInvites.expiresAt,
+        acceptedAt: teamInvites.acceptedAt,
+        createdAt: teamInvites.createdAt,
         team: {
-          select: {
-            name: true,
-          },
+          name: teams.name,
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+      })
+      .from(teamInvites)
+      .leftJoin(teams, eq(teamInvites.teamId, teams.id))
+      .where(
+        and(
+          eq(teamInvites.teamId, parseInt(teamId)),
+          isNull(teamInvites.acceptedAt),
+          gt(teamInvites.expiresAt, new Date())
+        )
+      )
+      .orderBy(desc(teamInvites.createdAt))
 
     return Response.json(invites)
   } catch (error) {
@@ -59,7 +67,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -67,7 +75,7 @@ export async function POST(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
 
   try {
     const body = await req.json()
@@ -81,30 +89,28 @@ export async function POST(
     }
 
     // Check if user has permission to invite members
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership) {
+    if (!membership || membership.length === 0) {
       return Response.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Check if there's already a pending invite
-    const existingInvite = await db.teamInvite.findFirst({
-      where: {
-        teamId,
-        email,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-    })
+    const existingInvite = await db.select().from(teamInvites).where(
+      and(
+        eq(teamInvites.teamId, parseInt(teamId)),
+        eq(teamInvites.email, email),
+        isNull(teamInvites.acceptedAt),
+        gt(teamInvites.expiresAt, new Date())
+      )
+    ).limit(1)
 
-    if (existingInvite) {
+    if (existingInvite && existingInvite.length > 0) {
       return Response.json(
         { error: 'Invite already sent' },
         { status: 409 }
@@ -112,30 +118,32 @@ export async function POST(
     }
 
     // Create invite
-    const invite = await db.teamInvite.create({
-      data: {
-        teamId,
-        email,
-        role,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-      include: {
-        team: {
-          select: {
-            name: true,
-          },
-        },
-      },
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const [invite] = await db.insert(teamInvites).values({
+      teamId: parseInt(teamId),
+      email,
+      role,
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    }).returning({
+      id: teamInvites.id,
+      teamId: teamInvites.teamId,
+      email: teamInvites.email,
+      role: teamInvites.role,
+      token: teamInvites.token,
+      expiresAt: teamInvites.expiresAt,
+      acceptedAt: teamInvites.acceptedAt,
+      createdAt: teamInvites.createdAt,
     })
 
     // Log invitation
     await createAuditLog({
-      teamId,
-      userId,
+      teamId: parseInt(teamId),
+      userId: userId,
       action: 'member.invited',
       resourceType: 'member',
       metadata: { inviteeEmail: email, role },
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
     // TODO: Send invitation email
@@ -153,7 +161,7 @@ export async function POST(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -161,7 +169,7 @@ export async function DELETE(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
   const { searchParams } = new URL(req.url)
   const inviteId = searchParams.get('inviteId')
 
@@ -174,43 +182,44 @@ export async function DELETE(
 
   try {
     // Check if user has permission to manage invites
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership) {
+    if (!membership || membership.length === 0) {
       return Response.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get and delete invite
-    const invite = await db.teamInvite.findFirst({
-      where: {
-        id: inviteId,
-        teamId,
-      },
-    })
+    const invite = await db.select().from(teamInvites).where(
+      and(
+        eq(teamInvites.id, parseInt(inviteId)),
+        eq(teamInvites.teamId, parseInt(teamId))
+      )
+    ).limit(1)
 
-    if (!invite) {
+    if (!invite || invite.length === 0) {
       return Response.json({ error: 'Invite not found' }, { status: 404 })
     }
 
-    await db.teamInvite.delete({
-      where: { id: inviteId },
-    })
+    await db.delete(teamInvites).where(
+      and(
+        eq(teamInvites.id, parseInt(inviteId)),
+        eq(teamInvites.teamId, parseInt(teamId))
+      )
+    )
 
     // Log invite cancellation
     await createAuditLog({
-      teamId,
-      userId,
+      teamId: parseInt(teamId),
+      userId: userId,
       action: 'invite.cancelled',
       resourceType: 'member',
-      metadata: { inviteeEmail: invite.email, role: invite.role },
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+      metadata: { inviteeEmail: invite[0].email, role: invite[0].role },
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
     return Response.json({ success: true })

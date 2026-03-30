@@ -41,35 +41,16 @@ export function Footer() {
     ],
   }
 
-  const footerStyle = {
-    background: 'rgba(5, 5, 8, 0.95)',
-    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    marginTop: '0',
-  }
-
-  const logoStyle = {
-    background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    fontSize: '1.75rem',
-    fontWeight: 900,
-    letterSpacing: '0.05em',
-    marginBottom: '12px',
-    display: 'inline-block',
-  }
-
   return (
     <>
-      <footer style={footerStyle}>
+      <footer className="bg-[rgba(5,5,8,0.95)] border-t border-white/8 backdrop-blur-xl mt-0">
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-5 gap-8">
 
             {/* Brand */}
             <div className="md:col-span-2">
               <Link href="/">
-                <div style={logoStyle} className="hover:scale-105 transition-transform cursor-pointer">FIXR</div>
+                <div className="bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent text-[1.75rem] font-black tracking-[0.05em] mb-3 inline-block hover:scale-105 transition-transform cursor-pointer">FIXR</div>
               </Link>
               <p className="text-gray-400 mb-6 max-w-sm text-sm leading-relaxed">
                 AI-powered DevOps automation that monitors, analyzes, and fixes your CI/CD pipelines automatically.
@@ -166,7 +147,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} className="mt-10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="mt-10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/7">
           <p className="text-gray-600 text-xs">
             © 2026 Fixr. All rights reserved. Built with ❤️ for developers.
           </p>

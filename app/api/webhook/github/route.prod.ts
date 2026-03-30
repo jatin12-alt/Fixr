@@ -8,7 +8,7 @@ const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET
 
 export async function POST(req: NextRequest) {
   try {
-    const headersList = headers()
+    const headersList = await headers()
     const signature = headersList.get('x-hub-signature-256')
     
     if (!signature) {

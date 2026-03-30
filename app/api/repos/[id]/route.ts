@@ -7,22 +7,23 @@ import { apiRateLimit } from '@/lib/middleware/rate-limit'
 
 // Secure GET endpoint
 const getHandler = secureAPIRoute(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { userId } = auth()
+    const { id } = await params
     
-    console.log("🔍 FETCHING_REPO_ID:", params.id, "USER_ID:", userId)
-    console.log("🔍 PARAMS_TYPE:", typeof params.id, "USERID_TYPE:", typeof userId)
+    console.log("🔍 FETCHING_REPO_ID:", id, "USER_ID:", userId)
+    console.log("🔍 PARAMS_TYPE:", typeof id, "USERID_TYPE:", typeof userId)
     
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     try {
-      const repoId = parseInt(params.id)
+      const repoId = parseInt(id)
       console.log("🔍 PARSED_REPO_ID:", repoId, "TYPE:", typeof repoId)
       
       if (isNaN(repoId)) {
-        console.log("❌ INVALID_REPO_ID:", params.id)
+        console.log("❌ INVALID_REPO_ID:", id)
         return Response.json({ error: 'Invalid repository ID' }, { status: 400 })
       }
 
@@ -258,7 +259,7 @@ const getHandler = secureAPIRoute(
 
 // Secure DELETE endpoint  
 const deleteHandler = secureAPIRoute(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { userId } = auth()
     
     if (!userId) {
@@ -266,7 +267,8 @@ const deleteHandler = secureAPIRoute(
     }
 
     try {
-      const repoId = parseInt(params.id)
+      const { id } = await params
+      const repoId = parseInt(id)
       
       if (isNaN(repoId)) {
         return Response.json({ error: 'Invalid repository ID' }, { status: 400 })
@@ -314,7 +316,7 @@ const deleteHandler = secureAPIRoute(
 
 // Secure PATCH endpoint
 const patchHandler = secureAPIRoute(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { userId } = auth()
     
     if (!userId) {
@@ -322,7 +324,8 @@ const patchHandler = secureAPIRoute(
     }
 
     try {
-      const repoId = parseInt(params.id)
+      const { id } = await params
+      const repoId = parseInt(id)
       
       if (isNaN(repoId)) {
         return Response.json({ error: 'Invalid repository ID' }, { status: 400 })

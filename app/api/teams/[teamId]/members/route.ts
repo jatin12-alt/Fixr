@@ -1,13 +1,14 @@
 import { NextRequest } from 'next/server'
 import { getAuth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
+import { db, teamMembers, teamInvites, users } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
 import { hasPermission, canManageRole, canRemoveMember } from '@/lib/permissions'
-import { TeamRole } from '@prisma/client'
+import { eq, and, desc, isNull, gt } from 'drizzle-orm'
+import type { TeamRole } from '@/lib/db/schema'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -15,38 +16,42 @@ export async function GET(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
 
   try {
     // Check if user is a member of the team
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership) {
+    if (!membership || membership.length === 0) {
       return Response.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get all team members
-    const members = await db.teamMember.findMany({
-      where: { teamId },
-      include: {
+    const members = await db
+      .select({
+        id: teamMembers.id,
+        teamId: teamMembers.teamId,
+        userId: teamMembers.userId,
+        role: teamMembers.role,
+        joinedAt: teamMembers.joinedAt,
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
+          id: users.id,
+          clerkId: users.clerkId,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
+          githubUsername: users.githubUsername,
         },
-      },
-      orderBy: { joinedAt: 'asc' },
-    })
+      })
+      .from(teamMembers)
+      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .where(eq(teamMembers.teamId, parseInt(teamId)))
+      .orderBy(desc(teamMembers.joinedAt))
 
     return Response.json(members)
   } catch (error) {
@@ -60,7 +65,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -68,7 +73,7 @@ export async function POST(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
 
   try {
     const body = await req.json()
@@ -82,21 +87,19 @@ export async function POST(
     }
 
     // Check if user has permission to invite members
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership || !hasPermission(membership.role, 'canInviteMembers')) {
+    if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canInviteMembers')) {
       return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Check if trying to invite someone with equal or higher role
-    if (!canManageRole(membership.role, role as TeamRole)) {
+    if (!canManageRole(membership[0].role, role as TeamRole)) {
       return Response.json(
         { error: 'Cannot invite members with equal or higher role' },
         { status: 403 }
@@ -104,12 +107,17 @@ export async function POST(
     }
 
     // Check if user is already a member
-    const existingMember = await db.teamMember.findFirst({
-      where: {
-        teamId,
-        user: { email },
-      },
-    })
+    const existingMember = await db
+      .select()
+      .from(teamMembers)
+      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .where(
+        and(
+          eq(teamMembers.teamId, parseInt(teamId)),
+          eq(users.email, email)
+        )
+      )
+      .limit(1)
 
     if (existingMember) {
       return Response.json(
@@ -119,16 +127,16 @@ export async function POST(
     }
 
     // Check if there's already a pending invite
-    const existingInvite = await db.teamInvite.findFirst({
-      where: {
-        teamId,
-        email,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-    })
+    const existingInvite = await db.select().from(teamInvites).where(
+      and(
+        eq(teamInvites.teamId, parseInt(teamId)),
+        eq(teamInvites.email, email),
+        isNull(teamInvites.acceptedAt),
+        gt(teamInvites.expiresAt, new Date())
+      )
+    ).limit(1)
 
-    if (existingInvite) {
+    if (existingInvite && existingInvite.length > 0) {
       return Response.json(
         { error: 'Invite already sent' },
         { status: 409 }
@@ -136,30 +144,23 @@ export async function POST(
     }
 
     // Create invite
-    const invite = await db.teamInvite.create({
-      data: {
-        teamId,
-        email,
-        role: role as TeamRole,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-      include: {
-        team: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    })
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const [invite] = await db.insert(teamInvites).values({
+      teamId: parseInt(teamId),
+      email,
+      role: role as TeamRole,
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    }).returning()
 
     // Log member invitation
     await createAuditLog({
-      teamId,
-      userId,
+      teamId: parseInt(teamId),
+      userId: userId,
       action: 'member.invited',
       resourceType: 'member',
       metadata: { inviteeEmail: email, role },
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
     // TODO: Send invitation email
@@ -177,7 +178,7 @@ export async function POST(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -185,7 +186,7 @@ export async function PATCH(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
 
   try {
     const body = await req.json()
@@ -199,36 +200,32 @@ export async function PATCH(
     }
 
     // Check if user has permission to manage roles
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership || !hasPermission(membership.role, 'canRemoveMembers')) {
+    if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canRemoveMembers')) {
       return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Get target member
-    const targetMember = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId: memberUserId,
-        },
-      },
-    })
+    const targetMember = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, memberUserId)
+      )
+    ).limit(1)
 
     if (!targetMember) {
       return Response.json({ error: 'Member not found' }, { status: 404 })
     }
 
     // Check if can manage this member's role
-    if (!canManageRole(membership.role, targetMember.role) || 
-        !canManageRole(membership.role, newRole as TeamRole)) {
+    if (!canManageRole(membership[0].role, targetMember[0].role) || 
+        !canManageRole(membership[0].role, newRole as TeamRole)) {
       return Response.json(
         { error: 'Cannot manage roles equal or higher than yours' },
         { status: 403 }
@@ -236,41 +233,29 @@ export async function PATCH(
     }
 
     // Update member role
-    const updatedMember = await db.teamMember.update({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId: memberUserId,
-        },
-      },
-      data: {
-        role: newRole as TeamRole,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
+    const [updatedMember] = await db.update(teamMembers)
+      .set({ role: newRole as TeamRole })
+      .where(
+        and(
+          eq(teamMembers.teamId, parseInt(teamId)),
+          eq(teamMembers.userId, memberUserId)
+        )
+      )
+      .returning()
 
     // Log role change
     await createAuditLog({
-      teamId,
-      userId,
+      teamId: parseInt(teamId),
+      userId: userId,
       action: 'member.role_changed',
       resourceType: 'member',
       resourceId: memberUserId,
       metadata: { 
         targetUserId: memberUserId,
-        oldRole: targetMember.role,
-        newRole 
+        oldRole: targetMember[0].role,
+        newRole,
       },
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
     return Response.json(updatedMember)
@@ -285,7 +270,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { userId } = getAuth(req)
   
@@ -293,7 +278,7 @@ export async function DELETE(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId } = params
+  const { teamId } = await params
   const { searchParams } = new URL(req.url)
   const memberUserId = searchParams.get('memberId')
 
@@ -306,42 +291,49 @@ export async function DELETE(
 
   try {
     // Check if user has permission to remove members
-    const membership = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    })
+    const membership = await db.select().from(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, userId)
+      )
+    ).limit(1)
 
-    if (!membership || !hasPermission(membership.role, 'canRemoveMembers')) {
+    if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canRemoveMembers')) {
       return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Get target member
-    const targetMember = await db.teamMember.findUnique({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId: memberUserId,
-        },
-      },
-      include: {
+    const targetMember = await db
+      .select({
+        id: teamMembers.id,
+        teamId: teamMembers.teamId,
+        userId: teamMembers.userId,
+        role: teamMembers.role,
+        joinedAt: teamMembers.joinedAt,
         user: {
-          select: {
-            name: true,
-          },
+          id: users.id,
+          clerkId: users.clerkId,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
         },
-      },
-    })
+      })
+      .from(teamMembers)
+      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .where(
+        and(
+          eq(teamMembers.teamId, parseInt(teamId)),
+          eq(teamMembers.userId, memberUserId)
+        )
+      )
+      .limit(1)
 
-    if (!targetMember) {
+    if (!targetMember || targetMember.length === 0) {
       return Response.json({ error: 'Member not found' }, { status: 404 })
     }
 
     // Check if can remove this member
-    if (!canRemoveMember(membership.role, targetMember.role)) {
+    if (!canRemoveMember(membership[0].role, targetMember[0].role)) {
       return Response.json(
         { error: 'Cannot remove members with equal or higher role' },
         { status: 403 }
@@ -349,27 +341,25 @@ export async function DELETE(
     }
 
     // Remove member
-    await db.teamMember.delete({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId: memberUserId,
-        },
-      },
-    })
+    await db.delete(teamMembers).where(
+      and(
+        eq(teamMembers.teamId, parseInt(teamId)),
+        eq(teamMembers.userId, memberUserId)
+      )
+    )
 
     // Log member removal
     await createAuditLog({
-      teamId,
-      userId,
+      teamId: parseInt(teamId),
+      userId: userId,
       action: 'member.removed',
       resourceType: 'member',
       resourceId: memberUserId,
       metadata: { 
-        removedUserId: memberUserId,
-        removedUserName: targetMember.user.name || 'Unknown',
+        targetUserId: memberUserId,
+        removedUserName: targetMember[0].user?.name || 'Unknown',
       },
-      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
     return Response.json({ success: true })

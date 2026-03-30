@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   try {
     console.log("📥 WEBHOOK_TRIGGERED: ", "GitHub Webhook Received")
     
-    const headersList = headers()
+    const headersList = await headers()
     const signature = headersList.get('x-hub-signature-256')
     const eventType = headersList.get('x-github-event')
     
@@ -249,6 +249,12 @@ async function handleWorkflowRunEvent(payload: any) {
 
     // Get GitHub token for log fetching
     console.log("🔍 FETCHING_GITHUB_TOKEN...")
+    
+    if (!repo.userId) {
+      console.log("❌ NO_USER_ID - Cannot fetch GitHub token")
+      return
+    }
+    
     const githubToken = await getGitHubTokenForUser(repo.userId)
     if (!githubToken) {
       console.log("❌ NO_GITHUB_TOKEN - Cannot fetch logs")

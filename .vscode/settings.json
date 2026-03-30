@@ -1,0 +1,8 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "css.lint.propertyIgnoredDueToDisplay": "ignore",
+  "css.lint.universalSelector": "ignore",
+  "css.validate": true,
+  "stylelint.enable": true,
+  "css.lint.zeroUnits": "ignore"
+}

@@ -1,48 +1,40 @@
-import { MetadataRoute } from 'next'
-
-export default function robots(): MetadataRoute.Robots {
+export function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fixr.vercel.app'
-  
-  return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/dashboard/',
-          '/api/',
-          '/sign-in',
-          '/sign-up',
-          '/invite/',
-          '/admin/',
-          '/_next/',
-          '/static/',
-          '/favicon.ico',
-          '/og-image.png'
-        ]
-      },
-      {
-        userAgent: 'GPTBot',
-        disallow: ['/']
-      },
-      {
-        userAgent: 'ChatGPT-User',
-        disallow: ['/']
-      },
-      {
-        userAgent: 'CCBot',
-        disallow: ['/']
-      },
-      {
-        userAgent: 'anthropic-ai',
-        disallow: ['/']
-      },
-      {
-        userAgent: 'Claude-Web',
-        disallow: ['/']
-      }
-    ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl
-  }
+
+  const body = [
+    'User-agent: *',
+    'Allow: /',
+    'Disallow: /dashboard/',
+    'Disallow: /api/',
+    'Disallow: /sign-in',
+    'Disallow: /sign-up',
+    'Disallow: /invite/',
+    'Disallow: /admin/',
+    'Disallow: /_next/',
+    'Disallow: /static/',
+    'Disallow: /favicon.ico',
+    'Disallow: /og-image.png',
+    '',
+    'User-agent: GPTBot',
+    'Disallow: /',
+    '',
+    'User-agent: ChatGPT-User',
+    'Disallow: /',
+    '',
+    'User-agent: CCBot',
+    'Disallow: /',
+    '',
+    'User-agent: anthropic-ai',
+    'Disallow: /',
+    '',
+    'User-agent: Claude-Web',
+    'Disallow: /',
+    '',
+    `Sitemap: ${baseUrl}/sitemap.xml`,
+    `Host: ${baseUrl}`,
+  ].join('\n')
+
+  return new Response(body, {
+    headers: { 'Content-Type': 'text/plain' },
+  })
 }

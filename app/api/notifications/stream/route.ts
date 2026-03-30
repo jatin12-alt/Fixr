@@ -44,10 +44,6 @@ export async function GET(req: NextRequest) {
         clearInterval(pingInterval)
         notificationEmitter.unsubscribe(userId, controller)
       })
-    },
-    cancel() {
-      // Controller is not available here, just cleanup the subscription
-      notificationEmitter.unsubscribe(userId)
     }
   })
 

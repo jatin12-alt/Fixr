@@ -17,9 +17,6 @@ if (process.env.NODE_ENV === 'production' && SENTRY_DSN) {
     // Release version
     release: process.env.npm_package_version,
     
-    // Capture unhandled promise rejections
-    captureUnhandledRejections: true,
-    
     // Ignore common server errors
     ignoreErrors: [
       // Database connection errors that are expected

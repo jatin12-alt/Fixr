@@ -1,4 +1,15 @@
 import '@testing-library/jest-dom'
+import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers'
+
+declare module 'expect' {
+  interface Matchers<R = void> extends TestingLibraryMatchers<typeof expect.stringContaining, R> {}
+}
+
+// Extend global type for mockFetch
+declare global {
+  var mockFetch: (data: any, status?: number) => jest.Mock
+  var mockFetchError: (error: string) => jest.Mock
+}
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({

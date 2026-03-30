@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
-import { useRef, Suspense, useState, useEffect } from "react"
-import { Canvas, useFrame } from "@react-three/fiber"
-import { TorusKnot, Text3D, Float, Center } from "@react-three/drei"
-import * as THREE from "three"
+import { useRef, useState, useEffect, Suspense } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Float, TorusKnot, Text3D, Center } from '@react-three/drei'
+import * as THREE from 'three'
 
 // Error boundary for WebGL fallback
 function CanvasErrorBoundary({ children }: { children: React.ReactNode }) {

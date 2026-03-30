@@ -119,8 +119,8 @@ pids
 .env.local
 .env.development
 
-# # AI Agent Specific Temp & Archive Folders
-# /tmp/
-# /_archive_scripts/
-# clean.js
-# cleanup.js
+# AI Agent Specific Temp & Archive Folders
+/tmp/
+/_archive_scripts/
+clean.js
+cleanup.js

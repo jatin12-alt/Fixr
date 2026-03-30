@@ -1,10 +1,11 @@
 import { Resend } from 'resend'
-import { db } from '@/lib/db'
+import { db, notificationPreferences, users } from '@/lib/db'
 import { 
   PipelineFailedEmail,
   AIAnalysisCompleteEmail,
   WeeklyDigestEmail 
 } from '@/components/emails'
+import { eq } from 'drizzle-orm'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -78,8 +79,8 @@ export async function sendWeeklyDigestEmail(
 
 // Get user notification preferences
 export async function getUserNotificationPrefs(userId: string) {
-  const prefs = await db.notificationPreferences.findUnique({
-    where: { userId },
+  const prefs = await db.query.notificationPreferences.findFirst({
+    where: eq(notificationPreferences.userId, userId),
   })
 
   return prefs || {
@@ -96,14 +97,13 @@ export async function sendNotificationByPrefs(
   type: 'pipeline_failed' | 'ai_complete' | 'auto_fix_applied',
   data: any
 ) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: { notificationPrefs: true },
+  const user = await db.query.users.findFirst({
+    where: eq(users.clerkId, userId),
   })
 
   if (!user || !user.email) return
 
-  const prefs = user.notificationPrefs
+  const prefs = await getUserNotificationPrefs(userId)
 
   switch (type) {
     case 'pipeline_failed':

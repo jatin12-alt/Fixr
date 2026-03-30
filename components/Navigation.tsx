@@ -57,20 +57,13 @@ export function Navigation() {
         variants={{ visible: { y: 0 }, hidden: { y: '-100%' } }}
         animate={hidden ? 'hidden' : 'visible'}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          background: atTop ? 'rgba(5,5,8,0.3)' : 'rgba(5,5,8,0.85)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: atTop ? '1px solid transparent' : '1px solid rgba(255,255,255,0.08)',
-          transition: 'background 0.3s ease, border-color 0.3s ease',
-        }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        atTop 
+          ? 'bg-[rgba(5,5,8,0.3)] border-b border-transparent' 
+          : 'bg-[rgba(5,5,8,0.85)] border-b border-white/8'
+      } backdrop-blur-xl`}
       >
-        <div className="container mx-auto px-6 py-4" style={{ minHeight: '72px' }}>
+        <div className="container mx-auto px-6 py-4 min-h-[72px]">
           <div className="flex justify-between items-center">
 
             {/* Logo */}
@@ -183,7 +176,7 @@ export function Navigation() {
                       {item.name}
                     </Link>
                   ))}
-                  <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="pt-3 space-y-2 border-t border-white/8">
                     {isSignedIn ? (
                       <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" size="sm" className="w-full">Dashboard</Button>

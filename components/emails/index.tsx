@@ -1,9 +1,20 @@
-import { Html } from '@react-email/html'
-import { Text } from '@react-email/text'
-import { Section } from '@react-email/section'
-import { Container } from '@react-email/container'
-import { Button } from '@react-email/button'
-import { Heading } from '@react-email/heading'
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable react/no-unknown-property */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/jsx-props-no-spreading */
+import React from 'react'
+
+// Utility function to escape HTML to prevent XSS
+const escapeHtml = (text: string): string => {
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }
+  return text.replace(/[&<>"']/g, (m) => map[m])
+}
 
 interface PipelineFailedEmailProps {
   repoName: string
@@ -13,44 +24,50 @@ interface PipelineFailedEmailProps {
 
 export function PipelineFailedEmail({ repoName, errorSummary, repoUrl }: PipelineFailedEmailProps) {
   return (
-    <Html>
-      <Container style={container}>
-        <Heading style={heading}>Pipeline Failed: {repoName}</Heading>
-        
-        <Section style={section}>
-          <Text style={text}>
-            Your pipeline for <strong>{repoName}</strong> has failed.
-          </Text>
-          
-          <Text style={text}>
-            <strong>Error Summary:</strong>
-          </Text>
-          <Text style={errorText}>{errorSummary}</Text>
-          
-          <Text style={text}>
-            Fixr AI is analyzing the failure and will attempt to fix it automatically.
-          </Text>
-        </Section>
+    <div
+      dangerouslySetInnerHTML={{
+        __html: `
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #000000; color: #ffffff; font-family: Arial, sans-serif;">
+            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff;">Pipeline Failed: ${escapeHtml(repoName)}</h1>
+            
+            <div style="margin-bottom: 30px;">
+              <p style="font-size: 16px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;">
+                Your pipeline for <strong>${escapeHtml(repoName)}</strong> has failed.
+              </p>
+              
+              <p style="font-size: 16px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;">
+                <strong>Error Summary:</strong>
+              </p>
+              <div style="font-size: 14px; line-height: 1.5; color: #ef4444; background-color: #1f2937; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                ${escapeHtml(errorSummary)}
+              </div>
+              
+              <p style="font-size: 16px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;">
+                Fixr AI is analyzing the failure and will attempt to fix it automatically.
+              </p>
+            </div>
 
-        <Section style={buttonSection}>
-          <Button href={repoUrl} style={button}>
-            View Pipeline Details
-          </Button>
-        </Section>
+            <div style="text-align: center; margin-bottom: 30px;">
+              <a href="${escapeHtml(repoUrl)}" style="background-color: #06b6d4; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
+                View Pipeline Details
+              </a>
+            </div>
 
-        <Section style={footerSection}>
-          <Text style={footerText}>
-            You're receiving this email because you have pipeline failure notifications enabled.
-          </Text>
-          <Text style={footerText}>
-            To manage your notification preferences, visit your{' '}
-            <a href="https://fixr.ai/dashboard/settings/notifications" style={link}>
-              notification settings
-            </a>.
-          </Text>
-        </Section>
-      </Container>
-    </Html>
+            <div style="border-top: 1px solid #374151; padding-top: 20px;">
+              <p style="font-size: 14px; color: #9ca3af; margin-bottom: 8px;">
+                You're receiving this email because you have pipeline failure notifications enabled.
+              </p>
+              <p style="font-size: 14px; color: #9ca3af; margin-bottom: 8px;">
+                To manage your notification preferences, visit your{' '}
+                <a href="https://fixr.ai/dashboard/settings/notifications" style="color: #06b6d4; text-decoration: underline;">
+                  notification settings
+                </a>.
+              </p>
+            </div>
+          </div>
+        `
+      }}
+    />
   )
 }
 
@@ -68,42 +85,48 @@ export function AIAnalysisCompleteEmail({
   repoUrl 
 }: AIAnalysisCompleteEmailProps) {
   return (
-    <Html>
-      <Container style={container}>
-        <Heading style={heading}>
-          AI Analysis Complete: {repoName}
-        </Heading>
-        
-        <Section style={section}>
-          <Text style={text}>
-            Fixr AI has completed analysis of your pipeline failure for <strong>{repoName}</strong>.
-          </Text>
-          
-          <Text style={text}>
-            <strong>Result:</strong>
-          </Text>
-          <Text style={resultText}>{result}</Text>
-          
-          {fixApplied && (
-            <Text style={successText}>
-              ✅ An automatic fix has been applied to your repository.
-            </Text>
-          )}
-        </Section>
+    <div
+      dangerouslySetInnerHTML={{
+        __html: `
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #000000; color: #ffffff; font-family: Arial, sans-serif;">
+            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff;">
+              AI Analysis Complete: ${escapeHtml(repoName)}
+            </h1>
+            
+            <div style="margin-bottom: 30px;">
+              <p style="font-size: 16px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;">
+                Fixr AI has completed analysis of your pipeline failure for <strong>${escapeHtml(repoName)}</strong>.
+              </p>
+              
+              <p style="font-size: 16px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;">
+                <strong>Result:</strong>
+              </p>
+              <div style="font-size: 14px; line-height: 1.5; color: #10b981; background-color: #1f2937; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                ${escapeHtml(result)}
+              </div>
+              
+              ${fixApplied ? `
+                <p style="font-size: 16px; line-height: 1.5; color: #10b981; margin-bottom: 16px;">
+                  ✅ An automatic fix has been applied to your repository.
+                </p>
+              ` : ''}
+            </div>
 
-        <Section style={buttonSection}>
-          <Button href={repoUrl} style={button}>
-            {fixApplied ? 'View Fix Details' : 'View Analysis Details'}
-          </Button>
-        </Section>
+            <div style="text-align: center; margin-bottom: 30px;">
+              <a href="${escapeHtml(repoUrl)}" style="background-color: #06b6d4; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
+                ${fixApplied ? 'View Fix Details' : 'View Analysis Details'}
+              </a>
+            </div>
 
-        <Section style={footerSection}>
-          <Text style={footerText}>
-            You're receiving this email because you have AI fix notifications enabled.
-          </Text>
-        </Section>
-      </Container>
-    </Html>
+            <div style="border-top: 1px solid #374151; padding-top: 20px;">
+              <p style="font-size: 14px; color: #9ca3af; margin-bottom: 8px;">
+                You're receiving this email because you have AI fix notifications enabled.
+              </p>
+            </div>
+          </div>
+        `
+      }}
+    />
   )
 }
 
@@ -122,199 +145,68 @@ export function WeeklyDigestEmail({
   timeSaved,
   topRepos
 }: WeeklyDigestEmailProps) {
+  const topReposHtml = topRepos.map((repo, index) => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #374151;">
+      <span style="font-size: 14px; font-weight: bold; color: #ffffff;">${escapeHtml(repo.name)}</span>
+      <span style="font-size: 14px; color: #9ca3af;">
+        ${repo.runs} runs • ${repo.successRate.toFixed(1)}% success
+      </span>
+    </div>
+  `).join('')
+
   return (
-    <Html>
-      <Container style={container}>
-        <Heading style={heading}>Your Weekly Fixr Digest</Heading>
-        
-        <Section style={section}>
-          <Text style={text}>
-            Here's your pipeline health summary for the past week:
-          </Text>
-          
-          <div style={statsGrid}>
-            <div style={statCard}>
-              <Text style={statNumber}>{totalRuns}</Text>
-              <Text style={statLabel}>Total Runs</Text>
+    <div
+      dangerouslySetInnerHTML={{
+        __html: `
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #000000; color: #ffffff; font-family: Arial, sans-serif;">
+            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff;">Your Weekly Fixr Digest</h1>
+            
+            <div style="margin-bottom: 30px;">
+              <p style="font-size: 16px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;">
+                Here's your pipeline health summary for the past week:
+              </p>
+              
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;">
+                <div style="background-color: #1f2937; padding: 16px; border-radius: 6px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #06b6d4; margin-bottom: 4px;">${totalRuns}</div>
+                  <div style="font-size: 14px; color: #9ca3af;">Total Runs</div>
+                </div>
+                <div style="background-color: #1f2937; padding: 16px; border-radius: 6px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #06b6d4; margin-bottom: 4px;">${successRate.toFixed(1)}%</div>
+                  <div style="font-size: 14px; color: #9ca3af;">Success Rate</div>
+                </div>
+                <div style="background-color: #1f2937; padding: 16px; border-radius: 6px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #06b6d4; margin-bottom: 4px;">${fixesApplied}</div>
+                  <div style="font-size: 14px; color: #9ca3af;">AI Fixes Applied</div>
+                </div>
+                <div style="background-color: #1f2937; padding: 16px; border-radius: 6px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #06b6d4; margin-bottom: 4px;">${timeSaved.toFixed(1)}h</div>
+                  <div style="font-size: 14px; color: #9ca3af;">Time Saved</div>
+                </div>
+              </div>
             </div>
-            <div style={statCard}>
-              <Text style={statNumber}>{successRate.toFixed(1)}%</Text>
-              <Text style={statLabel}>Success Rate</Text>
+
+            ${topRepos.length > 0 ? `
+              <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">Top Repositories</h2>
+                ${topReposHtml}
+              </div>
+            ` : ''}
+
+            <div style="text-align: center; margin-bottom: 30px;">
+              <a href="https://fixr.ai/dashboard/analytics" style="background-color: #06b6d4; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
+                View Full Analytics
+              </a>
             </div>
-            <div style={statCard}>
-              <Text style={statNumber}>{fixesApplied}</Text>
-              <Text style={statLabel}>AI Fixes Applied</Text>
-            </div>
-            <div style={statCard}>
-              <Text style={statNumber}>{timeSaved.toFixed(1)}h</Text>
-              <Text style={statLabel}>Time Saved</Text>
+
+            <div style="border-top: 1px solid #374151; padding-top: 20px;">
+              <p style="font-size: 14px; color: #9ca3af; margin-bottom: 8px;">
+                You're receiving this email because you have weekly digest enabled.
+              </p>
             </div>
           </div>
-        </Section>
-
-        {topRepos.length > 0 && (
-          <Section style={section}>
-            <Text style={subheading}>Top Repositories</Text>
-            {topRepos.map((repo, index) => (
-              <div key={index} style={repoRow}>
-                <Text style={repoName}>{repo.name}</Text>
-                <Text style={repoStats}>
-                  {repo.runs} runs • {repo.successRate.toFixed(1)}% success
-                </Text>
-              </div>
-            ))}
-          </Section>
-        )}
-
-        <Section style={buttonSection}>
-          <Button href="https://fixr.ai/dashboard/analytics" style={button}>
-            View Full Analytics
-          </Button>
-        </Section>
-
-        <Section style={footerSection}>
-          <Text style={footerText}>
-            You're receiving this email because you have weekly digest enabled.
-          </Text>
-        </Section>
-      </Container>
-    </Html>
+        `
+      }}
+    />
   )
-}
-
-// Styles
-const container = {
-  maxWidth: '600px',
-  margin: '0 auto',
-  padding: '20px',
-  backgroundColor: '#000000',
-  color: '#ffffff',
-}
-
-const heading = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  marginBottom: '20px',
-  color: '#ffffff',
-}
-
-const subheading = {
-  fontSize: '18px',
-  fontWeight: 'bold',
-  marginBottom: '10px',
-  color: '#ffffff',
-}
-
-const section = {
-  marginBottom: '30px',
-}
-
-const text = {
-  fontSize: '16px',
-  lineHeight: '1.5',
-  color: '#d1d5db',
-  marginBottom: '16px',
-}
-
-const errorText = {
-  fontSize: '14px',
-  lineHeight: '1.5',
-  color: '#ef4444',
-  backgroundColor: '#1f2937',
-  padding: '12px',
-  borderRadius: '6px',
-  marginBottom: '16px',
-}
-
-const resultText = {
-  fontSize: '14px',
-  lineHeight: '1.5',
-  color: '#10b981',
-  backgroundColor: '#1f2937',
-  padding: '12px',
-  borderRadius: '6px',
-  marginBottom: '16px',
-}
-
-const successText = {
-  fontSize: '16px',
-  lineHeight: '1.5',
-  color: '#10b981',
-  marginBottom: '16px',
-}
-
-const buttonSection = {
-  textAlign: 'center' as const,
-  marginBottom: '30px',
-}
-
-const button = {
-  backgroundColor: '#06b6d4',
-  color: '#ffffff',
-  padding: '12px 24px',
-  borderRadius: '6px',
-  textDecoration: 'none',
-  display: 'inline-block',
-  fontWeight: 'bold',
-}
-
-const footerSection = {
-  borderTop: '1px solid #374151',
-  paddingTop: '20px',
-}
-
-const footerText = {
-  fontSize: '14px',
-  color: '#9ca3af',
-  marginBottom: '8px',
-}
-
-const link = {
-  color: '#06b6d4',
-  textDecoration: 'underline',
-}
-
-const statsGrid = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, 1fr)',
-  gap: '16px',
-  marginBottom: '20px',
-}
-
-const statCard = {
-  backgroundColor: '#1f2937',
-  padding: '16px',
-  borderRadius: '6px',
-  textAlign: 'center' as const,
-}
-
-const statNumber = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: '#06b6d4',
-  marginBottom: '4px',
-}
-
-const statLabel = {
-  fontSize: '14px',
-  color: '#9ca3af',
-}
-
-const repoRow = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '8px 0',
-  borderBottom: '1px solid #374151',
-}
-
-const repoName = {
-  fontSize: '14px',
-  fontWeight: 'bold',
-  color: '#ffffff',
-}
-
-const repoStats = {
-  fontSize: '14px',
-  color: '#9ca3af',
 }

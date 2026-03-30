@@ -77,9 +77,7 @@ if (process.env.NODE_ENV === 'production' && SENTRY_DSN) {
     
     // Integrations
     integrations: [
-      new Sentry.Replay({
-        // Additional Replay configuration goes here
-        // For example, note the following:
+      Sentry.replayIntegration({
         maskAllText: true,
         blockAllMedia: true,
       }),

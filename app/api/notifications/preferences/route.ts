@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getAuth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
+import { db, notificationPreferences } from '@/lib/db'
+import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const { userId } = getAuth(req)
@@ -10,11 +11,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const preferences = await db.notificationPreferences.findUnique({
-      where: { userId },
-    })
+    const preferences = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1)
 
-    return Response.json(preferences || {
+    return Response.json(preferences[0] || {
       emailOnFailure: true,
       emailOnFix: true,
       weeklyDigest: false,
@@ -40,16 +39,15 @@ export async function PUT(req: NextRequest) {
     const body = await req.json()
     const { emailOnFailure, emailOnFix, weeklyDigest, pushEnabled } = body
 
-    await db.notificationPreferences.upsert({
-      where: { userId },
-      update: {
-        emailOnFailure,
-        emailOnFix,
-        weeklyDigest,
-        pushEnabled,
-      },
-      create: {
-        userId,
+    await db.insert(notificationPreferences).values({
+      userId,
+      emailOnFailure,
+      emailOnFix,
+      weeklyDigest,
+      pushEnabled,
+    }).onConflictDoUpdate({
+      target: notificationPreferences.userId,
+      set: {
         emailOnFailure,
         emailOnFix,
         weeklyDigest,

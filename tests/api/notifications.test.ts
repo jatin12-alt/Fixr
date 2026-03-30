@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { authenticate } from '../helpers/auth'
+import { authenticate } from '../e2e/helpers/auth'
 
 test.describe('Notifications API', () => {
   test.beforeEach(async ({ page }) => {

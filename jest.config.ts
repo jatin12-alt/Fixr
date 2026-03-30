@@ -1,4 +1,4 @@
-import type { Config } from 'jest'
+import type { JestConfigWithTsJest } from 'ts-jest'
 import nextJest from 'next/jest.js'
 
 const createJestConfig = nextJest({
@@ -7,14 +7,14 @@ const createJestConfig = nextJest({
 })
 
 // Add any custom config to be passed to Jest
-const config: Config = {
+const config: JestConfigWithTsJest = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
   // Add more setup options before each test is run
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   
   // Module path aliases
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
   

@@ -10,7 +10,7 @@ import {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = auth()
   if (!userId) {
@@ -19,7 +19,8 @@ export async function POST(
 
   try {
     const { runId } = await req.json()
-    const repoId = parseInt(params.id)
+    const { id } = await params
+    const repoId = parseInt(id)
 
     if (isNaN(repoId) || !runId) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })

@@ -42,7 +42,7 @@ export default function DashboardPage() {
     if (!data?.stats) return { devHours: 0, dollars: 0 }
     const devHours = data.stats.fixesApplied * 1.5 // 1.5h per fix
     const dollars = devHours * 80 // $80/hr premium rate
-    return { devHours: devHours.toFixed(1), dollars: dollars.toLocaleString() }
+    return { devHours, dollars: dollars.toLocaleString() }
   }, [data])
 
   const filteredRuns = useMemo(() => {
@@ -180,7 +180,7 @@ export default function DashboardPage() {
           />
           <ROICard 
             label="TIME RECLAIMED" 
-            value={<AnimatedCounter value={parseFloat(roi.devHours)} suffix="h" />} 
+            value={<AnimatedCounter value={roi.devHours} suffix="h" />} 
             icon={Clock} 
             color="text-blue-400" 
             sub="Developer bandwidth"
@@ -335,16 +335,15 @@ export default function DashboardPage() {
                     Autonomous recovery handling 85%+ of failure patterns. 
                     Real-time Groq analysis active.
                   </p>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="w-full text-xs text-primary hover:text-cyan-300 hover:bg-primary/10"
-                    asChild
-                  >
-                    <Link href="/dashboard/analytics">
+                  <Link href="/dashboard/analytics" className="w-full">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="w-full text-xs text-primary hover:text-cyan-300 hover:bg-primary/10"
+                    >
                       Engine Log History <ArrowRight size={12} className="ml-2" />
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                </CardContent>
             </Card>
           </div>
@@ -413,13 +412,17 @@ function PulseItem({ run, isHovered, onHoverChange, getStatusIcon, getStatusLabe
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold text-right">Engine Confidence</span>
               <div className="flex items-center gap-3 w-full max-w-[140px]">
                 <span className="text-xs font-black text-foreground truncate">{run.aiConfidence || run.confidence || 0}%</span>
-                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden min-w-0">
+                <div 
+                  className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden min-w-0 relative"
+                  // eslint-disable-next-line react/no-unknown-property
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  style={{ '--confidence-width': `${run.aiConfidence || run.confidence || 0}%` } as React.CSSProperties}
+                >
                   <div 
-                    className={`h-full transition-all duration-1000 ${
-                      (run.aiConfidence || run.confidence || 0) > 80 ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
+                    className={`h-full transition-all duration-1000 absolute top-0 left-0 confidence-bar ${
+                      (run.aiConfidence || run.confidence || 0) > 80 ? 'bg-green-500 shadow-neon-green' : 
                       (run.aiConfidence || run.confidence || 0) > 50 ? 'bg-primary' : 'bg-red-500'
                     }`}
-                    style={{ width: `${run.aiConfidence || run.confidence || 0}%` }}
                   />
                 </div>
               </div>

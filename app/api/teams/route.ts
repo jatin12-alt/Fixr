@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       })
       .from(teams)
       .leftJoin(teamMembers, eq(teams.id, teamMembers.teamId))
-      .where(eq(teamMembers.userId, user.id))
+      .where(eq(teamMembers.userId, user.clerkId))
       .orderBy(teams.createdAt)
 
     // Group by team and add user role info
@@ -119,20 +119,20 @@ export async function POST(req: NextRequest) {
     const [newTeam] = await db.insert(teams).values({
       name,
       slug,
-      createdBy: user.id,
+      createdBy: user.clerkId,
     }).returning()
 
     // Add creator as owner
     await db.insert(teamMembers).values({
       teamId: newTeam.id,
-      userId: user.id,
+      userId: user.clerkId,
       role: 'OWNER',
     })
 
     // Log team creation
     await createAuditLog({
       teamId: newTeam.id,
-      userId: user.id,
+      userId: user.clerkId,
       action: 'team.created',
       resourceType: 'team',
       resourceId: newTeam.id.toString(),

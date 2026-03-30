@@ -4,7 +4,7 @@ import { eq, and, desc, gte, lte, count } from 'drizzle-orm'
 
 interface CreateAuditLogData {
   teamId?: number
-  userId: number
+  userId: string
   action: string
   resourceType?: string
   resourceId?: string
@@ -33,7 +33,7 @@ export async function createAuditLog(data: CreateAuditLogData): Promise<AuditLog
 
 // Specific audit log helpers
 export async function logTeamCreated(
-  userId: number,
+  userId: string,
   teamId: number,
   teamName: string,
   ipAddress?: string
@@ -50,7 +50,7 @@ export async function logTeamCreated(
 }
 
 export async function logMemberInvited(
-  userId: number,
+  userId: string,
   teamId: number,
   inviteeEmail: string,
   role: string,
@@ -67,7 +67,7 @@ export async function logMemberInvited(
 }
 
 export async function logMemberJoined(
-  userId: number,
+  userId: string,
   teamId: number,
   inviteId: string,
   ipAddress?: string
@@ -84,9 +84,9 @@ export async function logMemberJoined(
 }
 
 export async function logMemberRemoved(
-  userId: number,
+  userId: string,
   teamId: number,
-  removedUserId: number,
+  removedUserId: string,
   removedUserName: string,
   ipAddress?: string
 ) {
@@ -102,9 +102,9 @@ export async function logMemberRemoved(
 }
 
 export async function logRoleChanged(
-  userId: number,
+  userId: string,
   teamId: number,
-  targetUserId: number,
+  targetUserId: string,
   oldRole: string,
   newRole: string,
   ipAddress?: string
@@ -121,7 +121,7 @@ export async function logRoleChanged(
 }
 
 export async function logRepoConnected(
-  userId: number,
+  userId: string,
   teamId: number,
   repoId: number,
   repoName: string,
@@ -139,7 +139,7 @@ export async function logRepoConnected(
 }
 
 export async function logRepoDisconnected(
-  userId: number,
+  userId: string,
   teamId: number,
   repoId: number,
   repoName: string,
@@ -157,7 +157,7 @@ export async function logRepoDisconnected(
 }
 
 export async function logFixApplied(
-  userId: number,
+  userId: string,
   teamId: number,
   repoId: number,
   fixDescription: string,
@@ -179,7 +179,7 @@ export async function getTeamAuditLogs(
   options: {
     limit?: number
     offset?: number
-    userId?: number
+    userId?: string
     action?: string
     startDate?: Date
     endDate?: Date
@@ -227,7 +227,7 @@ export async function getTeamAuditLogs(
       },
     })
     .from(auditLogs)
-    .leftJoin(users, eq(auditLogs.userId, users.id))
+    .leftJoin(users, eq(auditLogs.userId, users.clerkId))
     .leftJoin(teams, eq(auditLogs.teamId, teams.id))
     .where(where)
     .orderBy(desc(auditLogs.createdAt))

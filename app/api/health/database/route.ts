@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sql } from 'drizzle-orm'
 
 export async function GET() {
   try {
@@ -6,7 +7,7 @@ export async function GET() {
     const { db } = await import('@/lib/db')
     
     // Try a simple database operation
-    await db.user.findFirst()
+    await db.execute(sql`SELECT 1`)
     
     return NextResponse.json({ 
       status: 'connected',
