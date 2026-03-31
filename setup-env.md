@@ -12,7 +12,7 @@ The dashboard is failing because you need to set up your environment variables.
 DATABASE_URL="postgresql://username:password@localhost:5432/fixr"
 
 # Firebase Authentication - Get these from https://console.firebase.google.com/
-NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyClTAy3HBAxQFsk9lYY5ZFFkRAOkw0hgbc"
+NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key-here"
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="fixr-f0e28.firebaseapp.com"
 NEXT_PUBLIC_FIREBASE_PROJECT_ID="fixr-f0e28"
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="fixr-f0e28.firebasestorage.app"

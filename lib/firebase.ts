@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyClTAy3HBAxQFsk9lYY5ZFFkRAOkw0hgbc",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
   authDomain: "fixr-f0e28.firebaseapp.com",
   projectId: "fixr-f0e28",
   storageBucket: "fixr-f0e28.firebasestorage.app",
