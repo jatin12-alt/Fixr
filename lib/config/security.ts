@@ -48,8 +48,8 @@ export const securityConfig = {
 export function validateEnvironment() {
   const required = [
     'DATABASE_URL',
-    'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-    'CLERK_SECRET_KEY',
+    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+    'FIREBASE_CLIENT_EMAIL',
     'GITHUB_CLIENT_ID',
     'GITHUB_CLIENT_SECRET',
     'GROQ_API_KEY',

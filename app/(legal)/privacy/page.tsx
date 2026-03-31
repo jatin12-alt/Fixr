@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li><strong>Encryption:</strong> GitHub tokens are encrypted with AES-256-GCM at rest</li>
             <li><strong>Database:</strong> PostgreSQL hosted on Neon with encryption in transit</li>
-            <li><strong>Authentication:</strong> Managed by Clerk, an industry-standard auth provider</li>
+            <li><strong>Authentication:</strong> Managed by Firebase, an industry-standard auth provider</li>
             <li><strong>HTTPS:</strong> All data transmitted over TLS 1.3</li>
             <li><strong>Access Controls:</strong> Strict internal access controls and audit logs</li>
           </ul>
@@ -104,7 +104,7 @@ export default function PrivacyPolicy() {
           </p>
           
           <ul className="list-disc pl-6 space-y-2 mb-4">
-            <li><strong>Clerk:</strong> User authentication and session management</li>
+            <li><strong>Firebase:</strong> User authentication and session management</li>
             <li><strong>GitHub API:</strong> Repository access and webhook delivery</li>
             <li><strong>Groq API:</strong> AI analysis for pipeline failure detection</li>
             <li><strong>Neon:</strong> PostgreSQL database hosting</li>

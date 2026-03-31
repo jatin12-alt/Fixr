@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, teamMembers, teamInvites, teams } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
 import { eq, and, gt, desc, isNull } from 'drizzle-orm'
@@ -8,10 +8,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -26,7 +26,7 @@ export async function GET(
     ).limit(1)
 
     if (!membership || membership.length === 0) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get pending invites
@@ -55,10 +55,10 @@ export async function GET(
       )
       .orderBy(desc(teamInvites.createdAt))
 
-    return Response.json(invites)
+    return NextResponse.json(invites)
   } catch (error) {
     console.error('Failed to fetch team invites:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch team invites' },
       { status: 500 }
     )
@@ -69,10 +69,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -82,7 +82,7 @@ export async function POST(
     const { email, role = 'MEMBER' } = body
 
     if (!email) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Email is required' },
         { status: 400 }
       )
@@ -97,7 +97,7 @@ export async function POST(
     ).limit(1)
 
     if (!membership || membership.length === 0) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Check if there's already a pending invite
@@ -111,7 +111,7 @@ export async function POST(
     ).limit(1)
 
     if (existingInvite && existingInvite.length > 0) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Invite already sent' },
         { status: 409 }
       )
@@ -146,13 +146,10 @@ export async function POST(
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
-    // TODO: Send invitation email
-    // await sendTeamInviteEmail(email, invite.token, invite.team.name)
-
-    return Response.json(invite, { status: 201 })
+    return NextResponse.json(invite, { status: 201 })
   } catch (error) {
     console.error('Failed to create invite:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to create invite' },
       { status: 500 }
     )
@@ -163,10 +160,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -174,7 +171,7 @@ export async function DELETE(
   const inviteId = searchParams.get('inviteId')
 
   if (!inviteId) {
-    return Response.json(
+    return NextResponse.json(
       { error: 'Invite ID is required' },
       { status: 400 }
     )
@@ -190,7 +187,7 @@ export async function DELETE(
     ).limit(1)
 
     if (!membership || membership.length === 0) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get and delete invite
@@ -202,7 +199,7 @@ export async function DELETE(
     ).limit(1)
 
     if (!invite || invite.length === 0) {
-      return Response.json({ error: 'Invite not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Invite not found' }, { status: 404 })
     }
 
     await db.delete(teamInvites).where(
@@ -222,10 +219,10 @@ export async function DELETE(
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
-    return Response.json({ success: true })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to cancel invite:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to cancel invite' },
       { status: 500 }
     )

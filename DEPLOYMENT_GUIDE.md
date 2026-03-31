@@ -7,7 +7,7 @@ Before you begin, make sure you have:
 - [ ] GitHub account with admin access to test repositories
 - [ ] Vercel account (free tier is fine)
 - [ ] Neon account (for PostgreSQL database)
-- [ ] Clerk account (for authentication)
+- [ ] Firebase project (for authentication)
 - [ ] Resend account (for email notifications, optional)
 
 ---
@@ -39,10 +39,10 @@ npm run db:prisma:migrate
 
 ---
 
-## 🔐 Step 2: Authentication Setup (Clerk)
+## 🔐 Step 2: Authentication Setup (Firebase)
 
-### 2.1 Create Clerk Application
-1. Go to [https://dashboard.clerk.com/](https://dashboard.clerk.com/)
+### 2.1 Create Firebase Project
+1. Go to [https://console.firebase.google.com/](https://console.firebase.google.com/)
 2. Click "Add application"
 3. Give it a name (e.g., "Fixr Production")
 4. Select "Next.js" as the framework
@@ -144,8 +144,8 @@ vercel
 #### Required Variables:
 ```
 DATABASE_URL = your-neon-connection-string
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = pk_test_...
-CLERK_SECRET_KEY = sk_test_...
+FIREBASE_CLIENT_EMAIL = firebase-adminsdk-xxx@project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY = -----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
 GITHUB_CLIENT_ID = your-github-client-id
 GITHUB_CLIENT_SECRET = your-github-client-secret
 NEXT_PUBLIC_GITHUB_CALLBACK_URL = https://your-app.vercel.app/api/webhook/github/callback
@@ -283,7 +283,8 @@ curl https://your-app.vercel.app/api/health/database
 ### Authentication Issues
 - Verify Clerk keys are correct
 - Check allowed origins in Clerk dashboard
-- Ensure NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is set
+- Ensure NEXT_PUBLIC_FIREBASE_PROJECT_ID is set
+- Ensure FIREBASE_CLIENT_EMAIL is set
 
 ### GitHub Webhook Issues
 - Check webhook URL is accessible

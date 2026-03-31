@@ -17,8 +17,8 @@ async function authenticate(page: Page) {
   // Set auth cookies for testing
   await page.context().addCookies([
     {
-      name: '__clerk_session',
-      value: 'test-session-token',
+      name: 'firebase_token',
+      value: 'test-firebase-token',
       domain: 'localhost',
       path: '/',
       httpOnly: true,
@@ -29,9 +29,9 @@ async function authenticate(page: Page) {
   
   // Mock user data in localStorage
   await page.evaluate(() => {
-    localStorage.setItem('clerk-db-jwt', 'test-jwt')
-    localStorage.setItem('__clerk_user', JSON.stringify({
-      id: 'test-user',
+    localStorage.setItem('firebase_token', 'test-firebase-token')
+    localStorage.setItem('firebase_user', JSON.stringify({
+      uid: 'test-user',
       email: 'test@example.com',
     }))
   })

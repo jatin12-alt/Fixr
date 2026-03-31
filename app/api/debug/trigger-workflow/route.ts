@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { getAuth } from '@/lib/auth'
 import { db, repos, pipelineRuns } from '@/lib/db'
 import { eq } from 'drizzle-orm'
-import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = auth()
+    const { userId } = await getAuth(req)
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const body = await req.json()
-    const { repository, action } = body
 
     // Find the repository (using CodeSense-AI with ID 3 for testing)
     const repoRecord = await db

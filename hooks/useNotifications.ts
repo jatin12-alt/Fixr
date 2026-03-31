@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 
-interface Notification {
+export interface Notification {
   id: string
   type: string
   title: string
@@ -13,7 +13,9 @@ interface Notification {
 }
 
 export function useNotifications() {
-  const { userId, isSignedIn } = useAuth()
+  const { user } = useAuth()
+  const userId = user?.uid
+  const isSignedIn = !!user
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
@@ -22,10 +24,15 @@ export function useNotifications() {
 
   // Fetch initial notifications
   const fetchNotifications = useCallback(async () => {
-    if (!userId) return
+    if (!user) return
 
     try {
-      const response = await fetch('/api/notifications?limit=50')
+      const idToken = await user.getIdToken()
+      const response = await fetch('/api/notifications?limit=50', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setNotifications(data.notifications)
@@ -34,11 +41,11 @@ export function useNotifications() {
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
     }
-  }, [userId])
+  }, [user])
 
   // Connect to SSE stream
   const connectStream = useCallback(() => {
-    if (!userId) return
+    if (!user) return
 
     const eventSource = new EventSource('/api/notifications/stream')
 
@@ -80,16 +87,20 @@ export function useNotifications() {
     }
 
     return eventSource
-  }, [userId, reconnectAttempts])
+  }, [user, reconnectAttempts])
 
   // Mark notification as read
   const markAsRead = useCallback(async (ids: string[]) => {
-    if (!userId) return
+    if (!user) return
 
     try {
+      const idToken = await user.getIdToken()
       const response = await fetch('/api/notifications', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({ ids }),
       })
 
@@ -102,16 +113,20 @@ export function useNotifications() {
     } catch (error) {
       console.error('Failed to mark notifications as read:', error)
     }
-  }, [userId])
+  }, [user])
 
   // Mark all notifications as read
   const markAllRead = useCallback(async () => {
-    if (!userId) return
+    if (!user) return
 
     try {
+      const idToken = await user.getIdToken()
       const response = await fetch('/api/notifications', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({ all: true }),
       })
 
@@ -122,7 +137,7 @@ export function useNotifications() {
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error)
     }
-  }, [userId])
+  }, [user])
 
   const dismissNotification = useCallback((id: string) => {
     setDismissedIds(prev => new Set([...prev, id]))
@@ -130,7 +145,7 @@ export function useNotifications() {
 
   // Initialize on mount
   useEffect(() => {
-    if (isSignedIn && userId) {
+    if (isSignedIn && user) {
       fetchNotifications()
       const eventSource = connectStream()
 
@@ -140,7 +155,7 @@ export function useNotifications() {
         }
       }
     }
-  }, [isSignedIn, userId, fetchNotifications, connectStream])
+  }, [isSignedIn, user, fetchNotifications, connectStream])
 
   return {
     notifications: notifications.filter(n => !dismissedIds.has(n.id)),

@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, teamInvites, teamMembers, teams } from '@/lib/db'
 import { eq, and, gt, isNull } from 'drizzle-orm'
 import { createAuditLog } from '@/lib/audit'
@@ -8,10 +8,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { token } = await params
@@ -45,7 +45,7 @@ export async function GET(
       .limit(1)
 
     if (!invite.length) {
-      return Response.json({ error: 'Invalid or expired invite' }, { status: 404 })
+      return NextResponse.json({ error: 'Invalid or expired invite' }, { status: 404 })
     }
 
     // Check if user is already a member
@@ -61,10 +61,10 @@ export async function GET(
       .limit(1)
 
     if (existingMember.length > 0) {
-      return Response.json({ error: 'Already a team member' }, { status: 409 })
+      return NextResponse.json({ error: 'Already a team member' }, { status: 409 })
     }
 
-    return Response.json({
+    return NextResponse.json({
       team: {
         id: invite[0].team?.id || 0,
         name: invite[0].team?.name || '',
@@ -75,7 +75,7 @@ export async function GET(
     })
   } catch (error) {
     console.error('Failed to fetch invite:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch invite' },
       { status: 500 }
     )
@@ -86,10 +86,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { token } = await params
@@ -123,7 +123,7 @@ export async function POST(
       .limit(1)
 
     if (!invite.length) {
-      return Response.json({ error: 'Invalid or expired invite' }, { status: 404 })
+      return NextResponse.json({ error: 'Invalid or expired invite' }, { status: 404 })
     }
 
     // Check if user is already a member
@@ -139,7 +139,7 @@ export async function POST(
       .limit(1)
 
     if (existingMember.length > 0) {
-      return Response.json({ error: 'Already a team member' }, { status: 409 })
+      return NextResponse.json({ error: 'Already a team member' }, { status: 409 })
     }
 
     // Add user to team
@@ -166,7 +166,7 @@ export async function POST(
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
-    return Response.json({
+    return NextResponse.json({
       success: true,
       teamMember: teamMember[0],
       team: {
@@ -177,7 +177,7 @@ export async function POST(
     })
   } catch (error) {
     console.error('Failed to accept invite:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to accept invite' },
       { status: 500 }
     )

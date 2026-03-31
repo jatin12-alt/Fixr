@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, users, repos, pipelineRuns, githubTokens } from '@/lib/db'
 import { eq, desc, and, sql } from 'drizzle-orm'
 import { secureAPIRoute } from '@/lib/middleware/security'
@@ -8,7 +8,7 @@ import { apiRateLimit } from '@/lib/middleware/rate-limit'
 // Secure GET endpoint
 const getHandler = secureAPIRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const { userId } = auth()
+    const { userId } = await getAuth(req)
     const { id } = await params
     
     console.log("🔍 FETCHING_REPO_ID:", id, "USER_ID:", userId)
@@ -56,7 +56,7 @@ const getHandler = secureAPIRoute(
             user: users,
           })
           .from(repos)
-          .leftJoin(users, eq(repos.userId, users.clerkId))
+          .leftJoin(users, eq(repos.userId, users.authId))
           .where(and(eq(repos.id, repoId), eq(repos.userId, userId)))
           .limit(1)
       } catch (selectError) {
@@ -81,7 +81,7 @@ const getHandler = secureAPIRoute(
             user: users,
           })
           .from(repos)
-          .leftJoin(users, eq(repos.userId, users.clerkId))
+          .leftJoin(users, eq(repos.userId, users.authId))
           .where(and(eq(repos.id, repoId), eq(repos.userId, userId)))
           .limit(1)
       }
@@ -260,7 +260,7 @@ const getHandler = secureAPIRoute(
 // Secure DELETE endpoint  
 const deleteHandler = secureAPIRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const { userId } = auth()
+    const { userId } = await getAuth(req)
     
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -278,7 +278,7 @@ const deleteHandler = secureAPIRoute(
       const user = await db
         .select()
         .from(users)
-        .where(eq(users.clerkId, userId))
+        .where(eq(users.authId, userId))
         .limit(1)
       
       if (user.length === 0) {
@@ -317,7 +317,7 @@ const deleteHandler = secureAPIRoute(
 // Secure PATCH endpoint
 const patchHandler = secureAPIRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const { userId } = auth()
+    const { userId } = await getAuth(req)
     
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })

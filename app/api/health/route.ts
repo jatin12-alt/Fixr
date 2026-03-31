@@ -25,7 +25,7 @@ interface HealthStatus {
       usage?: number
     }
     external_services: {
-      clerk: 'healthy' | 'unhealthy'
+      firebase: 'healthy' | 'unhealthy'
       github: 'healthy' | 'unhealthy'
       resend: 'healthy' | 'unhealthy'
     }
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
         status: 'healthy'
       },
       external_services: {
-        clerk: 'healthy',
+        firebase: 'healthy',
         github: 'healthy',
         resend: 'healthy'
       }
@@ -107,8 +107,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Check external services (simple checks)
-    const clerkKey = process.env.CLERK_SECRET_KEY
-    healthStatus.checks.external_services.clerk = clerkKey ? 'healthy' : 'unhealthy'
+    const firebaseProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    healthStatus.checks.external_services.firebase = firebaseProjectId ? 'healthy' : 'unhealthy'
 
     const githubKey = process.env.GITHUB_CLIENT_SECRET
     healthStatus.checks.external_services.github = githubKey ? 'healthy' : 'unhealthy'

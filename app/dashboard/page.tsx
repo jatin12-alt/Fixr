@@ -25,13 +25,20 @@ const AnalyticsChart = dynamic(() => import('@/components/AnalyticsChart').then(
   loading: () => <div className="h-[300px] w-full mt-4 flex items-center justify-center text-muted-foreground">Loading chart...</div>
 })
 
-const fetcher = (url: string) => fetch(url).then(r => r.json())
+import { useAuthFetcher } from '@/hooks/useAuthFetcher'
+import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { data, error, isLoading, mutate } = useSWR<DashboardData & { analytics: any[] }>('/api/dashboard', fetcher, {
-    refreshInterval: 30000 // Real-time: 30s
-  })
+  const { user } = useAuth()
+  const authFetcher = useAuthFetcher()
+  const { data, error, isLoading, mutate } = useSWR<DashboardData & { analytics: any[] }>(
+    user ? '/api/dashboard' : null, 
+    authFetcher, 
+    {
+      refreshInterval: 30000 // Real-time: 30s
+    }
+  )
 
   const [hoveredRun, setHoveredRun] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')

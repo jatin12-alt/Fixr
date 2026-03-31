@@ -9,7 +9,7 @@ export class GitHubTokenService {
       const user = await db
         .select()
         .from(users)
-        .where(eq(users.clerkId, userId))
+        .where(eq(users.authId, userId))
         .limit(1)
       
       if (user.length === 0) {
@@ -27,13 +27,13 @@ export class GitHubTokenService {
       // Delete existing tokens
       await db
         .delete(githubTokens)
-        .where(eq(githubTokens.userId, user[0].clerkId))
+        .where(eq(githubTokens.userId, user[0].authId))
 
       // Store new token
       await db
         .insert(githubTokens)
         .values({
-          userId: user[0].clerkId,
+          userId: user[0].authId,
           encryptedToken,
           tokenExpiry: expiry,
           scope,
@@ -51,7 +51,7 @@ export class GitHubTokenService {
       const user = await db
         .select()
         .from(users)
-        .where(eq(users.clerkId, userId))
+        .where(eq(users.authId, userId))
         .limit(1)
       
       if (user.length === 0) {
@@ -61,7 +61,7 @@ export class GitHubTokenService {
       const tokenRecord = await db
         .select()
         .from(githubTokens)
-        .where(eq(githubTokens.userId, user[0].clerkId))
+        .where(eq(githubTokens.userId, user[0].authId))
         .limit(1)
 
       if (tokenRecord.length === 0) {
@@ -132,7 +132,7 @@ export class GitHubTokenService {
       const user = await db
         .select()
         .from(users)
-        .where(eq(users.clerkId, userId))
+        .where(eq(users.authId, userId))
         .limit(1)
       
       if (user.length === 0) {
@@ -141,7 +141,7 @@ export class GitHubTokenService {
 
       await db
         .delete(githubTokens)
-        .where(eq(githubTokens.userId, user[0].clerkId))
+        .where(eq(githubTokens.userId, user[0].authId))
 
       console.log(`🗑️ GitHub token removed for user ${userId}`)
     } catch (error) {

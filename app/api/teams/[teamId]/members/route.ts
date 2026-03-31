@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, teamMembers, teamInvites, users } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
 import { hasPermission, canManageRole, canRemoveMember } from '@/lib/permissions'
@@ -10,10 +10,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -28,7 +28,7 @@ export async function GET(
     ).limit(1)
 
     if (!membership || membership.length === 0) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get all team members
@@ -41,7 +41,7 @@ export async function GET(
         joinedAt: teamMembers.joinedAt,
         user: {
           id: users.id,
-          clerkId: users.clerkId,
+          authId: users.authId,
           name: users.name,
           email: users.email,
           avatarUrl: users.avatarUrl,
@@ -49,14 +49,14 @@ export async function GET(
         },
       })
       .from(teamMembers)
-      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .leftJoin(users, eq(teamMembers.userId, users.authId))
       .where(eq(teamMembers.teamId, parseInt(teamId)))
       .orderBy(desc(teamMembers.joinedAt))
 
-    return Response.json(members)
+    return NextResponse.json(members)
   } catch (error) {
     console.error('Failed to fetch team members:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch team members' },
       { status: 500 }
     )
@@ -67,10 +67,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -80,7 +80,7 @@ export async function POST(
     const { email, role = 'MEMBER' } = body
 
     if (!email) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Email is required' },
         { status: 400 }
       )
@@ -95,12 +95,12 @@ export async function POST(
     ).limit(1)
 
     if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canInviteMembers')) {
-      return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Check if trying to invite someone with equal or higher role
     if (!canManageRole(membership[0].role, role as TeamRole)) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Cannot invite members with equal or higher role' },
         { status: 403 }
       )
@@ -110,7 +110,7 @@ export async function POST(
     const existingMember = await db
       .select()
       .from(teamMembers)
-      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .leftJoin(users, eq(teamMembers.userId, users.authId))
       .where(
         and(
           eq(teamMembers.teamId, parseInt(teamId)),
@@ -119,8 +119,8 @@ export async function POST(
       )
       .limit(1)
 
-    if (existingMember) {
-      return Response.json(
+    if (existingMember.length > 0) {
+      return NextResponse.json(
         { error: 'User is already a team member' },
         { status: 409 }
       )
@@ -137,7 +137,7 @@ export async function POST(
     ).limit(1)
 
     if (existingInvite && existingInvite.length > 0) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Invite already sent' },
         { status: 409 }
       )
@@ -166,10 +166,10 @@ export async function POST(
     // TODO: Send invitation email
     // await sendTeamInviteEmail(email, invite.token, invite.team.name)
 
-    return Response.json(invite, { status: 201 })
+    return NextResponse.json(invite, { status: 201 })
   } catch (error) {
     console.error('Failed to invite member:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to invite member' },
       { status: 500 }
     )
@@ -180,10 +180,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -193,7 +193,7 @@ export async function PATCH(
     const { memberUserId, newRole } = body
 
     if (!memberUserId || !newRole) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Member ID and new role are required' },
         { status: 400 }
       )
@@ -208,7 +208,7 @@ export async function PATCH(
     ).limit(1)
 
     if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canRemoveMembers')) {
-      return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Get target member
@@ -219,14 +219,14 @@ export async function PATCH(
       )
     ).limit(1)
 
-    if (!targetMember) {
-      return Response.json({ error: 'Member not found' }, { status: 404 })
+    if (!targetMember || targetMember.length === 0) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 })
     }
 
     // Check if can manage this member's role
     if (!canManageRole(membership[0].role, targetMember[0].role) || 
         !canManageRole(membership[0].role, newRole as TeamRole)) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Cannot manage roles equal or higher than yours' },
         { status: 403 }
       )
@@ -258,10 +258,10 @@ export async function PATCH(
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
-    return Response.json(updatedMember)
+    return NextResponse.json(updatedMember)
   } catch (error) {
     console.error('Failed to update member role:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to update member role' },
       { status: 500 }
     )
@@ -272,10 +272,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -283,7 +283,7 @@ export async function DELETE(
   const memberUserId = searchParams.get('memberId')
 
   if (!memberUserId) {
-    return Response.json(
+    return NextResponse.json(
       { error: 'Member ID is required' },
       { status: 400 }
     )
@@ -299,7 +299,7 @@ export async function DELETE(
     ).limit(1)
 
     if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canRemoveMembers')) {
-      return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Get target member
@@ -312,14 +312,14 @@ export async function DELETE(
         joinedAt: teamMembers.joinedAt,
         user: {
           id: users.id,
-          clerkId: users.clerkId,
+          authId: users.authId,
           name: users.name,
           email: users.email,
           avatarUrl: users.avatarUrl,
         },
       })
       .from(teamMembers)
-      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .leftJoin(users, eq(teamMembers.userId, users.authId))
       .where(
         and(
           eq(teamMembers.teamId, parseInt(teamId)),
@@ -329,12 +329,12 @@ export async function DELETE(
       .limit(1)
 
     if (!targetMember || targetMember.length === 0) {
-      return Response.json({ error: 'Member not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 })
     }
 
     // Check if can remove this member
     if (!canRemoveMember(membership[0].role, targetMember[0].role)) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Cannot remove members with equal or higher role' },
         { status: 403 }
       )
@@ -362,10 +362,10 @@ export async function DELETE(
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
-    return Response.json({ success: true })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to remove member:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to remove member' },
       { status: 500 }
     )

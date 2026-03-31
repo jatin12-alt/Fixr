@@ -227,7 +227,7 @@ export async function getTeamAuditLogs(
       },
     })
     .from(auditLogs)
-    .leftJoin(users, eq(auditLogs.userId, users.clerkId))
+    .leftJoin(users, eq(auditLogs.userId, users.authId))
     .leftJoin(teams, eq(auditLogs.teamId, teams.id))
     .where(where)
     .orderBy(desc(auditLogs.createdAt))

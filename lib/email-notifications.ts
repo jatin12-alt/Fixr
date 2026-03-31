@@ -98,7 +98,7 @@ export async function sendNotificationByPrefs(
   data: any
 ) {
   const user = await db.query.users.findFirst({
-    where: eq(users.clerkId, userId),
+    where: eq(users.authId, userId),
   })
 
   if (!user || !user.email) return

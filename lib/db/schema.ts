@@ -14,7 +14,7 @@ export const healthStatusEnum = pgEnum('health_status', ['healthy', 'failed', 'p
 // Tables
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  clerkId: text('clerk_id').unique().notNull(),
+  authId: text('auth_id').unique().notNull(),
   email: text('email').notNull(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
@@ -24,7 +24,7 @@ export const users = pgTable('users', {
 
 export const repos = pgTable('repos', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').references(() => users.clerkId),
+  userId: text('user_id').references(() => users.authId),
   teamId: integer('team_id').references(() => teams.id),
   githubId: text('github_id').notNull(),
   name: text('name').notNull(),
@@ -57,7 +57,7 @@ export const pipelineRuns = pgTable('pipeline_runs', {
 
 export const githubTokens = pgTable('github_tokens', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').references(() => users.clerkId),
+  userId: text('user_id').references(() => users.authId),
   encryptedToken: text('encrypted_token').notNull(),
   tokenExpiry: timestamp('token_expiry'),
   scope: text('scope').notNull(),
@@ -70,14 +70,14 @@ export const teams = pgTable('teams', {
   name: text('name').notNull(),
   slug: text('slug').unique().notNull(),
   avatarUrl: text('avatar_url'),
-  createdBy: text('created_by').references(() => users.clerkId),
+  createdBy: text('created_by').references(() => users.authId),
   createdAt: timestamp('created_at').defaultNow(),
 })
 
 export const teamMembers = pgTable('team_members', {
   id: serial('id').primaryKey(),
   teamId: integer('team_id').references(() => teams.id),
-  userId: text('user_id').references(() => users.clerkId),
+  userId: text('user_id').references(() => users.authId),
   role: teamRoleEnum('role').notNull().default('MEMBER'),
   joinedAt: timestamp('joined_at').defaultNow(),
 })
@@ -95,7 +95,7 @@ export const teamInvites = pgTable('team_invites', {
 
 export const notifications = pgTable('notifications', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').references(() => users.clerkId),
+  userId: text('user_id').references(() => users.authId),
   type: notificationTypeEnum('type').notNull(),
   title: text('title').notNull(),
   message: text('message').notNull(),
@@ -108,7 +108,7 @@ export const notifications = pgTable('notifications', {
 export const auditLogs = pgTable('audit_logs', {
   id: serial('id').primaryKey(),
   teamId: integer('team_id').references(() => teams.id),
-  userId: text('user_id').references(() => users.clerkId),
+  userId: text('user_id').references(() => users.authId),
   action: text('action').notNull(),
   resourceType: text('resource_type'),
   resourceId: text('resource_id'),
@@ -118,7 +118,7 @@ export const auditLogs = pgTable('audit_logs', {
 })
 
 export const notificationPreferences = pgTable('notification_preferences', {
-  userId: text('user_id').primaryKey().references(() => users.clerkId),
+  userId: text('user_id').primaryKey().references(() => users.authId),
   emailOnFailure: boolean('email_on_failure').default(true),
   emailOnFix: boolean('email_on_fix').default(true),
   weeklyDigest: boolean('weekly_digest').default(false),
@@ -129,7 +129,7 @@ export const notificationPreferences = pgTable('notification_preferences', {
 
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.clerkId),
+  userId: text('user_id').notNull().references(() => users.authId),
   subscription: text('subscription').notNull(), // JSON stringified PushSubscription
   createdAt: timestamp('created_at').defaultNow(),
 })

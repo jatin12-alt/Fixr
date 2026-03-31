@@ -23,20 +23,11 @@ export async function authenticate(page: Page, options: AuthOptions = {}): Promi
   // Set authentication cookies
   await page.context().addCookies([
     {
-      name: '__clerk_session',
-      value: 'mock-session-token',
+      name: 'firebase_token',
+      value: 'mock-firebase-token',
       domain: 'localhost',
       path: '/',
       httpOnly: true,
-      secure: false,
-      sameSite: 'Lax',
-    },
-    {
-      name: '__clerk_client_uat',
-      value: Date.now().toString(),
-      domain: 'localhost',
-      path: '/',
-      httpOnly: false,
       secure: false,
       sameSite: 'Lax',
     },
@@ -44,11 +35,11 @@ export async function authenticate(page: Page, options: AuthOptions = {}): Promi
 
   // Set localStorage auth state
   await page.evaluate((authData) => {
-    localStorage.setItem('clerk-db-jwt', 'mock-jwt-token')
-    localStorage.setItem('__clerk_user', JSON.stringify({
-      id: authData.userId,
+    localStorage.setItem('firebase_token', 'mock-firebase-token')
+    localStorage.setItem('firebase_user', JSON.stringify({
+      uid: authData.userId,
       email: authData.email,
-      name: authData.name,
+      displayName: authData.name,
     }))
   }, { userId, email, name })
 
@@ -90,8 +81,8 @@ export async function signOut(page: Page): Promise<void> {
 
   // Clear localStorage
   await page.evaluate(() => {
-    localStorage.removeItem('clerk-db-jwt')
-    localStorage.removeItem('__clerk_user')
+    localStorage.removeItem('firebase_token')
+    localStorage.removeItem('firebase_user')
   })
 
   // Mock auth API to return not authenticated
@@ -111,7 +102,7 @@ export async function signOut(page: Page): Promise<void> {
  */
 export async function isAuthenticated(page: Page): Promise<boolean> {
   const cookies = await page.context().cookies()
-  const hasSessionCookie = cookies.some(c => c.name === '__clerk_session')
+  const hasSessionCookie = cookies.some(c => c.name === 'firebase_token')
   
   return hasSessionCookie
 }

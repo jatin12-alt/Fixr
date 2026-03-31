@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { 
   getOverallStats, 
   getPipelineTrend, 
@@ -8,13 +8,13 @@ import {
   getHourlyHeatmap, 
   getFixTimeline 
 } from '@/lib/analytics'
-import { format, subDays } from 'date-fns'
+import { subDays } from 'date-fns'
 
 export async function GET(req: NextRequest) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Cache for 5 minutes
-    return Response.json(response, {
+    return NextResponse.json(response, {
       headers: {
         'Cache-Control': 'public, max-age=300',
         'CDN-Cache-Control': 'public, max-age=300',
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (error) {
     console.error('Failed to fetch analytics:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch analytics' },
       { status: 500 }
     )

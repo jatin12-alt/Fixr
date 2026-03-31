@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Bell, Mail, Settings, TestTube, Send } from 'lucide-react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 import { useNotifications } from '@/hooks/useNotifications'
 import { requestPermission, subscribeToPush, unsubscribeFromPush } from '@/lib/push-notifications'
 
 export default function NotificationSettingsPage() {
-  const { userId } = useAuth()
+  const { user } = useAuth()
+  const userId = user?.uid
   const { unreadCount } = useNotifications()
   const [preferences, setPreferences] = useState({
     emailOnFailure: true,

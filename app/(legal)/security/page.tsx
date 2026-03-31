@@ -92,7 +92,7 @@ export default function SecurityPage() {
           </p>
           
           <ul className="list-disc pl-6 space-y-2 mb-4">
-            <li><strong>Clerk:</strong> Enterprise-grade authentication and session management</li>
+            <li><strong>Firebase:</strong> Enterprise-grade authentication and session management</li>
             <li><strong>OAuth 2.0:</strong> Secure GitHub integration using standard OAuth flow</li>
             <li><strong>Session Security:</strong> Secure, HTTP-only session cookies</li>
             <li><strong>Multi-factor:</strong> Support for 2FA through GitHub accounts</li>

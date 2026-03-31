@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { getAuth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
 import { hasPermission } from '@/lib/permissions'
@@ -7,15 +7,15 @@ import { TeamRole, teams, teamMembers, users, repos } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    // Get user's clerk ID to find their database user ID
-    const [user] = await db.select().from(users).where(eq(users.clerkId, userId))
+    // Get user's firebase ID to find their database user ID
+    const [user] = await db.select().from(users).where(eq(users.authId, userId))
     
     if (!user) {
       return Response.json({ error: 'User not found' }, { status: 404 })
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       })
       .from(teams)
       .leftJoin(teamMembers, eq(teams.id, teamMembers.teamId))
-      .where(eq(teamMembers.userId, user.clerkId))
+      .where(eq(teamMembers.userId, user.authId))
       .orderBy(teams.createdAt)
 
     // Group by team and add user role info
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -98,8 +98,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Get user's clerk ID to find their database user ID
-    const [user] = await db.select().from(users).where(eq(users.clerkId, userId))
+    // Get user's firebase ID to find their database user ID
+    const [user] = await db.select().from(users).where(eq(users.authId, userId))
     
     if (!user) {
       return Response.json({ error: 'User not found' }, { status: 404 })
@@ -119,20 +119,20 @@ export async function POST(req: NextRequest) {
     const [newTeam] = await db.insert(teams).values({
       name,
       slug,
-      createdBy: user.clerkId,
+      createdBy: user.authId,
     }).returning()
 
     // Add creator as owner
     await db.insert(teamMembers).values({
       teamId: newTeam.id,
-      userId: user.clerkId,
+      userId: user.authId,
       role: 'OWNER',
     })
 
     // Log team creation
     await createAuditLog({
       teamId: newTeam.id,
-      userId: user.clerkId,
+      userId: user.authId,
       action: 'team.created',
       resourceType: 'team',
       resourceId: newTeam.id.toString(),

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Github, Star, Lock, Globe, Search, 
          CheckCircle, Plus, Loader2 } from 'lucide-react'
+import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 
 interface GitHubRepo {
   id: number
@@ -25,6 +26,7 @@ interface MonitoredRepo {
 
 export default function ReposPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [connected, setConnected] = useState<boolean | null>(null)
   const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([])
   const [monitoredRepos, setMonitoredRepos] = useState<MonitoredRepo[]>([])
@@ -34,58 +36,52 @@ export default function ReposPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    checkGitHubStatus()
-  }, [])
+    if (user) {
+      checkGitHubStatus()
+    }
+  }, [user])
 
   async function checkGitHubStatus() {
+    if (!user) return
+
     try {
       console.log('Repos page: Checking GitHub status...')
+      const idToken = await user.getIdToken()
       
       // Check if GitHub is connected
-      const statusRes = await fetch('/api/auth/github/status')
-      console.log('Repos page: Status response status:', statusRes.status)
+      const statusRes = await fetch('/api/auth/github/status', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
+      })
       
       if (!statusRes.ok) {
-        const errorText = await statusRes.text()
-        console.error('Repos page: Status API error:', statusRes.status, errorText)
         throw new Error(`Status API failed: ${statusRes.status}`)
       }
       
       const status = await statusRes.json()
-      console.log('Repos page: GitHub status:', status)
       setConnected(status.connected)
 
       if (status.connected) {
-        console.log('Repos page: GitHub connected, fetching repos...')
-        
         // Fetch GitHub repos and monitored repos in parallel
         const [githubRes, monitoredRes] = await Promise.all([
-          fetch('/api/github/repos'),
-          fetch('/api/repos'),
+          fetch('/api/github/repos', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          }),
+          fetch('/api/repos', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          }),
         ])
         
-        console.log('Repos page: GitHub repos response:', githubRes.status)
-        console.log('Repos page: Monitored repos response:', monitoredRes.status)
-        
-        if (!githubRes.ok) {
-          const errorText = await githubRes.text()
-          console.error('Repos page: GitHub repos API error:', githubRes.status, errorText)
-          throw new Error(`GitHub repos API failed: ${githubRes.status}`)
+        if (githubRes.ok) {
+          const githubData = await githubRes.json()
+          if (githubData.repos) setGithubRepos(githubData.repos)
         }
         
-        if (!monitoredRes.ok) {
-          const errorText = await monitoredRes.text()
-          console.error('Repos page: Monitored repos API error:', monitoredRes.status, errorText)
+        if (monitoredRes.ok) {
+          const monitoredData = await monitoredRes.json()
+          if (monitoredData.repos) setMonitoredRepos(monitoredData.repos)
         }
-        
-        const githubData = await githubRes.json()
-        const monitoredData = await monitoredRes.json()
-        
-        console.log('Repos page: GitHub repos data:', githubData)
-        console.log('Repos page: Monitored repos data:', monitoredData)
-
-        if (githubData.repos) setGithubRepos(githubData.repos)
-        if (monitoredData.repos) setMonitoredRepos(monitoredData.repos)
       }
     } catch (err) {
       console.error('Repos page: checkGitHubStatus error:', err)
@@ -96,11 +92,16 @@ export default function ReposPage() {
   }
 
   async function addRepo(repo: GitHubRepo) {
+    if (!user) return
     setAdding(repo.id)
     try {
+      const idToken = await user.getIdToken()
       const res = await fetch('/api/repos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           githubRepoId: String(repo.id),
           name: repo.name,

@@ -1,18 +1,23 @@
-import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, users, githubTokens } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 
-export async function GET() {
-  const { userId } = auth()
-  
-  console.log("Status check for user:", userId)
-  
-  if (!userId) {
-    console.log("Status check: No userId found")
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+export async function GET(req: NextRequest) {
   try {
+    const { userId, error } = await getAuth(req)
+    
+    console.log("Status check for user:", userId, "Error:", error)
+    
+    if (!userId) {
+      console.log("Status check: No userId found, error:", error)
+      return NextResponse.json({ 
+        error: error || 'Unauthorized', 
+        connected: false,
+        debug: { userId, error }
+      }, { status: 401 })
+    }
+
     console.log("Status check: Querying githubTokens for userId:", userId)
     
     // Check if user has GitHub tokens
@@ -23,20 +28,12 @@ export async function GET() {
       .limit(1)
 
     console.log("Status check: Found tokens:", userTokens.length, "records")
-    if (userTokens.length > 0) {
-      console.log("Status check: Token record:", {
-        id: userTokens[0].id,
-        hasToken: !!userTokens[0].encryptedToken,
-        scope: userTokens[0].scope,
-        createdAt: userTokens[0].createdAt
-      })
-    }
 
     // Get user info for GitHub username
     const userInfo = await db
       .select()
       .from(users)
-      .where(eq(users.clerkId, userId))
+      .where(eq(users.authId, userId))
       .limit(1)
 
     console.log("Status check: User info:", userInfo.length, "records")
@@ -46,12 +43,17 @@ export async function GET() {
 
     console.log("Status check: Final result:", { connected, githubUsername })
 
-    return Response.json({
+    return NextResponse.json({
       connected,
-      githubUsername
+      githubUsername,
+      debug: { userId, tokenCount: userTokens.length }
     })
   } catch (error) {
     console.error('GitHub status error:', error)
-    return Response.json({ error: 'Failed to check GitHub status' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to check GitHub status',
+      connected: false,
+      debug: { error: error instanceof Error ? error.message : 'Unknown error' }
+    }, { status: 500 })
   }
 }

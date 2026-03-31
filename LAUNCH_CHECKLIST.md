@@ -32,7 +32,8 @@ Complete this checklist before launching Fixr to production.
 
 - [ ] **Environment variables in Vercel** (not in code)
   - [ ] `DATABASE_URL` set
-  - [ ] `CLERK_SECRET_KEY` set
+  - [ ] `FIREBASE_CLIENT_EMAIL` set
+  - [ ] `FIREBASE_PRIVATE_KEY` set
   - [ ] `GITHUB_CLIENT_SECRET` set
   - [ ] `RESEND_API_KEY` set
   - [ ] `SENTRY_DSN` set (if using)

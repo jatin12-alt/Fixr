@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { getAuth } from '@/lib/auth'
 
 export interface SecurityConfig {
   requireAuth?: boolean
@@ -34,7 +34,7 @@ export function withSecurity(config: SecurityConfig = {}) {
 
       // Authentication check
       if (config.requireAuth) {
-        const { userId } = auth()
+        const { userId } = await getAuth(req)
         
         if (!userId) {
           return NextResponse.json(
@@ -83,6 +83,7 @@ export function withSecurity(config: SecurityConfig = {}) {
     }
   }
 }
+
 
 // Helper function to apply security to API routes
 export function secureAPIRoute<T extends Record<string, string>>(

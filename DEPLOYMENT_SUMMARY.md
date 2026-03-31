@@ -61,8 +61,8 @@ vercel --prod
 ### Required for Production
 ```bash
 DATABASE_URL                    # Neon PostgreSQL connection
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY # Clerk authentication
-CLERK_SECRET_KEY               # Clerk authentication
+NEXT_PUBLIC_FIREBASE_PROJECT_ID # Firebase authentication
+FIREBASE_CLIENT_EMAIL          # Firebase service account
 GITHUB_CLIENT_ID               # GitHub OAuth
 GITHUB_CLIENT_SECRET           # GitHub OAuth
 NEXT_PUBLIC_GITHUB_CALLBACK_URL # Production webhook URL
@@ -172,8 +172,8 @@ curl https://your-app.vercel.app/api/health/database
 - Look at Vercel function logs
 
 #### Authentication Issues
-- Verify Clerk keys are correct
-- Check allowed origins in Clerk
+- Verify Firebase project ID is correct
+- Check authorized domains in Firebase Console
 - Ensure environment variables are set
 
 ---
@@ -198,7 +198,7 @@ Your Fixr app is production-ready when:
 ### Documentation Links
 - [Vercel Docs](https://vercel.com/docs)
 - [Neon Docs](https://neon.tech/docs)
-- [Clerk Docs](https://clerk.com/docs)
+- [Firebase Docs](https://firebase.google.com/docs)
 - [Next.js Docs](https://nextjs.org/docs)
 
 ### Emergency Commands

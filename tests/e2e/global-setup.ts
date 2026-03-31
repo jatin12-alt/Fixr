@@ -33,8 +33,8 @@ async function globalSetup(config: FullConfig) {
   // Create authenticated state for tests
   await context.addCookies([
     {
-      name: '__clerk_session',
-      value: 'test-session-token',
+      name: 'firebase_token',
+      value: 'test-firebase-token',
       domain: 'localhost',
       path: '/',
       httpOnly: true,

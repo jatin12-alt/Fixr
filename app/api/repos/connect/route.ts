@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { getAuth } from '@/lib/auth'
 import { db, users, repos } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 import { createWebhook } from '@/lib/github/api'
@@ -8,7 +8,7 @@ import { apiRateLimit } from '@/lib/middleware/rate-limit'
 
 const postHandler = secureAPIRoute(
   async (req: NextRequest) => {
-    const { userId } = auth()
+    const { userId } = await getAuth(req)
     
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -24,30 +24,17 @@ const postHandler = secureAPIRoute(
       const { githubId, name, fullName } = await req.json()
 
       // Get user from database
-      let user = await db
+      const userResult = await db
         .select()
         .from(users)
-        .where(eq(users.clerkId, userId))
+        .where(eq(users.authId, userId))
         .limit(1)
       
-      if (user.length === 0) {
-        // Fallback: If user isn't in DB (due to missing webhook event), dynamically insert them now
-        const { currentUser } = await import('@clerk/nextjs/server')
-        const clerkUser = await currentUser()
-        const email = clerkUser?.primaryEmailAddress?.emailAddress || 
-                      clerkUser?.emailAddresses?.[0]?.emailAddress || 
-                      'unknown@example.com'
-
-        const [newUser] = await db
-          .insert(users)
-          .values({
-            clerkId: userId,
-            email: email,
-          })
-          .returning()
-        
-        user = [newUser]
+      if (userResult.length === 0) {
+        return Response.json({ error: 'User not found. Please sign in again.' }, { status: 404 })
       }
+      
+      const user = userResult[0]
 
       // Check if repository already exists
       const existingRepo = await db
@@ -77,7 +64,7 @@ const postHandler = secureAPIRoute(
       const [newRepo] = await db
         .insert(repos)
         .values({
-          userId: user[0].clerkId,
+          userId: user.authId,
           githubId,
           name,
           fullName,

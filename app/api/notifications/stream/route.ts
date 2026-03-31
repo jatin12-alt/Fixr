@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { getAuth } from '@/lib/auth'
 import { notificationEmitter } from '@/lib/notification-emitter'
 
 export async function GET(req: NextRequest) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
     return new Response('Unauthorized', { status: 401 })

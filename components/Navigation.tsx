@@ -2,14 +2,15 @@
 
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { UserButton, useUser } from '@clerk/nextjs'
-import { dark } from '@clerk/themes'
+import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp } from 'lucide-react'
+import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp, LogOut } from 'lucide-react'
 
 export function Navigation() {
-  const { isSignedIn } = useUser()
+  const { user, logout } = useAuth()
+  const isSignedIn = !!user
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [atTop, setAtTop] = useState(true)
@@ -49,6 +50,8 @@ export function Navigation() {
     { name: 'Reviews',       href: '/reviews',        icon: Star },
     { name: 'About',         href: '/about',          icon: Users },
   ]
+
+  if (!mounted) return null
 
   return (
     <>
@@ -119,14 +122,23 @@ export function Navigation() {
                   <Link href="/dashboard">
                     <Button variant="outline" size="sm">Dashboard</Button>
                   </Link>
-                  <UserButton
-                    appearance={{
-                      baseTheme: dark,
-                      elements: {
-                        userButtonAvatarBox: 'w-8 h-8 ring-2 ring-cyan-500',
-                      },
-                    }}
-                  />
+                  <div className="flex items-center gap-3">
+                    {user?.photoURL && (
+                      <img 
+                        src={user.photoURL} 
+                        alt={user.displayName || 'User'} 
+                        className="w-8 h-8 rounded-full ring-2 ring-cyan-500"
+                      />
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={logout}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -178,9 +190,19 @@ export function Navigation() {
                   ))}
                   <div className="pt-3 space-y-2 border-t border-white/8">
                     {isSignedIn ? (
-                      <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="outline" size="sm" className="w-full">Dashboard</Button>
-                      </Link>
+                      <div className="space-y-2">
+                        <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="outline" size="sm" className="w-full">Dashboard</Button>
+                        </Link>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => { logout(); setMobileMenuOpen(false); }}
+                          className="w-full text-gray-400"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" /> Log Out
+                        </Button>
+                      </div>
                     ) : (
                       <>
                         <Link href="/sign-in" onClick={() => setMobileMenuOpen(false)}>

@@ -1,19 +1,19 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, notificationPreferences } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const preferences = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1)
 
-    return Response.json(preferences[0] || {
+    return NextResponse.json(preferences[0] || {
       emailOnFailure: true,
       emailOnFix: true,
       weeklyDigest: false,
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (error) {
     console.error('Failed to fetch notification preferences:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch preferences' },
       { status: 500 }
     )
@@ -29,10 +29,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
@@ -55,10 +55,10 @@ export async function PUT(req: NextRequest) {
       },
     })
 
-    return Response.json({ success: true })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to update notification preferences:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to update preferences' },
       { status: 500 }
     )

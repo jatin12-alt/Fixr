@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { getAuth } from '@/lib/auth'
 import { db, repos, pipelineRuns, users } from '@/lib/db'
 import { eq, desc, and, gte, sql } from 'drizzle-orm'
 import type { Repo } from '@/lib/db'
@@ -33,12 +33,13 @@ type RecentRun = {
 }
 
 const getHandler = secureAPIRoute(
-  async () => {
-    const { userId } = auth()
+  async (req) => {
+    const { userId } = await getAuth(req)
     
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
 
     try {
       // Initialize variables

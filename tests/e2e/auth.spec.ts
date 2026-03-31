@@ -39,11 +39,11 @@ test.describe('Authentication Flow', () => {
     // Click sign in button
     await page.click('button:has-text("Sign In")');
     
-    // Should redirect to Clerk (or auth page)
+    // Should redirect to Firebase (or auth page)
     await expect(page).toHaveURL(/.*sign-in.*/);
     
     // For testing, we'll mock successful authentication
-    // In real tests, you'd use actual Clerk test credentials
+    // In real tests, you'd use actual Firebase test credentials
     await authenticate(page);
     
     // Should redirect to dashboard after successful auth

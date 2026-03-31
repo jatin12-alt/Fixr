@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
-import { notifications } from '@/lib/db'
+import { getAuth } from '@/lib/auth'
+import { db, notifications } from '@/lib/db'
 import { eq, desc } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId } = await getAuth(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -39,7 +38,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId } = await getAuth(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

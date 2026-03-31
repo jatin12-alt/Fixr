@@ -67,7 +67,7 @@ describe('Health API Routes', () => {
       const data = await response.json()
 
       expect(data.checks).toHaveProperty('external_services')
-      expect(data.checks.external_services).toHaveProperty('clerk')
+      expect(data.checks.external_services).toHaveProperty('firebase')
       expect(data.checks.external_services).toHaveProperty('github')
       expect(data.checks.external_services).toHaveProperty('resend')
     })

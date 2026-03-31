@@ -1,18 +1,18 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, teamMembers, teams, users, repos } from '@/lib/db'
 import { createAuditLog } from '@/lib/audit'
-import { hasPermission, canManageRole } from '@/lib/permissions'
-import { eq, and, desc } from 'drizzle-orm'
+import { hasPermission } from '@/lib/permissions'
+import { eq, and } from 'drizzle-orm'
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -28,14 +28,14 @@ export async function GET(
         joinedAt: teamMembers.joinedAt,
         user: {
           id: users.id,
-          clerkId: users.clerkId,
+          authId: users.authId,
           name: users.name,
           email: users.email,
           avatarUrl: users.avatarUrl,
         },
       })
       .from(teamMembers)
-      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .leftJoin(users, eq(teamMembers.userId, users.authId))
       .where(
         and(
           eq(teamMembers.teamId, parseInt(teamId)),
@@ -45,14 +45,14 @@ export async function GET(
       .limit(1)
 
     if (!membership || membership.length === 0) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get team details
     const [teamData] = await db.select().from(teams).where(eq(teams.id, parseInt(teamId))).limit(1)
 
     if (!teamData) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get team members
@@ -65,14 +65,14 @@ export async function GET(
         joinedAt: teamMembers.joinedAt,
         user: {
           id: users.id,
-          clerkId: users.clerkId,
+          authId: users.authId,
           name: users.name,
           email: users.email,
           avatarUrl: users.avatarUrl,
         },
       })
       .from(teamMembers)
-      .leftJoin(users, eq(teamMembers.userId, users.clerkId))
+      .leftJoin(users, eq(teamMembers.userId, users.authId))
       .where(eq(teamMembers.teamId, parseInt(teamId)))
       .orderBy(teamMembers.joinedAt)
 
@@ -114,10 +114,10 @@ export async function GET(
       },
     }
 
-    return Response.json(teamWithUserRole)
+    return NextResponse.json(teamWithUserRole)
   } catch (error) {
     console.error('Failed to fetch team:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch team' },
       { status: 500 }
     )
@@ -128,10 +128,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -149,7 +149,7 @@ export async function PATCH(
     ).limit(1)
 
     if (!membership || membership.length === 0 || !hasPermission(membership[0].role, 'canManageSettings')) {
-      return Response.json({ error: 'Insufficient permissions' }, { status: 403 })
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     // Update team
@@ -172,10 +172,10 @@ export async function PATCH(
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
     })
 
-    return Response.json(team)
+    return NextResponse.json(team)
   } catch (error) {
     console.error('Failed to update team:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to update team' },
       { status: 500 }
     )
@@ -186,10 +186,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -204,16 +204,16 @@ export async function DELETE(
     ).limit(1)
 
     if (!membership || membership.length === 0 || membership[0].role !== 'OWNER') {
-      return Response.json({ error: 'Only team owners can delete teams' }, { status: 403 })
+      return NextResponse.json({ error: 'Only team owners can delete teams' }, { status: 403 })
     }
 
     // Delete team (cascade delete will handle members, invites, etc.)
     await db.delete(teams).where(eq(teams.id, parseInt(teamId)))
 
-    return Response.json({ success: true })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to delete team:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to delete team' },
       { status: 500 }
     )

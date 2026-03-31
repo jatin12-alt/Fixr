@@ -32,62 +32,44 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
-// Mock Clerk auth
-jest.mock('@clerk/nextjs', () => ({
-  useUser: () => ({
-    user: {
-      id: 'test-user-id',
-      emailAddresses: [{ emailAddress: 'test@example.com' }],
-      firstName: 'Test',
-      lastName: 'User',
-    },
-    isLoaded: true,
-    isSignedIn: true,
-  }),
+// Mock Firebase auth
+jest.mock('@/lib/providers/FirebaseAuthProvider', () => ({
   useAuth: () => ({
-    userId: 'test-user-id',
-    sessionId: 'test-session-id',
-    getToken: jest.fn().mockResolvedValue('mock-token'),
+    user: {
+      uid: 'test-user-id',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      photoURL: 'https://example.com/photo.jpg',
+    },
+    loading: false,
     signOut: jest.fn(),
-    orgId: null,
-    orgRole: null,
-    has: jest.fn().mockReturnValue(true),
+    getIdToken: jest.fn().mockResolvedValue('mock-token'),
   }),
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
+  FirebaseAuthProvider: ({ children }: { children: React.ReactNode }) => children,
 }))
 
-// Mock Prisma client
+// Mock Drizzle DB
 jest.mock('@/lib/db', () => ({
   db: {
-    $queryRaw: jest.fn(),
-    user: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    repository: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    pipelineRun: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    notification: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
+    select: jest.fn().mockReturnThis(),
+    from: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockReturnThis(),
+    values: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    delete: jest.fn().mockReturnThis(),
+    returning: jest.fn().mockReturnThis(),
+    innerJoin: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    execute: jest.fn().mockResolvedValue([]),
   },
+  users: { authId: 'authId', email: 'email' },
+  repos: { id: 'id', userId: 'userId' },
+  pipelineRuns: { id: 'id', repoId: 'repoId' },
+  notifications: { id: 'id', userId: 'userId' },
 }))
 
 // Mock fetch

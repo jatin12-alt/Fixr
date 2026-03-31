@@ -78,7 +78,7 @@ export default function CookiePolicy() {
           </ul>
           
           <p className="mb-4">
-            These cookies are provided by our authentication provider, Clerk:
+            These cookies are provided by our authentication provider, Firebase:
           </p>
           
           <ul className="list-disc pl-6 space-y-2 mb-4">

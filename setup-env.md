@@ -11,15 +11,20 @@ The dashboard is failing because you need to set up your environment variables.
 # Database - Replace with your actual database URL
 DATABASE_URL="postgresql://username:password@localhost:5432/fixr"
 
-# Clerk Authentication - Get these from https://dashboard.clerk.com/
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_your_key_here"
-CLERK_SECRET_KEY="sk_test_your_key_here"
+# Firebase Authentication - Get these from https://console.firebase.google.com/
+NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyClTAy3HBAxQFsk9lYY5ZFFkRAOkw0hgbc"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="fixr-f0e28.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="fixr-f0e28"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="fixr-f0e28.firebasestorage.app"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="972380168221"
+NEXT_PUBLIC_FIREBASE_APP_ID="1:972380168221:web:844c5c7566d2b2a15ee6f4"
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="G-0S83WLCJXL"
 
-# Clerk URLs
-NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/dashboard"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/dashboard"
+# Firebase Admin SDK (server-side only - get from service account)
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxx@fixr-f0e28.iam.gserviceaccount.com"
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+# Firebase is now used for authentication
+# No additional URLs needed beyond Firebase config above
 
 # GitHub Integration - Get these from https://github.com/settings/applications/new
 GITHUB_CLIENT_ID="your_github_client_id"
@@ -29,10 +34,11 @@ NEXT_PUBLIC_GITHUB_CALLBACK_URL="http://localhost:3000/api/webhook/github/callba
 
 ## Get Required Keys:
 
-1. **Clerk Authentication:**
-   - Go to https://dashboard.clerk.com/
-   - Create a new application or use existing one
-   - Copy the Publishable Key and Secret Key
+1. **Firebase Authentication:**
+   - Go to https://console.firebase.google.com/
+   - Create a new project or use existing one
+   - Get service account credentials from Project Settings
+   - Copy the private key and client email
 
 2. **GitHub OAuth:**
    - Go to https://github.com/settings/applications/new

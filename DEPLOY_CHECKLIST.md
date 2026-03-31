@@ -5,8 +5,10 @@
 ### Environment Setup
 - [ ] **All env vars added to Vercel dashboard**
   - [ ] `DATABASE_URL` (Neon PostgreSQL connection string)
-  - [ ] `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (Clerk public key)
-  - [ ] `CLERK_SECRET_KEY` (Clerk secret key)
+  - [ ] `NEXT_PUBLIC_FIREBASE_API_KEY` (Firebase public API key)
+  - [ ] `NEXT_PUBLIC_FIREBASE_PROJECT_ID` (Firebase project ID)
+  - [ ] `FIREBASE_CLIENT_EMAIL` (Firebase Admin SDK client email)
+  - [ ] `FIREBASE_PRIVATE_KEY` (Firebase Admin SDK private key)
   - [ ] `RESEND_API_KEY` (Email notifications - optional)
   - [ ] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Push notifications - optional)
   - [ ] `VAPID_PRIVATE_KEY` (Push notifications - optional)
@@ -57,7 +59,7 @@
   - [ ] Replace with environment variables
 
 ### Third-Party Services
-- [ ] **Clerk configured**
+- [ ] **Firebase configured**
   - [ ] Production URL added to allowed origins
   - [ ] Sign-in/sign-up URLs configured correctly
 
@@ -237,7 +239,7 @@ npm run build
 ### Support Links
 - [Vercel Dashboard](https://vercel.com/dashboard)
 - [Neon Console](https://console.neon.tech/)
-- [Clerk Dashboard](https://dashboard.clerk.com/)
+- [Firebase Console](https://console.firebase.google.com/)
 - [GitHub Developer Settings](https://github.com/settings/developers)
 
 ### Rollback Commands

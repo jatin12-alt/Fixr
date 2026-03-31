@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getAuth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from '@/lib/auth'
 import { db, teamMembers } from '@/lib/db'
 import { getTeamAuditLogs } from '@/lib/audit'
 import { eq, and } from 'drizzle-orm'
@@ -8,10 +8,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = await getAuth(req)
   
   if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { teamId } = await params
@@ -34,7 +34,7 @@ export async function GET(
     ).limit(1)
 
     if (!membership || membership.length === 0) {
-      return Response.json({ error: 'Team not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
     }
 
     // Get audit logs
@@ -47,7 +47,7 @@ export async function GET(
       endDate,
     })
 
-    return Response.json({
+    return NextResponse.json({
       logs,
       totalCount,
       hasMore,
@@ -59,7 +59,7 @@ export async function GET(
     })
   } catch (error) {
     console.error('Failed to fetch audit logs:', error)
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch audit logs' },
       { status: 500 }
     )
