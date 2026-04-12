@@ -10,7 +10,7 @@ import { Menu, X, Zap, Users, BookOpen, Star, ArrowUp, LogOut } from 'lucide-rea
 export function Navigation() {
   const { user, logout } = useAuth()
   const isSignedIn = !!user
-  
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [atTop, setAtTop] = useState(true)
@@ -45,10 +45,10 @@ export function Navigation() {
   }
 
   const navigationItems = [
-    { name: 'Features',      href: '/features',      icon: Zap },
-    { name: 'How It Works',  href: '/how-it-works',  icon: BookOpen },
-    { name: 'Reviews',       href: '/reviews',        icon: Star },
-    { name: 'About',         href: '/about',          icon: Users },
+    { name: 'Features', href: '/features', icon: Zap },
+    { name: 'How It Works', href: '/how-it-works', icon: BookOpen },
+    { name: 'Reviews', href: '/reviews', icon: Star },
+    { name: 'About', href: '/about', icon: Users },
   ]
 
   if (!mounted) return null
@@ -60,11 +60,10 @@ export function Navigation() {
         variants={{ visible: { y: 0 }, hidden: { y: '-100%' } }}
         animate={hidden ? 'hidden' : 'visible'}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        atTop 
-          ? 'bg-[rgba(5,5,8,0.3)] border-b border-transparent' 
-          : 'bg-[rgba(5,5,8,0.85)] border-b border-white/8'
-      } backdrop-blur-xl`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${atTop
+            ? 'bg-[rgba(5,5,8,0.3)] border-b border-transparent'
+            : 'bg-[rgba(5,5,8,0.85)] border-b border-white/8'
+          } backdrop-blur-xl`}
       >
         <div className="container mx-auto px-6 py-4 min-h-[72px]">
           <div className="flex justify-between items-center">
@@ -124,14 +123,14 @@ export function Navigation() {
                   </Link>
                   <div className="flex items-center gap-3">
                     {user?.photoURL && (
-                      <img 
-                        src={user.photoURL} 
-                        alt={user.displayName || 'User'} 
+                      <img
+                        src={user.photoURL}
+                        alt={user.displayName || 'User'}
                         className="w-8 h-8 rounded-full ring-2 ring-cyan-500"
                       />
                     )}
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={logout}
                       className="text-gray-400 hover:text-white"
@@ -194,9 +193,9 @@ export function Navigation() {
                         <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                           <Button variant="outline" size="sm" className="w-full">Dashboard</Button>
                         </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => { logout(); setMobileMenuOpen(false); }}
                           className="w-full text-gray-400"
                         >

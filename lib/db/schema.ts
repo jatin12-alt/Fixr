@@ -14,7 +14,7 @@ export const healthStatusEnum = pgEnum('health_status', ['healthy', 'failed', 'p
 // Tables
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  authId: text('auth_id').unique().notNull(),
+  authId: text('clerk_id').unique().notNull(),
   email: text('email').notNull(),
   name: text('name'),
   avatarUrl: text('avatar_url'),

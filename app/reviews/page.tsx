@@ -1,90 +1,80 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Card } from '@/components/ui/card'
 import { Star } from 'lucide-react'
 
 export default function ReviewsPage() {
   const reviews = [
     {
-      name: "Sarah Chen",
-      role: "DevOps Engineer at TechCorp",
+      name: "SARAH CHEN",
+      role: "PRINCIPAL ENGINEER / TECHCORP",
       avatar: "SC",
       rating: 5,
-      color: "from-blue-500 to-cyan-400",
-      review: "Fixr has completely transformed our CI/CD pipeline. We've reduced our failure resolution time from hours to minutes. The AI suggestions are incredibly accurate.",
+      review: "Sentinel has completely transformed our CI/CD architecture. We've reduced entropy by 90% through autonomous resolution protocols. Precise results.",
     },
     {
-      name: "Marcus Johnson",
-      role: "CTO at StartupXYZ",
+      name: "MARCUS JOHNSON",
+      role: "CTO / INFRASTRUX",
       avatar: "MJ",
       rating: 5,
-      color: "from-purple-500 to-violet-400",
-      review: "The auto-fix feature is a game changer. Our team can focus on building features instead of debugging pipeline failures. ROI was immediate.",
+      review: "The auto-resolution engine is a game changer for deployment scaling. Our team focuses on architectural drift instead of debugging logs.",
     },
     {
-      name: "Priya Patel",
-      role: "Senior Developer at CloudTech",
+      name: "PRIYA PATEL",
+      role: "SITE RELIABILITY / CLOUDNATIVE",
       avatar: "PP",
       rating: 5,
-      color: "from-green-500 to-emerald-400",
-      review: "Love the real-time monitoring and GitHub integration. Setup was incredibly easy and the dashboard provides great insights into our pipeline health.",
+      review: "Setup was zero-latency. The real-time telemetry mesh provides unparalleled visibility into our structural integrity.",
     },
     {
-      name: "Alex Rodriguez",
-      role: "Lead Engineer at DataFlow",
+      name: "ALEX RODRIGUEZ",
+      role: "LEAD ARCHITECT / FLOWDATA",
       avatar: "AR",
       rating: 5,
-      color: "from-orange-500 to-yellow-400",
-      review: "Fixr caught issues we didn't even know existed. The AI analysis is spot-on and has helped us improve our code quality significantly.",
+      review: "Autonomous synthesis of build failures has reduced our iteration cycle by 40%. The Sentinel platform is mission-critical.",
     },
     {
-      name: "Emily Zhang",
-      role: "DevOps Manager at ScaleUP",
+      name: "EMILY ZHANG",
+      role: "ENGINEERING VP / SCALENET",
       avatar: "EZ",
       rating: 5,
-      color: "from-pink-500 to-rose-400",
-      review: "The time savings alone justify the cost. Our team productivity has increased by 40% since implementing Fixr. Highly recommended!",
+      review: "The telemetry decks are luminous. Productivity increased immediately upon stack deployment. Standardized resolution achieved.",
     },
     {
-      name: "David Kim",
-      role: "Full Stack Developer at InnovateLab",
+      name: "DAVID KIM",
+      role: "CORE DEV / INNOVATELAB",
       avatar: "DK",
       rating: 5,
-      color: "from-cyan-500 to-blue-400",
-      review: "Brilliant tool! The automated fixes work perfectly for common issues, and the manual approval workflow gives us control when needed.",
+      review: "Proprietary AI synthesis at its finest. The manual staging workflow for edge-case resolution provides total control with zero overhead.",
     },
   ]
 
   const stats = [
-    { label: "Average Rating", value: "4.9/5" },
-    { label: "Time Saved", value: "15K+ hrs" },
-    { label: "Issues Fixed", value: "2.5K+" },
-    { label: "Happy Users", value: "500+" },
+    { label: "Neural Precision", value: "99.2%" },
+    { label: "Entropy Reduced", value: "15M+ ops" },
+    { label: "Systems Fixed", value: "2.5K+" },
+    { label: "Active Nodes", value: "500+" },
   ]
 
-  const cardStyle = {
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '16px',
-    transition: 'all 0.3s ease',
-  }
-
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div className="container mx-auto px-6 pt-24 pb-24">
+    <div className="min-h-screen bg-[#131317] selection:bg-primary selection:text-black">
+      <div className="container mx-auto px-6 pt-40 pb-32 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+        
         {/* Hero */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
+          className="text-center mb-32 relative z-10"
         >
-          <h1 className="text-5xl md:text-6xl font-bold mb-6"
-            style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
-            LOVED BY DEVELOPERS
+          <span className="text-[12px] font-black text-primary uppercase tracking-[0.5em] mb-6 block text-glow">Telemetry Verification</span>
+          <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-[0.95] mb-12">
+            Verified <br />
+            <span className="text-white/10 italic text-8xl">Protocols.</span>
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            See what developers and DevOps teams are saying about Fixr
+          <p className="text-xl text-white/40 max-w-2xl mx-auto font-medium leading-relaxed italic border-x border-white/5 px-12">
+            "Peer-reviewed testimonials from the architects of global delivery systems."
           </p>
         </motion.div>
 
@@ -93,18 +83,18 @@ export default function ReviewsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16"
+          className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-32 relative z-10"
         >
           {stats.map((stat, i) => (
-            <div key={stat.label} style={cardStyle} className="text-center p-6">
-              <div className="text-3xl font-bold mb-1" style={{ color: '#00d4ff' }}>{stat.value}</div>
-              <div className="text-sm text-gray-400">{stat.label}</div>
-            </div>
+            <Card key={stat.label} className="p-8 glass-card border-white/5 bg-[#1b1b1f]/20 text-center group hover:bg-white/[0.03] transition-all">
+              <div className="text-4xl font-black mb-4 text-white group-hover:text-primary transition-colors text-glow">{stat.value}</div>
+              <div className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] font-black">{stat.label}</div>
+            </Card>
           ))}
         </motion.div>
 
         {/* Reviews Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 relative z-10">
           {reviews.map((review, index) => (
             <motion.div
               key={review.name}
@@ -112,29 +102,23 @@ export default function ReviewsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * index }}
             >
-              <div style={cardStyle} className="p-6 h-full flex flex-col"
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,212,255,0.25)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
-              >
-                {/* Stars */}
-                <div className="flex mb-4">
+              <Card className="p-10 h-full flex flex-col glass-card border-white/5 bg-[#1b1b1f]/20 hover:bg-white/[0.03] hover:border-primary/20 transition-all duration-700 group">
+                <div className="flex mb-8 gap-1.5">
                   {Array.from({ length: review.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                    <Star key={i} className="h-3 w-3 text-primary fill-primary shadow-glow" />
                   ))}
                 </div>
-                {/* Review */}
-                <p className="text-gray-300 text-sm leading-relaxed flex-1 mb-5">"{review.review}"</p>
-                {/* Author */}
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${review.color} flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-white font-bold text-xs">{review.avatar}</span>
+                <p className="text-white/40 text-[15px] leading-relaxed flex-1 mb-10 italic font-medium group-hover:text-white/60 transition-colors">"{review.review}"</p>
+                <div className="flex items-center gap-6 border-t border-white/5 pt-8">
+                  <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 group-hover:border-primary/40 transition-all">
+                    <span className="text-white/30 font-black text-xs tracking-tighter group-hover:text-primary transition-colors">{review.avatar}</span>
                   </div>
                   <div>
-                    <div className="font-semibold text-white text-sm">{review.name}</div>
-                    <div className="text-xs text-gray-500">{review.role}</div>
+                    <div className="font-black text-white text-[11px] uppercase tracking-[0.2em] mb-1">{review.name}</div>
+                    <div className="text-[10px] text-white/10 font-bold tracking-widest">{review.role}</div>
                   </div>
                 </div>
-              </div>
+              </Card>
             </motion.div>
           ))}
         </div>

@@ -4,8 +4,7 @@ import React, { useState } from 'react'
 import { auth } from '@/lib/firebase'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Mail, Lock, Loader2 } from 'lucide-react'
+import { Loader2, ArrowRight } from 'lucide-react'
 
 export function EmailPasswordSignUp() {
   const [email, setEmail] = useState('')
@@ -73,75 +72,56 @@ export function EmailPasswordSignUp() {
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4 w-full">
+    <form onSubmit={handleSignUp} className="space-y-[20px] w-full">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">
           {error}
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition"
-            placeholder="you@example.com"
-            required
-          />
-        </div>
+      <div className="space-y-[6px]">
+        <label className="block text-[13px] font-medium text-[#0a0a0a]">Email Address</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full h-[44px] px-4 bg-white border border-[#e5e5e5] rounded-[6px] text-black placeholder-[#a3a3a3] focus:border-black focus:outline-none transition-all"
+          placeholder="name@company.com"
+          required
+        />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition"
-            placeholder="••••••••"
-            required
-          />
-        </div>
+      <div className="space-y-[6px]">
+        <label className="block text-[13px] font-medium text-[#0a0a0a]">Create Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full h-[44px] px-4 bg-white border border-[#e5e5e5] rounded-[6px] text-black placeholder-[#a3a3a3] focus:border-black focus:outline-none transition-all"
+          placeholder="Min. 6 characters"
+          required
+        />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition"
-            placeholder="••••••••"
-            required
-          />
-        </div>
+      <div className="space-y-[6px]">
+        <label className="block text-[13px] font-medium text-[#0a0a0a]">Confirm Password</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full h-[44px] px-4 bg-white border border-[#e5e5e5] rounded-[6px] text-black placeholder-[#a3a3a3] focus:border-black focus:outline-none transition-all"
+          placeholder="Repeat password"
+          required
+        />
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+        className="w-full h-[44px] bg-black hover:bg-black/90 disabled:opacity-50 text-white font-bold rounded-[6px] transition flex items-center justify-center gap-2"
       >
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        {loading ? 'Creating account...' : 'Sign Up with Email'}
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Create account <ArrowRight className="h-4 w-4" /></>}
       </button>
-
-      <div className="text-center text-sm">
-        <p className="text-gray-400">
-          Already have an account?{' '}
-          <Link href="/sign-in" className="text-blue-400 hover:text-blue-300 font-medium">
-            Sign in
-          </Link>
-        </p>
-      </div>
     </form>
   )
 }

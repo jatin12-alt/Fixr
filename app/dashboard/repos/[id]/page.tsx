@@ -12,9 +12,10 @@ import {
   GitBranch, Clock, CheckCircle, AlertTriangle, 
   Github, Loader2, Zap, ArrowLeft, Bot, 
   Activity, TrendingUp, DollarSign, ExternalLink,
-  ChevronDown, ChevronUp, Shield
+  ChevronDown, ChevronUp, Shield, Edit2, Users, Calendar
 } from 'lucide-react'
 import { AnimatedCounter } from '@/components/AnimatedCounter'
+import { cn } from '@/lib/utils'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -27,8 +28,7 @@ export default function RepoDetailPage() {
   })
 
   const [fixLoading, setFixLoading] = useState<number | null>(null)
-  const [showHistory, setShowHistory] = useState(false)
-
+  const [activeTab, setActiveTab] = useState('overview')
   const [scanLoading, setScanLoading] = useState(false)
 
   const handleManualScan = async () => {
@@ -77,14 +77,15 @@ export default function RepoDetailPage() {
 
   if (error || !data?.success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Error Loading Repository</h2>
-          <p className="text-muted-foreground mb-6">{data?.error || "Failed to fetch repository details."}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#131317] p-10 selection:bg-primary selection:text-black">
+        <div className="text-center relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/10 blur-[80px] pointer-events-none" />
+          <AlertTriangle className="h-16 w-16 text-primary mx-auto mb-8 shadow-glow" />
+          <h2 className="text-4xl font-black text-white mb-4 tracking-tighter">Node Breakdown.</h2>
+          <p className="text-white/30 mb-12 font-medium italic border-l border-primary/20 pl-8 text-left max-w-sm mx-auto">{data?.error || "Neural link failure: Unable to synchronize repository manifest."}</p>
           <Link href="/dashboard">
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+            <Button variant="outline" className="h-[52px] px-8 font-black uppercase tracking-[0.2em] text-[10px] border-white/10 text-white hover:bg-white hover:text-black transition-all rounded-xl">
+              <ArrowLeft className="mr-3 h-4 w-4" /> Return to Deck
             </Button>
           </Link>
         </div>
@@ -96,339 +97,205 @@ export default function RepoDetailPage() {
   const latestRun = recentRuns?.[0]
   const historyRuns = recentRuns?.slice(1) || []
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'fixed':
-      case 'FIXED_AND_MERGED':
-        return <CheckCircle className="w-5 h-5 text-green-400" />
-      case 'failed':
-      case 'analysis_failed':
-        return <AlertTriangle className="w-5 h-5 text-red-500" />
-      case 'running':
-      case 'PR_CREATED_WAITING_REVIEW':
-        return <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
-      default:
-        return <Clock className="w-5 h-5 text-muted-foreground" />
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'fixed':
-      case 'FIXED_AND_MERGED':
-        return 'text-green-400'
-      case 'failed':
-      case 'analysis_failed':
-        return 'text-red-400'
-      case 'running':
-      case 'PR_CREATED_WAITING_REVIEW':
-        return 'text-blue-400'
-      default:
-        return 'text-muted-foreground'
-    }
-  }
+  const tabs = [
+    { id: 'overview', name: 'Overview' },
+    { id: 'tasks', name: 'Tasks' },
+    { id: 'members', name: 'Members' },
+    { id: 'activity', name: 'Activity' },
+  ]
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-6 bg-background text-foreground">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pt-32 pb-32 px-10 bg-[#131317] selection:bg-primary selection:text-black">
+      <div className="max-w-[1120px] mx-auto relative">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[150px] pointer-events-none" />
         
-        {/* Navigation & Header */}
-        <div className="mb-10">
-          <Link href="/dashboard" className="inline-flex items-center text-xs font-bold text-muted-foreground hover:text-cyan-400 transition-colors mb-4 uppercase tracking-widest group">
-            <ArrowLeft className="mr-2 h-3 w-3 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
+        {/* Navigation */}
+        <div className="mb-16">
+          <Link href="/dashboard" className="inline-flex items-center text-[11px] font-black uppercase tracking-[0.4em] text-white/20 hover:text-primary transition-all group">
+            <ArrowLeft className="mr-3 h-4 w-4 group-hover:-translate-x-2 transition-transform" /> Back to command deck
           </Link>
-          
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 ${repo.isActive ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
-                  {repo.isActive && <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />}
-                  {repo.isActive ? 'Engine Online' : 'Engine Offline'}
-                </div>
-                <div className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[9px] font-black tracking-widest uppercase">
-                  Health Score: {stats.successRate}%
-                </div>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3 overflow-hidden">
-                <Github size={36} className="text-white/60 shrink-0" />
-                <span className="truncate">{repo.name}</span>
-              </h1>
-              <p className="text-muted-foreground mt-1 font-mono text-xs opacity-60 truncate">
-                {repo.fullName}
-              </p>
-            </motion.div>
+        </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-               <Button 
-                 variant="outline" 
-                 size="sm" 
-                 className="glass border-white/5 text-xs hover:border-cyan-500/30 transition-all font-black uppercase tracking-widest"
-                 onClick={handleManualScan}
-                 disabled={scanLoading}
-               >
-                 {scanLoading ? <Loader2 size={12} className="animate-spin mr-2" /> : <Activity size={12} className="mr-2" />}
-                 Trigger Manual Scan
-               </Button>
-               <a href={`https://github.com/${repo.fullName}`} target="_blank" rel="noopener noreferrer">
-                 <Button variant="outline" size="sm" className="glass border-white/5 text-xs hover:border-cyan-500/30 transition-all">
-                   View on GitHub <ExternalLink size={12} className="ml-2" />
-                 </Button>
-               </a>
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-12 mb-20 relative z-10">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-6 mb-6">
+              <h1 className="text-5xl font-black text-white tracking-tighter truncate">
+                {repo.name.split('/').pop()} <span className="text-white/10 italic">Core.</span>
+              </h1>
+              <div className={cn(
+                "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.3em] shadow-glow-subtle",
+                repo.isActive ? "bg-primary/10 border border-primary/20 text-primary" : "bg-white/5 text-white/20 border border-white/5"
+              )}>
+                {repo.isActive ? "Monitoring Active" : "Telemetry Paused"}
+              </div>
             </div>
+            
+            <div className="flex flex-wrap items-center gap-x-12 gap-y-4 text-[11px] font-black uppercase tracking-[0.2em] text-white/30">
+              <div className="flex items-center gap-3">
+                <Calendar size={14} className="text-primary/40" />
+                <span className="text-white/60">Node Initialized</span> {new Date(repo.createdAt).toLocaleDateString()}
+              </div>
+              <div className="flex items-center gap-3">
+                <Clock size={14} className="text-primary/40" />
+                <span className="text-white/60">Pulse Sync</span> Q3 2025
+              </div>
+              <div className="flex items-center gap-3">
+                <Users size={14} className="text-primary/40" />
+                <span className="text-white/60">Mesh Size:</span> 12
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-white/60">{stats.successRate}% Integrity</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 shrink-0">
+            <Button variant="outline" className="h-[52px] px-8 font-black uppercase tracking-[0.2em] text-[10px] border-white/5 glass-card text-white/40 hover:text-white hover:bg-white/10 transition-all rounded-xl">
+              <Edit2 size={14} className="mr-3" /> Edit Manifest
+            </Button>
+            <Button onClick={handleManualScan} disabled={scanLoading} className="h-[52px] px-10 font-black uppercase tracking-[0.2em] text-[10px] bg-primary text-black hover:bg-white transition-all rounded-xl shadow-glow">
+              {scanLoading ? <Loader2 size={16} className="animate-spin" /> : "Initiate Pulse Scan"}
+            </Button>
           </div>
         </div>
 
-        {/* Localized Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <DetailMetricCard 
-            label="Total Runs" 
-            value={<AnimatedCounter value={stats.totalRuns} />} 
-            icon={Activity} 
-            color="text-blue-400" 
-            sub="Pipeline events"
-            tooltip="Total number of CI/CD executions monitored for this repository"
-          />
-          <DetailMetricCard 
-            label="Auto-Fixes" 
-            value={<AnimatedCounter value={stats.fixesApplied} />} 
-            icon={Zap} 
-            color="text-green-400" 
-            sub="AI Resolved"
-            tooltip="Number of pipeline failures autonomously fixed by AI"
-          />
-          <DetailMetricCard 
-            label="Success Rate" 
-            value={<AnimatedCounter value={stats.successRate} suffix="%" />} 
-            icon={CheckCircle} 
-            color="text-cyan-400" 
-            sub="Engine Accuracy"
-            tooltip="Percentage of failures where AI provided a successful resolution"
-          />
-          <DetailMetricCard 
-            label="Est. Savings" 
-            value={<AnimatedCounter value={stats.timeSaved * 80} prefix="$" />} 
-            icon={DollarSign} 
-            color="text-purple-400" 
-            sub={`${stats.timeSaved}h reclaimed`}
-            tooltip="Estimated financial value saved ($80/hr) through autonomous fixing"
-          />
+        {/* Tabs */}
+        <div className="flex items-center gap-12 border-b border-white/5 mb-20 relative z-10 overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "pb-6 text-[11px] font-black uppercase tracking-[0.4em] transition-all relative block whitespace-nowrap",
+                activeTab === tab.id ? "text-primary text-glow" : "text-white/20 hover:text-white"
+              )}
+            >
+              {tab.name}
+              {activeTab === tab.id && (
+                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 w-full h-[2px] bg-primary shadow-glow" />
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Latest Run Section */}
-        <div className="space-y-6 mb-8">
-           <div className="flex items-center gap-3">
-              <Bot className="h-5 w-5 text-cyan-400" />
-              <h2 className="text-xl font-bold tracking-tight">Latest <span className="text-cyan-400">Analysis</span></h2>
-           </div>
-
-           {latestRun ? (
-             <RunCard 
-               run={latestRun} 
-               repoId={id} 
-               onTriggerFix={handleTriggerFix} 
-               fixLoading={fixLoading}
-               isHighlighted
-             />
-           ) : (
-             <Card className="glass border-dashed border-white/10 p-12 text-center">
-               <Bot className="h-12 w-12 text-white/5 mx-auto mb-4" />
-               <p className="text-muted-foreground">No recent pipeline failures detected.</p>
-             </Card>
-           )}
-        </div>
-
-        {/* Collapsible History */}
-        {recentRuns.length > 1 && (
-           <div className="space-y-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => setShowHistory(!showHistory)}
-                className="w-full h-12 flex items-center justify-center gap-2 border border-white/5 hover:bg-white/5 transition-all group"
+        {/* Content Area */}
+        <div className="space-y-16 relative z-10">
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && (
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-12"
               >
-                 <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground">
-                   {showHistory ? 'Hide Run History' : 'View Run History'}
-                 </span>
-                 {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </Button>
+                <Card className="p-10 glass-card border-white/5 group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl pointer-events-none" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 mb-10 block">Infrastructure Telemetry</h3>
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-12">
+                    <div className="group/metric">
+                      <p className="text-[9px] uppercase font-black text-white/10 mb-2 tracking-[0.2em] group-hover/metric:text-primary transition-colors">Total Runs</p>
+                      <p className="text-4xl font-black text-white tracking-tighter group-hover/metric:text-glow-subtle transition-all">{stats.totalRuns}</p>
+                    </div>
+                    <div className="group/metric">
+                      <p className="text-[9px] uppercase font-black text-white/10 mb-2 tracking-[0.2em] group-hover/metric:text-primary transition-colors">Integrity Rate</p>
+                      <p className="text-4xl font-black text-primary tracking-tighter text-glow-subtle">{stats.successRate}%</p>
+                    </div>
+                    <div className="group/metric">
+                      <p className="text-[9px] uppercase font-black text-white/10 mb-2 tracking-[0.2em] group-hover/metric:text-primary transition-colors">Neural Repairs</p>
+                      <p className="text-4xl font-black text-white tracking-tighter group-hover/metric:text-glow-subtle transition-all">{stats.fixesApplied}</p>
+                    </div>
+                    <div className="group/metric">
+                      <p className="text-[9px] uppercase font-black text-white/10 mb-2 tracking-[0.2em] group-hover/metric:text-primary transition-colors">Value Recouped</p>
+                      <p className="text-4xl font-black text-white tracking-tighter group-hover/metric:text-glow-subtle transition-all">${(stats.timeSaved * 80).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </Card>
 
-              <AnimatePresence>
-                {showHistory && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden space-y-4"
-                  >
-                    {historyRuns.map((run: any) => (
-                      <RunCard 
-                        key={run.id}
-                        run={run} 
-                        repoId={id} 
-                        onTriggerFix={handleTriggerFix} 
-                        fixLoading={fixLoading}
-                      />
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-           </div>
-        )}
+                <Card className="p-10 glass-card border-white/5 flex flex-col justify-center relative group">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/5 blur-[100px] pointer-events-none group-hover:bg-primary/10 transition-all duration-700" />
+                  <Bot size={48} className="text-primary mb-8 animate-float shadow-glow" />
+                  <h3 className="text-2xl font-black text-white mb-6 tracking-tighter">Autonomous Core AI</h3>
+                  <p className="text-[14px] leading-relaxed text-white/40 font-medium italic border-l-2 border-primary/20 pl-8">
+                    Sentinel Engine is currently triaging your CI/CD delivery nodes. It has successfully correlated root structural causes for {stats.fixesApplied} anomalies in the current cycle.
+                  </p>
+                </Card>
+
+                <div className="md:col-span-2">
+                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 mb-8 block">Live Engine Analysis</h3>
+                   {latestRun ? (
+                      <Card className="p-10 glass-card border-white/5 group hover:bg-white/[0.04] transition-all duration-500 flex flex-col md:flex-row gap-12 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[120px] pointer-events-none" />
+                        <div className="flex-1 space-y-8 relative z-10">
+                          <div className="flex items-center gap-6">
+                            <span className={cn(
+                              "text-[9px] font-black uppercase tracking-[0.3em] px-5 py-2 rounded-full border shadow-glow-subtle",
+                              latestRun.status.toUpperCase() === 'FIXED' ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/5 text-white/30"
+                            )}>
+                              {latestRun.status.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-[10px] text-white/10 font-black uppercase tracking-[0.4em]">Signal #{latestRun.githubRunId}</span>
+                          </div>
+                          <p className="text-[17px] font-medium text-white/60 leading-relaxed italic pr-12 group-hover:text-white transition-colors">
+                            "{latestRun.aiExplanation || "Decoding structural anomalies: Node sync in progress..."}"
+                          </p>
+                        </div>
+                        {['FAILED', 'ANALYSIS_FAILED'].includes(latestRun.status.toUpperCase()) && (
+                          <div className="shrink-0 flex items-center relative z-10">
+                            <Button onClick={() => handleTriggerFix(latestRun.id)} disabled={fixLoading === latestRun.id} className="h-14 px-10 font-black uppercase tracking-[0.2em] text-[10px] bg-primary text-black hover:bg-white transition-all rounded-xl shadow-glow">
+                              {fixLoading === latestRun.id ? <Loader2 size={18} className="animate-spin" /> : <>Deploy Neural Fix <ArrowLeft className="h-4 w-4 rotate-180 ml-4" /></>}
+                            </Button>
+                          </div>
+                        )}
+                      </Card>
+                   ) : (
+                     <p className="text-white/10 text-[11px] font-black uppercase tracking-[0.4em] italic py-12 border border-dashed border-white/5 rounded-[24px] text-center">No telemetry pulses captured in this cycle.</p>
+                   )}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab !== 'overview' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-32 text-center"
+              >
+                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-white/5">
+                  <Shield className="w-8 h-8 text-white/20" />
+                </div>
+                <p className="text-white/10 text-[11px] font-black uppercase tracking-[0.5em] italic">Accessing encrypted module data...</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
       </div>
     </div>
   )
 }
 
-function RunCard({ run, repoId, onTriggerFix, fixLoading, isHighlighted = false }: any) {
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'fixed':
-      case 'fixed_and_merged':
-        return <CheckCircle className="w-4 h-4 text-green-400" />
-      case 'failed':
-      case 'analysis_failed':
-        return <AlertTriangle className="w-4 h-4 text-red-500" />
-      default:
-        return <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-    }
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <Card className={`glass border-white/5 overflow-hidden transition-all duration-300 ${isHighlighted ? 'border-cyan-500/20 ring-1 ring-cyan-500/5 shadow-[0_0_30px_rgba(0,212,255,0.05)]' : ''}`}>
-        <div className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="shrink-0 p-3 rounded-xl bg-white/5 border border-white/10">
-                <GitBranch className="h-5 w-5 text-cyan-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 className="text-sm font-bold uppercase tracking-tight truncate">Build #{run.githubRunId || run.id.toString().slice(-4)}</h3>
-                  <div className="flex shrink-0 items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/40 border border-white/5">
-                    {getStatusIcon(run.status)}
-                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{run.status.replace(/_/g, ' ')}</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground font-medium opacity-60 truncate">
-                  Triggered {new Date(run.createdAt).toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-end gap-1.5">
-               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">AI Confidence</span>
-               <div className="flex items-center gap-3 w-32">
-                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${run.aiConfidence || run.confidence || 0}%` }}
-                      className={`h-full ${ (run.aiConfidence || run.confidence || 0) > 80 ? 'bg-cyan-400 shadow-[0_0_10px_rgba(0,212,255,0.5)]' : 'bg-blue-500'}`}
-                    />
-                  </div>
-                  <span className="text-xs font-black text-foreground">{(run.aiConfidence || run.confidence || 0)}%</span>
-               </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-3 min-w-0">
-              <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-muted-foreground">
-                <Bot size={12} className="text-cyan-400 shrink-0" />
-                AI Diagnostics
-              </div>
-              <div className="bg-white/[0.03] border border-white/5 rounded-xl p-4 text-sm leading-relaxed text-blue-100/80 break-words whitespace-pre-wrap">
-                {run.aiExplanation || "Engine is correlating logs and identifying root cause..."}
-              </div>
-            </div>
-
-            <div className="space-y-3 min-w-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-muted-foreground">
-                  <Shield size={12} className="text-green-400" />
-                   Solution Protocol
-                </div>
-                {['FAILED', 'ANALYSIS_FAILED', 'FAILED_RECOVERY'].includes(run.status.toUpperCase()) && (
-                  <Button 
-                    size="sm" 
-                    className="h-7 text-[10px] font-black uppercase tracking-widest px-3 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg transition-all hover:shadow-[0_0_15px_rgba(0,212,255,0.4)]"
-                    onClick={() => onTriggerFix(run.id)}
-                    disabled={fixLoading === run.id}
-                  >
-                    {fixLoading === run.id ? <Loader2 size={12} className="animate-spin mr-2" /> : <Zap size={12} className="mr-2" />}
-                    Trigger Auto-Fix
-                  </Button>
-                )}
-              </div>
-              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-xl p-4">
-                 <p className="text-sm font-medium text-cyan-200/90 leading-relaxed mb-3 break-words whitespace-pre-wrap">
-                   {run.aiFixSuggestion || (run.status === 'fixed' ? 'Integrity restored. Fix merged to main.' : 'Determining recovery strategy...')}
-                 </p>
-                 {run.aiCodeFix && (
-                   <div className="rounded-lg bg-black/40 border border-white/5 overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5 bg-white/5">
-                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Proposed Diff</span>
-                      </div>
-                      <pre className="p-3 text-[10px] font-mono text-cyan-300 overflow-x-auto">
-                        {run.aiCodeFix}
-                      </pre>
-                   </div>
-                 )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </motion.div>
-  )
-}
-
-function DetailMetricCard({ label, value, icon: Icon, color, sub, tooltip }: any) {
-  return (
-    <Card 
-      className="glass border-white/5 group hover:border-cyan-500/20 transition-all duration-500 overflow-hidden relative"
-      title={tooltip}
-    >
-      <CardContent className="p-6">
-        <div className={`absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-700 ${color}`}>
-          <Icon size={120} />
-        </div>
-        <p className="text-[10px] font-black tracking-widest text-muted-foreground mb-1 uppercase">{label}</p>
-        <div className="flex items-baseline gap-2">
-          <p className={`text-4xl font-black ${color} tracking-tighter`}>{value}</p>
-          <span className="text-[10px] text-muted-foreground font-black opacity-40 uppercase">{sub}</span>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 function RepoDetailSkeleton() {
   return (
-    <div className="min-h-screen pt-24 pb-12 px-6 bg-background">
-      <div className="max-w-7xl mx-auto space-y-10">
-        <Skeleton className="h-4 w-32" />
+    <div className="min-h-screen pt-32 pb-20 px-10 bg-[#131317]">
+      <div className="max-w-[1120px] mx-auto space-y-16">
+        <Skeleton className="h-4 w-40 bg-white/5" />
         <div className="flex justify-between items-end">
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-12 w-80" />
-            <Skeleton className="h-4 w-64" />
+          <div className="space-y-6">
+            <Skeleton className="h-14 w-96 bg-white/5 rounded-xl" />
+            <Skeleton className="h-4 w-80 bg-white/5" />
           </div>
-          <Skeleton className="h-10 w-40" />
+          <div className="flex gap-4">
+             <Skeleton className="h-14 w-40 bg-white/5 rounded-xl" />
+             <Skeleton className="h-14 w-40 bg-white/5 rounded-xl" />
+          </div>
         </div>
-        <div className="grid grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 w-full" />)}
-        </div>
-        <div className="space-y-6">
-           <Skeleton className="h-6 w-48" />
-           <Skeleton className="h-80 w-full" />
+        <Skeleton className="h-16 w-full bg-white/5 rounded-xl" />
+        <div className="grid grid-cols-2 gap-12">
+           <Skeleton className="h-72 bg-white/5 rounded-[32px]" />
+           <Skeleton className="h-72 bg-white/5 rounded-[32px]" />
         </div>
       </div>
     </div>

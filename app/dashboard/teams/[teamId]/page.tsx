@@ -15,10 +15,13 @@ import {
   Crown,
   UserCheck,
   Eye,
-  Settings2
+  Settings2,
+  ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { cn } from '@/lib/utils'
+import { AnimatePresence } from 'framer-motion'
 
 interface TeamMember {
   id: string
@@ -126,11 +129,12 @@ export default function TeamDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-muted-foreground py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-card rounded w-1/4 mb-8"></div>
-            <div className="h-96 bg-muted/50 border border-gray-800 rounded-xl"></div>
+      <div className="min-h-screen py-16 px-10">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="animate-pulse h-12 bg-white/5 rounded-2xl w-1/4"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 h-[500px] bg-white/5 border border-white/5 rounded-[40px]"></div>
+            <div className="h-[500px] bg-white/5 border border-white/5 rounded-[40px]"></div>
           </div>
         </div>
       </div>
@@ -159,60 +163,57 @@ export default function TeamDetailPage() {
   })
 
   return (
-    <div className="min-h-screen bg-black text-muted-foreground py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-16 px-10 selection:bg-primary selection:text-black">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-16 gap-8">
+          <div className="flex items-center space-x-6">
             <Link 
               href="/dashboard/teams"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white/5 border border-white/5 text-white/40 hover:text-white hover:border-white/20 transition-all group"
             >
-              ← Teams
+              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             </Link>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-5">
               {team.avatarUrl ? (
-                <Image
-                  src={team.avatarUrl}
-                  alt={team.name}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-lg"
-                  loading="lazy"
-                />
+                <div className="w-16 h-16 rounded-[20px] overflow-hidden bg-white/5 border border-white/5 p-1">
+                  <Image src={team.avatarUrl} alt={team.name} width={64} height={64} className="w-full h-full object-cover rounded-[15px]" />
+                </div>
               ) : (
-                <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="text-foreground font-bold text-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#1b1b1f] to-[#0e0e11] border border-white/10 rounded-[20px] flex items-center justify-center shadow-2xl skew-y-1">
+                  <span className="text-white font-black text-3xl tracking-tighter">
                     {team.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-foreground">{team.name}</h1>
-                <p className="text-muted-foreground">/{team.slug}</p>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="text-4xl font-black text-white tracking-tighter leading-none">{team.name}</h1>
+                  <span className={cn(
+                    "px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border",
+                    getRoleColor(team.userRole)
+                  )}>
+                    {team.userRole}
+                  </span>
+                </div>
+                <p className="text-white/20 text-[11px] font-black uppercase tracking-[0.3em]">/{team.slug} • Protocol v1.4.2</p>
               </div>
             </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <span className={`px-3 py-1 text-sm font-medium rounded-full flex items-center space-x-1 ${getRoleColor(team.userRole)}`}>
-              {getRoleIcon(team.userRole)}
-              <span>{getRoleLabel(team.userRole)}</span>
-            </span>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 mb-8 bg-muted/50 p-1 rounded-lg w-fit">
+        <div className="flex space-x-2 mb-12 bg-white/5 p-1.5 rounded-2xl w-fit border border-white/5">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={cn(
+                "flex items-center space-x-3 px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300",
                 activeTab === tab.id
-                  ? 'bg-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  ? 'bg-primary text-black shadow-glow'
+                  : 'text-white/30 hover:bg-white/5 hover:text-white'
+              )}
             >
               {tab.icon}
               <span>{tab.label}</span>
@@ -222,62 +223,68 @@ export default function TeamDetailPage() {
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Stats */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
-                    <Users className="h-5 w-5 text-primary" />
+            <div className="lg:col-span-2 space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="glass-card border-white/5 rounded-[40px] p-12 group overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl group-hover:bg-primary/10 transition-colors" />
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20 group-hover:text-primary transition-colors">Neural Personnel</h3>
+                    <Users className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all" />
                   </div>
-                  <p className="text-3xl font-bold text-foreground">{team._count.members}</p>
-                  <p className="text-sm text-muted-foreground mt-2">Active collaborators</p>
+                  <div className="flex items-baseline gap-4">
+                    <p className="text-6xl font-black text-white tracking-tighter">{team._count.members}</p>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/10 uppercase">Active Units</span>
+                  </div>
                 </div>
                 
-                <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-foreground">Repositories</h3>
-                    <GitBranch className="h-5 w-5 text-primary" />
+                <div className="glass-card border-white/5 rounded-[40px] p-12 group overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl group-hover:bg-primary/10 transition-colors" />
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20 group-hover:text-primary transition-colors">Connected Assets</h3>
+                    <GitBranch className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all" />
                   </div>
-                  <p className="text-3xl font-bold text-foreground">{team._count.repositories}</p>
-                  <p className="text-sm text-muted-foreground mt-2">Connected repositories</p>
+                  <div className="flex items-baseline gap-4">
+                    <p className="text-6xl font-black text-white tracking-tighter">{team._count.repositories}</p>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/10 uppercase">Synced Nodes</span>
+                  </div>
                 </div>
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Recent Members</h3>
-                <div className="space-y-3">
+              <div className="glass-card border-white/5 rounded-[40px] p-12 overflow-hidden relative">
+                <div className="flex items-center justify-between mb-12">
+                  <h3 className="text-2xl font-black text-white tracking-tighter">Unit Registry</h3>
+                  <Users className="h-5 w-5 text-white/10" />
+                </div>
+                <div className="space-y-6">
                   {team.members.slice(0, 5).map((member) => (
-                    <div key={member.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                    <div key={member.id} className="flex items-center justify-between group/item p-4 rounded-2xl hover:bg-white/5 transition-all">
+                      <div className="flex items-center space-x-5">
                         {member.user.avatarUrl ? (
-                          <Image
-                            src={member.user.avatarUrl}
-                            alt={member.user.name || 'User'}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full"
-                            loading="lazy"
-                          />
+                          <div className="w-12 h-12 rounded-xl border border-white/10 p-0.5">
+                            <Image src={member.user.avatarUrl} alt={member.user.name} width={48} height={48} className="w-full h-full object-cover rounded-[10px]" />
+                          </div>
                         ) : (
-                          <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-foreground">
+                          <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">
+                            <span className="text-white/40 font-black text-sm">
                               {(member.user.name || member.user.email).charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
                         <div>
-                          <p className="text-foreground font-medium">
+                          <p className="text-white font-bold tracking-tight">
                             {member.user.name || member.user.email}
                           </p>
-                          <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/20">{member.user.email}</p>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center space-x-1 ${getRoleColor(member.role)}`}>
-                        {getRoleIcon(member.role)}
-                        <span>{getRoleLabel(member.role)}</span>
+                      <span className={cn(
+                         "px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border",
+                         getRoleColor(member.role)
+                      )}>
+                        {member.role}
                       </span>
                     </div>
                   ))}
@@ -286,56 +293,58 @@ export default function TeamDetailPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="space-y-6">
-              <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-                <div className="space-y-3">
+            <div className="space-y-10">
+              <div className="glass-card border-white/5 rounded-[40px] p-12 bg-gradient-to-br from-white/[0.02] to-transparent">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20 mb-10">Command Center</h3>
+                <div className="space-y-4">
                   {team.userPermissions.canInviteMembers && (
                     <button
                       onClick={() => setShowInviteModal(true)}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
+                      className="w-full flex items-center justify-center space-x-3 px-6 py-5 bg-primary text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white transition-all shadow-glow"
                     >
                       <Plus className="h-4 w-4" />
-                      <span>Invite Member</span>
+                      <span>Invite Personnel</span>
                     </button>
                   )}
                   
                   {team.userPermissions.canManageRepos && (
                     <Link
                       href="/dashboard/repos/new"
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center space-x-3 px-6 py-5 bg-white/5 border border-white/5 text-white/40 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white hover:text-black transition-all"
                     >
                       <GitBranch className="h-4 w-4" />
-                      <span>Connect Repository</span>
+                      <span>Sync Asset</span>
                     </Link>
                   )}
                   
                   {team.userPermissions.canViewAnalytics && (
                     <Link
                       href={`/dashboard/analytics?team=${teamId}`}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center space-x-3 px-6 py-5 bg-white/5 border border-white/5 text-white/40 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white hover:text-black transition-all"
                     >
                       <FileText className="h-4 w-4" />
-                      <span>View Analytics</span>
+                      <span>Telemetry Logs</span>
                     </Link>
                   )}
                 </div>
               </div>
 
-              <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Team Info</h3>
-                <div className="space-y-3">
+              <div className="glass-card border-white/5 rounded-[40px] p-12 ring-1 ring-primary/10">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20 mb-8">Metadata</h3>
+                <div className="space-y-6">
                   <div>
-                    <p className="text-sm text-muted-foreground">Created</p>
-                    <p className="text-foreground">
-                      {new Date(team.createdAt).toLocaleDateString()}
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/10 mb-2">Structure Epoch</p>
+                    <p className="text-white font-black tracking-tight">
+                      {new Date(team.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Your Role</p>
-                    <div className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(team.userRole)}`}>
-                      {getRoleIcon(team.userRole)}
-                      <span>{getRoleLabel(team.userRole)}</span>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/10 mb-2">Assigned Protocol</p>
+                    <div className={cn(
+                       "inline-flex px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border",
+                       getRoleColor(team.userRole)
+                    )}>
+                      {team.userRole}
                     </div>
                   </div>
                 </div>
@@ -394,112 +403,88 @@ function MembersSection({
     member.user.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'OWNER': return <Crown className="h-4 w-4" />
-      case 'ADMIN': return <Shield className="h-4 w-4" />
-      case 'MEMBER': return <UserCheck className="h-4 w-4" />
-      case 'VIEWER': return <Eye className="h-4 w-4" />
-      default: return <Users className="h-4 w-4" />
-    }
-  }
-
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'OWNER': return 'text-purple-400 bg-purple-900/20'
-      case 'ADMIN': return 'text-primary bg-cyan-900/20'
-      case 'MEMBER': return 'text-blue-400 bg-blue-900/20'
-      case 'VIEWER': return 'text-muted-foreground bg-muted/20'
-      default: return 'text-muted-foreground bg-muted/20'
-    }
-  }
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'OWNER': return 'Owner'
-      case 'ADMIN': return 'Admin'
-      case 'MEMBER': return 'Member'
-      case 'VIEWER': return 'Viewer'
-      default: return role
+      case 'OWNER': return 'text-primary border-primary/20 bg-primary/5 shadow-glow-subtle'
+      case 'ADMIN': return 'text-white/80 border-white/10 bg-white/5'
+      case 'MEMBER': return 'text-white/40 border-white/5 bg-white/5'
+      default: return 'text-white/20 border-white/5 bg-transparent'
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Team Members</h2>
+        <h2 className="text-2xl font-black text-white tracking-tighter">Unit Registry</h2>
         {team.userPermissions.canInviteMembers && (
           <button
             onClick={onInvite}
-            className="flex items-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
+            className="flex items-center space-x-3 px-6 py-3 bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-primary hover:text-black transition-all"
           >
             <Plus className="h-4 w-4" />
-            <span>Invite Member</span>
+            <span>Invite Personnel</span>
           </button>
         )}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="relative group">
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
         <input
           type="text"
-          placeholder="Search members..."
+          placeholder="Search personnel directory..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+          className="w-full pl-16 pr-8 py-5 bg-white/5 border border-white/5 rounded-2xl text-white font-medium placeholder-white/10 focus:outline-none focus:border-primary/40 transition-all"
         />
       </div>
 
-      <div className="bg-muted/50 border border-gray-800 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-sm font-medium text-muted-foreground">
-          <div className="col-span-6">Member</div>
-          <div className="col-span-2">Role</div>
-          <div className="col-span-2">Joined</div>
-          <div className="col-span-2">Actions</div>
+      <div className="glass-card border-white/5 rounded-[32px] overflow-hidden">
+        <div className="grid grid-cols-12 gap-4 p-8 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-white/10 bg-white/[0.02]">
+          <div className="col-span-6">Registry Entry</div>
+          <div className="col-span-2 text-center">Protocol</div>
+          <div className="col-span-2 text-center">Epoch</div>
+          <div className="col-span-2 text-right">Link</div>
         </div>
         
-        <div className="divide-y divide-gray-800">
+        <div className="divide-y divide-white/5">
           {filteredMembers.map((member) => (
-            <div key={member.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-card/50 transition-colors">
-              <div className="col-span-6 flex items-center space-x-3">
+            <div key={member.id} className="grid grid-cols-12 gap-4 p-8 items-center hover:bg-white/[0.03] transition-all group/row">
+              <div className="col-span-6 flex items-center space-x-5">
                 {member.user.avatarUrl ? (
-                  <Image
-                    src={member.user.avatarUrl}
-                    alt={member.user.name || 'User'}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full"
-                    loading="lazy"
-                  />
+                  <div className="w-12 h-12 rounded-xl border border-white/10 p-0.5">
+                    <Image src={member.user.avatarUrl} alt={member.user.name} width={48} height={48} className="w-full h-full object-cover rounded-[10px]" />
+                  </div>
                 ) : (
-                  <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-foreground">
+                  <div className="w-12 h-12 bg-[#131317] border border-white/10 rounded-xl flex items-center justify-center">
+                    <span className="text-white/40 font-black text-sm">
                       {(member.user.name || member.user.email).charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
                 <div>
-                  <p className="text-foreground font-medium">
+                  <p className="text-white font-bold tracking-tight">
                     {member.user.name || member.user.email}
                   </p>
-                  <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/20">{member.user.email}</p>
                 </div>
               </div>
               
-              <div className="col-span-2">
-                <span className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(member.role)}`}>
-                  {getRoleIcon(member.role)}
-                  <span>{getRoleLabel(member.role)}</span>
+              <div className="col-span-2 flex justify-center">
+                <span className={cn(
+                   "px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border",
+                   getRoleColor(member.role)
+                )}>
+                  {member.role}
                 </span>
               </div>
               
-              <div className="col-span-2 text-sm text-muted-foreground">
+              <div className="col-span-2 text-center text-xs font-medium text-white/40">
                 {new Date(member.joinedAt).toLocaleDateString()}
               </div>
               
-              <div className="col-span-2">
+              <div className="col-span-2 flex justify-end">
                 {team.userPermissions.canRemoveMembers && member.user.id !== team.userRole && (
-                  <button className="text-muted-foreground hover:text-red-400 transition-colors">
+                  <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/5 text-white/20 hover:text-red-400 hover:border-red-400/30 transition-all">
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
                 )}
@@ -515,74 +500,75 @@ function MembersSection({
 // Repositories Section Component
 function RepositoriesSection({ team }: { team: Team }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Repositories</h2>
+        <h2 className="text-2xl font-black text-white tracking-tighter">Synced Assets</h2>
         {team.userPermissions.canManageRepos && (
           <Link
             href="/dashboard/repos/new"
-            className="flex items-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
+            className="flex items-center space-x-3 px-6 py-3 bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-primary hover:text-black transition-all shadow-glow"
           >
             <Plus className="h-4 w-4" />
-            <span>Connect Repository</span>
+            <span>Sync New Asset</span>
           </Link>
         )}
       </div>
 
       {team.repositories.length === 0 ? (
-        <div className="text-center py-12">
-          <GitBranch className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No repositories connected</h3>
-          <p className="text-muted-foreground mb-6">
-            Connect your first repository to start monitoring your pipelines
+        <div className="text-center py-24 glass-card rounded-[40px] border-dashed border-white/5 px-10">
+          <GitBranch className="h-16 w-16 text-white/5 mx-auto mb-8" />
+          <h3 className="text-2xl font-black text-white mb-4 tracking-tight">Vessel Void</h3>
+          <p className="text-white/20 font-medium mb-12 max-w-sm mx-auto italic">
+            "No architectural assets currently linked to this node structure."
           </p>
           {team.userPermissions.canManageRepos && (
             <Link
               href="/dashboard/repos/new"
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 transition-colors"
+              className="inline-flex items-center space-x-6 px-10 py-5 bg-primary text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-white transition-all shadow-glow"
             >
               <Plus className="h-4 w-4" />
-              <span>Connect Repository</span>
+              <span>Link Initial Repository</span>
             </Link>
           )}
         </div>
       ) : (
-        <div className="bg-muted/50 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-sm font-medium text-muted-foreground">
-            <div className="col-span-6">Repository</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-2">Connected</div>
-            <div className="col-span-2">Actions</div>
+        <div className="glass-card border-white/5 rounded-[32px] overflow-hidden">
+          <div className="grid grid-cols-12 gap-4 p-8 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-white/10 bg-white/[0.02]">
+            <div className="col-span-6">Asset Identifier</div>
+            <div className="col-span-2 text-center">Pulse</div>
+            <div className="col-span-2 text-center">Sync Date</div>
+            <div className="col-span-2 text-right">Terminal</div>
           </div>
           
-          <div className="divide-y divide-gray-800">
+          <div className="divide-y divide-white/5">
             {team.repositories.map((repo) => (
-              <div key={repo.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-card/50 transition-colors">
+              <div key={repo.id} className="grid grid-cols-12 gap-4 p-8 items-center hover:bg-white/[0.03] transition-all group/row">
                 <div className="col-span-6">
-                  <p className="text-foreground font-medium">{repo.name}</p>
-                  <p className="text-sm text-muted-foreground">{repo.fullName}</p>
+                  <p className="text-white font-bold tracking-tight group-hover/row:text-primary transition-colors">{repo.name}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/20">{repo.fullName}</p>
                 </div>
                 
-                <div className="col-span-2">
-                  <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                <div className="col-span-2 flex justify-center">
+                  <span className={cn(
+                    "px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border",
                     repo.isActive 
-                      ? 'bg-green-900/20 text-green-400' 
-                      : 'bg-muted/20 text-muted-foreground'
-                  }`}>
-                    {repo.isActive ? 'Active' : 'Inactive'}
+                      ? 'border-primary/20 bg-primary/5 text-primary shadow-glow-subtle' 
+                      : 'border-white/5 bg-transparent text-white/20'
+                  )}>
+                    {repo.isActive ? 'Active' : 'Idle'}
                   </span>
                 </div>
                 
-                <div className="col-span-2 text-sm text-muted-foreground">
+                <div className="col-span-2 text-center text-xs font-medium text-white/40">
                   {new Date(repo.createdAt).toLocaleDateString()}
                 </div>
                 
-                <div className="col-span-2">
+                <div className="col-span-2 flex justify-end">
                   <Link
                     href={`/dashboard/repos/${repo.id}`}
-                    className="text-primary hover:text-cyan-300 text-sm"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/5 text-white/20 hover:text-primary hover:border-primary/30 transition-all shadow-subtle"
                   >
-                    View Details
+                    <Eye className="h-4 w-4" />
                   </Link>
                 </div>
               </div>
@@ -623,49 +609,49 @@ function SettingsSection({ team, onUpdate }: { team: Team; onUpdate: () => void 
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="bg-muted/50 border border-gray-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Team Settings</h3>
+    <div className="max-w-2xl space-y-10">
+      <div className="glass-card border-white/5 rounded-[40px] p-12">
+        <h3 className="text-2xl font-black text-white tracking-tighter mb-10">Team Configuration</h3>
         
-        <div className="space-y-4">
+        <div className="space-y-8">
           <div>
-            <label htmlFor="team-name" className="block text-sm font-medium text-muted-foreground mb-1">
-              Team Name
+            <label htmlFor="team-name" className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-3">
+              Organization Name
             </label>
             <input
               id="team-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
+              className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-medium focus:outline-none focus:border-primary/40 transition-all placeholder-white/5"
               aria-label="Team name"
             />
           </div>
 
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between py-8 border-y border-white/5">
             <div>
-              <p className="text-sm text-muted-foreground">Team Slug</p>
-              <p className="text-foreground">/{team.slug}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/10 mb-1">Assigned Path</p>
+              <p className="text-white font-bold tracking-tight">/{team.slug}</p>
             </div>
             <button
               onClick={handleSave}
               disabled={loading || name === team.name}
-              className="px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 disabled:opacity-50 transition-colors"
+              className="px-8 py-4 bg-primary text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-white disabled:opacity-20 transition-all shadow-glow"
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Syncing...' : 'Save Configuration'}
             </button>
           </div>
         </div>
       </div>
 
       {team.userRole === 'OWNER' && (
-        <div className="bg-red-900/20 border border-red-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-red-400 mb-4">Danger Zone</h3>
-          <p className="text-muted-foreground mb-4">
-            Once you delete a team, there is no going back. Please be certain.
+        <div className="glass-card border-red-500/10 rounded-[40px] p-12 bg-red-500/[0.02]">
+          <h3 className="text-xl font-black text-red-400 tracking-tighter mb-4 uppercase">Terminal Destruction</h3>
+          <p className="text-white/30 text-sm font-medium mb-8 italic">
+            "Requesting permanent deletion of all neural paths associated with this organization. This action is irreversible."
           </p>
-          <button className="px-4 py-2 bg-red-600 text-foreground rounded-lg hover:bg-red-700 transition-colors">
-            Delete Team
+          <button className="px-8 py-4 bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-red-500 hover:text-white transition-all">
+            Initiate Deletion
           </button>
         </div>
       )}
@@ -713,66 +699,73 @@ function InviteMemberModal({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    >
+    <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-muted border border-gray-800 rounded-xl p-6 max-w-md w-full"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 selection:bg-primary selection:text-black"
       >
-        <h2 className="text-xl font-bold text-foreground mb-4">Invite Team Member</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="colleague@example.com"
-              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground placeholder-gray-400 focus:outline-none focus:border-cyan-500"
-              required
-            />
-          </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="glass-card border-white/10 rounded-[40px] p-12 max-w-lg w-full relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl -z-10" />
+          
+          <h2 className="text-3xl font-black text-white tracking-tighter mb-2 uppercase">Personnel Draft</h2>
+          <p className="text-white/20 text-[11px] font-black uppercase tracking-[0.3em] mb-10">Assigning new neural link</p>
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div>
+              <label className="block text-[9px] font-black uppercase tracking-[0.3em] text-white/10 mb-3">
+                Digital Identifier (Email)
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="unit@protocol.syn"
+                className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-medium placeholder-white/5 focus:outline-none focus:border-primary/40 transition-all font-mono text-sm"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              Role
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none focus:border-cyan-500"
-            >
-              <option value="VIEWER">Viewer - Read-only access</option>
-              <option value="MEMBER">Member - Can manage repositories</option>
-              <option value="ADMIN">Admin - Can manage members</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-[9px] font-black uppercase tracking-[0.3em] text-white/10 mb-3">
+                Privilege Level
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full px-6 py-4 bg-[#131317] border border-white/10 rounded-2xl text-white font-medium focus:outline-none focus:border-primary/40 transition-all appearance-none cursor-pointer"
+              >
+                <option value="VIEWER">Observer - Sensory access only</option>
+                <option value="MEMBER">Operative - Standard node management</option>
+                <option value="ADMIN">Architect - Full structural control</option>
+              </select>
+            </div>
 
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 bg-card text-muted-foreground rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-cyan-600 disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Inviting...' : 'Send Invite'}
-            </button>
-          </div>
-        </form>
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-8 py-5 bg-white/5 border border-white/5 text-white/20 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:text-white hover:border-white/20 transition-all order-2 sm:order-1"
+              >
+                Abort
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-8 py-5 bg-primary text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white disabled:opacity-20 transition-all shadow-glow order-1 sm:order-2"
+              >
+                {loading ? 'Initializing...' : 'Authorize Link'}
+              </button>
+            </div>
+          </form>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </AnimatePresence>
   )
 }

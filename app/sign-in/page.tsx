@@ -1,84 +1,104 @@
 'use client'
 
-import { useState } from 'react'
 import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 import { Button } from '@/components/ui/button'
-import { Github } from 'lucide-react'
+import { Github, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { EmailPasswordSignIn } from '@/components/auth/EmailPasswordSignIn'
-
-type SignInMethod = 'oauth' | 'email'
+import Link from 'next/link'
 
 export default function SignInPage() {
   const { signInWithGithub, loading } = useAuth()
-  const [method, setMethod] = useState<SignInMethod>('oauth')
+
+  const features = [
+    "Real-time collaboration",
+    "Project analytics",
+    "One-click deployments"
+  ]
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-blue-600/20 rounded-full blur-[100px]" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-purple-600/20 rounded-full blur-[100px]" />
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl relative z-10 shadow-2xl"
-      >
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-black mb-3 tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Welcome Back
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Sign in to your Fixr account
+    <div className="min-h-screen flex bg-white font-sans selection:bg-black selection:text-white">
+      {/* Left Panel (45% width, black bg #000) */}
+      <div className="hidden lg:flex w-[45%] bg-[#000] text-white p-[40px] flex-col justify-between relative overflow-hidden">
+        <div className="relative z-10">
+          <Link href="/" className="inline-block">
+            <span className="text-[24px] font-extrabold tracking-[-0.04em]">FIXR</span>
+          </Link>
+          
+          <div className="mt-[16vh] max-w-[400px]">
+            <h2 className="text-[48px] font-extrabold mb-[12px] tracking-tight leading-[1.1]">
+              Welcome back.
+            </h2>
+            <p className="text-[16px] text-white/60 mb-[48px] font-medium">
+              Your team is waiting.
+            </p>
+            
+            <div className="space-y-[20px]">
+              {features.map((f, i) => (
+                <div key={i} className="flex items-center gap-[12px] text-white">
+                  <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-black" />
+                  </div>
+                  <span className="font-semibold text-[15px]">{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-[13px] font-medium text-white/40 uppercase tracking-widest">
+            Trusted by 2,000+ teams
           </p>
         </div>
 
-        {/* Toggle between OAuth and Email */}
-        <div className="flex gap-3 mb-6 bg-gray-900/30 p-1 rounded-lg border border-gray-700">
-          <button
-            onClick={() => setMethod('oauth')}
-            className={`flex-1 py-2 px-4 rounded-md font-medium transition ${
-              method === 'oauth'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            Quick Sign In
-          </button>
-          <button
-            onClick={() => setMethod('email')}
-            className={`flex-1 py-2 px-4 rounded-md font-medium transition ${
-              method === 'email'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            Email
-          </button>
-        </div>
+        {/* Subtle dot grid for texture */}
+        <div className="absolute inset-0 bg-dot-grid opacity-[0.05] pointer-events-none" />
+      </div>
 
-        {method === 'oauth' ? (
-          <div className="space-y-3">
-            <Button 
-              onClick={signInWithGithub}
-              disabled={loading}
-              className="w-full h-12 text-base font-semibold bg-[#24292F] hover:bg-[#24292F]/90 text-white flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Github className="w-5 h-5" />
-              Continue with GitHub
-            </Button>
-
-            <GoogleSignInButton />
+      {/* Right Panel (55% width, white bg #fff) */}
+      <div className="w-full lg:w-[55%] flex items-center justify-center p-[40px] bg-white">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-[400px]"
+        >
+          <div className="mb-[40px]">
+            <h1 className="text-[28px] font-bold text-[#0a0a0a] mb-2 tracking-tight">Sign in to Fixr</h1>
+            <p className="text-[14px] text-[#525252] font-medium">
+              Don't have an account? <Link href="/sign-up" className="text-black font-bold underline underline-offset-4 decoration-[#e5e5e5] hover:decoration-black transition-all">Sign up</Link>
+            </p>
           </div>
-        ) : (
-          <EmailPasswordSignIn />
-        )}
 
-        <p className="text-center text-xs text-gray-500 mt-8">
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-        </p>
-      </motion.div>
+          <div className="space-y-6">
+            <EmailPasswordSignIn />
+            
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-[#e5e5e5]"></span>
+              </div>
+              <div className="relative flex justify-center text-[11px] uppercase tracking-widest font-black">
+                <span className="bg-white px-4 text-[#a3a3a3]">OR CONTINUE WITH</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={signInWithGithub}
+                disabled={loading}
+                variant="outline"
+                className="h-[44px] font-bold border-[#e5e5e5] hover:bg-[#f5f5f5]"
+              >
+                <Github className="w-4 h-4 mr-2" />
+                GitHub
+              </Button>
+              <GoogleSignInButton customClass="h-[44px] font-bold border-[#e5e5e5] hover:bg-[#f5f5f5]" />
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   )
 }

@@ -4,9 +4,16 @@ import Link from 'next/link'
 import { Github, Linkedin, Twitter, Mail, ArrowUp } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
+import { usePathname } from 'next/navigation'
+
 export function Footer() {
+  const pathname = usePathname()
   const [showBackToTop, setShowBackToTop] = useState(false)
-  
+
+  if (pathname?.startsWith('/dashboard')) {
+    return null
+  }
+
   useEffect(() => {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 400)
@@ -14,166 +21,147 @@ export function Footer() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-  
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
   const navigation = {
     product: [
       { name: 'Features', href: '/features' },
-      { name: 'How It Works', href: '/how-it-works' },
-      { name: 'Reviews', href: '/reviews' },
+      { name: 'Pricing', href: '/pricing' },
+      { name: 'Dashboard', href: '/dashboard' },
+      { name: 'Changelog', href: '/changelog' },
+      { name: 'Roadmap', href: '/roadmap' },
     ],
     company: [
       { name: 'About', href: '/about' },
-      { name: 'Dashboard', href: '/dashboard' },
-    ],
-    support: [
-      { name: 'Help', href: '/help' },
       { name: 'Contact', href: '/contact' },
-      { name: 'Status', href: '/status' },
+      { name: 'Blog', href: '/blog' },
+      { name: 'Careers', href: '/careers' },
+      { name: 'Press', href: '/press' },
     ],
     legal: [
-      { name: 'Privacy', href: '/privacy' },
-      { name: 'Terms', href: '/terms' },
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' },
+      { name: 'Cookie Policy', href: '/cookies' },
       { name: 'Security', href: '/security' },
-      { name: 'Cookies', href: '/cookies' },
     ],
   }
 
   return (
     <>
-      <footer className="bg-[rgba(5,5,8,0.95)] border-t border-white/8 backdrop-blur-xl mt-0">
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid md:grid-cols-5 gap-8">
-
-            {/* Brand */}
-            <div className="md:col-span-2">
-              <Link href="/">
-                <div className="bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent text-[1.75rem] font-black tracking-[0.05em] mb-3 inline-block hover:scale-105 transition-transform cursor-pointer">FIXR</div>
+      <footer className="bg-[#0e0e11] border-t border-white/5 mt-0 relative overflow-hidden">
+        <div className="absolute bottom-0 left-0 w-full h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none translate-y-1/2" />
+        <div className="container pt-[80px] pb-0 relative z-10">
+          <div className="grid md:grid-cols-12 gap-16 lg:gap-24 pb-24">
+            {/* COLUMN 1 — Brand (wider, ~30%) */}
+            <div className="md:col-span-4 lg:col-span-5">
+              <Link href="/" className="inline-block group mb-8">
+                <div className="text-[24px] font-black text-white tracking-tighter text-glow">FIXR</div>
               </Link>
-              <p className="text-gray-400 mb-6 max-w-sm text-sm leading-relaxed">
-                AI-powered DevOps automation that monitors, analyzes, and fixes your CI/CD pipelines automatically.
+              <p className="text-white/40 mb-10 text-[15px] font-medium leading-relaxed italic max-w-xs">
+                "Architecting the future of autonomous delivery through neural synthesis and precision telemetry."
               </p>
-              <div className="flex space-x-4">
-                <a href="https://github.com/jatin12-alt" target="_blank" rel="noopener noreferrer"
-                  className="text-gray-500 transition-all hover:scale-110"
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#00d4ff'}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'}
-                  aria-label="GitHub"
-                >
-                  <Github className="h-5 w-5" />
-                </a>
-                <a href="https://linkedin.com/in/jatin-dongre-6a13a3294" target="_blank" rel="noopener noreferrer"
-                  className="text-gray-500 transition-all hover:scale-110"
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#00d4ff'}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'}
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin className="h-5 w-5" />
-                </a>
-                <a href="#"
-                  className="text-gray-500 transition-all hover:scale-110"
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#00d4ff'}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'}
-                  aria-label="Twitter"
-                >
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="mailto:contact@fixr.dev"
-                  className="text-gray-500 transition-all hover:scale-110"
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#00d4ff'}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'}
-                  aria-label="Email"
-                >
-                  <Mail className="h-5 w-5" />
-                </a>
+              <div className="flex space-x-8">
+                {[
+                  { Icon: Github, href: "https://github.com/jatin12-alt" },
+                  { Icon: Twitter, href: "#" },
+                  { Icon: Mail, href: "mailto:hello@fixr.io" }
+                ].map(({ Icon, href }, i) => (
+                  <a key={i} href={href} 
+                    className="text-white/20 hover:text-primary transition-all duration-300 hover:scale-110"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Icon className="h-6 w-6" />
+                  </a>
+                ))}
               </div>
             </div>
 
-          {/* Product */}
-          <div>
-            <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-4">
-              Product
-            </h3>
-            <ul className="space-y-3">
-              {navigation.product.map((item) => (
-                <li key={item.name}>
-                  <Link href={item.href}
-                    className="text-sm text-gray-500 hover:text-white transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/* COLUMN 2 — Modules */}
+            <div className="md:col-span-2 lg:col-span-2">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mb-10">
+                Modules
+              </h3>
+              <ul className="space-y-4">
+                {navigation.product.map((item) => (
+                  <li key={item.name}>
+                    <Link href={item.href}
+                      className="text-[13px] font-bold text-white/30 hover:text-primary transition-all flex items-center group"
+                    >
+                      <span className="w-0 h-[1px] bg-primary mr-0 group-hover:w-3 group-hover:mr-3 transition-all" />
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* COLUMN 3 — Structure */}
+            <div className="md:col-span-3 lg:col-span-2">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mb-10">
+                Structure
+              </h3>
+              <ul className="space-y-4">
+                {navigation.company.map((item) => (
+                  <li key={item.name}>
+                    <Link href={item.href}
+                      className="text-[13px] font-bold text-white/30 hover:text-primary transition-all flex items-center group"
+                    >
+                       <span className="w-0 h-[1px] bg-primary mr-0 group-hover:w-3 group-hover:mr-3 transition-all" />
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* COLUMN 4 — Protocol */}
+            <div className="md:col-span-3 lg:col-span-3">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em] mb-10">
+                Protocol
+              </h3>
+              <ul className="space-y-4">
+                {navigation.legal.map((item) => (
+                  <li key={item.name}>
+                    <Link href={item.href}
+                      className="text-[13px] font-bold text-white/30 hover:text-primary transition-all flex items-center group"
+                    >
+                       <span className="w-0 h-[1px] bg-primary mr-0 group-hover:w-3 group-hover:mr-3 transition-all" />
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Company */}
-          <div>
-            <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-4">
-              Company
-            </h3>
-            <ul className="space-y-3">
-              {navigation.company.map((item) => (
-                <li key={item.name}>
-                  <Link href={item.href}
-                    className="text-sm text-gray-500 hover:text-white transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-4">
-              Support
-            </h3>
-            <ul className="space-y-3">
-              {navigation.support.map((item) => (
-                <li key={item.name}>
-                  <Link href={item.href}
-                    className="text-sm text-gray-500 hover:text-white transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* BOTTOM BAR */}
+          <div className="py-10 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
+            <p className="text-white/10 text-[11px] font-black uppercase tracking-[0.3em]">
+              © 2025 Sentinel / Fixr. Core Protocol v4.0.2
+            </p>
+            <div className="flex items-center gap-4 text-white/10 text-[11px] font-black uppercase tracking-[0.3em]">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-glow" />
+              All Systems Operational
+            </div>
           </div>
         </div>
+      </footer>
 
-        {/* Bottom bar */}
-        <div className="mt-10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/7">
-          <p className="text-gray-600 text-xs">
-            © 2026 Fixr. All rights reserved. Built with ❤️ for developers.
-          </p>
-          <div className="flex space-x-6">
-            {navigation.legal.map((item) => (
-              <Link key={item.name} href={item.href}
-                className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </footer>
-    
-    {/* Back to Top Button */}
-    {showBackToTop && (
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300"
-        aria-label="Back to top"
-      >
-        <ArrowUp className="h-5 w-5" />
-      </button>
-    )}
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-12 right-12 z-50 w-16 h-16 bg-white text-black rounded-[20px] flex items-center justify-center shadow-2xl hover:bg-primary transition-all duration-500 hover:-translate-y-2 group"
+          aria-label="Back to top"
+        >
+          <ArrowUp className="h-6 w-6 group-hover:scale-125 transition-transform" />
+        </button>
+      )}
     </>
   )
 }
+

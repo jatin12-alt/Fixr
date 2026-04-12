@@ -4,342 +4,295 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import {
-  Bot, Zap, Shield, GitBranch, BarChart3, Workflow,
-  ArrowRight, CheckCircle, Github, Play
+  Zap, Shield, GitBranch, BarChart3, Workflow,
+  ArrowRight, CheckCircle, Github, Play, Quote, Star, Package
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { MagneticButton } from '@/components/ui/MagneticButton'
+import { TiltCard } from '@/components/ui/TiltCard'
+import { useScrollAnimations } from '@/hooks/useScrollAnimations'
+
+const OrbDivider = dynamic(
+  () => import('@/components/three/OrbDivider').then(m => ({ default: m.OrbDivider })),
+  { ssr: false, loading: () => null }
+)
+
+const HeroScene = dynamic(
+  () => import('@/components/three/HeroScene').then(m => ({ default: m.HeroScene })),
+  { ssr: false, loading: () => null }
+)
 
 const fadeUp = {
-  initial: { opacity: 0, y: 40 },
+  initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
 }
 const stagger = {
-  animate: { transition: { staggerChildren: 0.12 } },
-}
-
-function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    let start = 0
-    const step = Math.ceil(target / 60)
-    const timer = setInterval(() => {
-      start += step
-      if (start >= target) { setCount(target); clearInterval(timer) }
-      else setCount(start)
-    }, 25)
-    return () => clearInterval(timer)
-  }, [target])
-  return <>{count.toLocaleString()}{suffix}</>
+  animate: { transition: { staggerChildren: 0.1 } },
 }
 
 export default function HomePage() {
-  const glowText = {
-    background: 'linear-gradient(135deg, #00d4ff 0%, #8b5cf6 50%, #00ff88 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-    filter: 'drop-shadow(0 0 30px rgba(0,212,255,0.3))',
-  }
-
-  const cardBase = {
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.09)',
-    borderRadius: '16px',
-    transition: 'all 0.3s ease',
-  }
+  useScrollAnimations()
 
   const features = [
-    { icon: Bot,       title: 'AI Analysis',       desc: 'GPT-powered root cause analysis with 95% accuracy',                color: 'from-blue-500 to-cyan-400' },
-    { icon: Zap,       title: 'Real-time Alerts',  desc: 'Sub-second detection via webhooks and live WebSocket updates',    color: 'from-yellow-500 to-orange-400' },
-    { icon: Shield,    title: 'Enterprise Grade',  desc: 'SOC 2 compliant, end-to-end encrypted, full audit trails',        color: 'from-green-500 to-emerald-400' },
-    { icon: GitBranch, title: 'GitHub Native',     desc: 'One-click OAuth, automatic webhooks, branch protection support',  color: 'from-purple-500 to-violet-400' },
-    { icon: Workflow,  title: 'Auto-Fix Engine',   desc: 'Automatically deploys patches for common pipeline failures',      color: 'from-pink-500 to-rose-400' },
-    { icon: BarChart3, title: 'Deep Analytics',    desc: 'Trend reports, failure heatmaps, and team productivity insights', color: 'from-cyan-500 to-blue-400' },
+    { icon: Workflow, title: 'Automated CI/CD', desc: 'Deploy with confidence. Automated pipelines that test, build, and ship your code without manual intervention.' },
+    { icon: Shield, title: 'Enterprise Security', desc: 'Bank-grade encryption and compliance. Your infrastructure stays protected 24/7 with zero-trust architecture.' },
+    { icon: GitBranch, title: 'Git Integration', desc: 'Native support for GitHub, GitLab, and Bitbucket. Trigger deployments on every push or pull request.' },
+    { icon: Package, title: 'Dependency Management', desc: 'Automatically track, update, and resolve dependencies across your entire project ecosystem.' },
+    { icon: BarChart3, title: 'Performance Analytics', desc: 'Real-time metrics and insights. Know exactly how your infrastructure performs at every moment.' },
+    { icon: Github, title: 'GitHub Actions', desc: 'Native GitHub Actions support. Compose powerful workflows with hundreds of pre-built integrations.' },
   ]
 
-  const steps = [
-    { num: '01', title: 'Connect GitHub',  desc: 'OAuth in one click, select any repo' },
-    { num: '02', title: 'Monitor 24/7',    desc: 'Webhooks catch every failure instantly' },
-    { num: '03', title: 'AI Diagnoses',    desc: 'Groq-powered analysis finds root cause' },
-    { num: '04', title: 'Auto Fix & Ship', desc: 'Patch deployed, pipeline re-runs clean' },
-  ]
-
-  const testimonials = [
-    { name: 'Sarah Chen',     role: 'DevOps @ TechCorp',      quote: 'Failure resolution dropped from 3 hours to under 5 minutes.',    avatar: 'SC', color: 'from-blue-500 to-cyan-400' },
-    { name: 'Marcus Johnson', role: 'CTO @ StartupXYZ',       quote: 'ROI was immediate. Team ships features instead of chasing bugs.', avatar: 'MJ', color: 'from-purple-500 to-violet-400' },
-    { name: 'Priya Patel',   role: 'Senior Dev @ CloudTech',  quote: 'Setup took 4 minutes. The dashboard is exactly what I needed.',  avatar: 'PP', color: 'from-green-500 to-emerald-400' },
+  const metrics = [
+    { label: 'Pipelines Fixed', value: 2500, suffix: '+' },
+    { label: 'Hours Reclaimed', value: 15000, suffix: 'h' },
+    { label: 'Active Teams', value: 500, suffix: '+' },
+    { label: 'System Uptime', value: 99.9, suffix: '%' },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative' }}>
+    <div className="min-h-screen bg-[#131317] selection:bg-primary selection:text-black overflow-x-hidden">
+      {/* 3D HERO SECTION */}
+      <section style={{
+        position: 'relative',
+        width: '100%',
+        height: '100vh',
+        background: '#000',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {/* Three.js Canvas — background layer */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+        }}>
+          <HeroScene />
+        </div>
 
-      {/* HERO */}
-      <section className="container mx-auto px-6 pt-24 pb-24 text-center">
-        <motion.div variants={stagger} initial="initial" animate="animate">
+        {/* Content — foreground layer, BELOW the particle text visually */}
+        <div style={{
+          position: 'relative',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'flex-end', // push to bottom portion
+          height: '100%',
+          paddingBottom: '120px',
+          textAlign: 'center',
+        }}>
+          
+          <p style={{
+            color: 'rgba(255,255,255,0.5)',
+            fontSize: '18px',
+            maxWidth: '520px',
+            marginBottom: '40px',
+            lineHeight: 1.6,
+          }}>
+            The Digital Architect for your infrastructure. 
+            24/7 autonomous monitoring and intelligent resolution.
+          </p>
 
-          {/* Badge */}
-          <motion.div variants={fadeUp} className="flex justify-center mb-8">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold"
-              style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.25)', color: '#00d4ff' }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              AI-Powered DevOps &middot; Live in Production
-            </span>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1 variants={fadeUp}
-            className="text-6xl md:text-8xl font-black leading-none mb-6"
-            style={{ letterSpacing: '-0.02em' }}
-          >
-            <span className="text-white">Your Pipelines.</span>
-            <br />
-            <span style={glowText}>Never Broken Again.</span>
-          </motion.h1>
-
-
-          {/* Subheadline */}
-          <motion.p variants={fadeUp} className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Fixr monitors your GitHub Actions 24/7, uses AI to diagnose failures instantly,
-            and automatically deploys fixes while you sleep.
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div variants={fadeUp} className="flex flex-wrap gap-4 justify-center mb-14">
+          <div style={{
+            display: 'flex',
+            gap: '16px',
+            alignItems: 'center',
+          }}>
             <Link href="/sign-up">
-              <Button size="lg" className="text-base px-8 gap-2">
-                Start Free - No Credit Card
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <button className="bg-white hover:bg-primary text-black border-none px-8 py-3.5 rounded-md text-[15px] font-semibold cursor-none transition-colors">
+                Initialize System →
+              </button>
             </Link>
             <Link href="/how-it-works">
-              <Button variant="outline" size="lg" className="text-base px-8 gap-2">
-                <Play className="h-4 w-4" />
-                See How It Works
-              </Button>
+              <button className="bg-transparent hover:bg-white/10 text-white border border-white/25 px-8 py-3.5 rounded-md text-[15px] font-medium cursor-none transition-colors">
+                View Protocol
+              </button>
             </Link>
-          </motion.div>
+          </div>
+        </div>
 
-          {/* Trust badges */}
-          <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-            {['No credit card required', 'Setup in 5 minutes', 'GitHub OAuth secured', 'Cancel anytime'].map(t => (
-              <span key={t} className="flex items-center gap-1.5">
-                <CheckCircle className="h-3.5 w-3.5 text-green-400" />
-                {t}
-              </span>
+        {/* Scroll indicator */}
+        <div style={{
+          position: 'absolute',
+          bottom: '32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          color: 'rgba(255,255,255,0.25)',
+          fontSize: '12px',
+          letterSpacing: '0.1em',
+        }}>
+          SCROLL ↓
+        </div>
+      </section>
+
+      {/* METRICS STRIP - Tonal Shift to surface_container_low */}
+      <section className="bg-[#1b1b1f] border-y border-white/5 py-0 relative z-10">
+        <div className="max-w-[1120px] mx-auto px-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
+            {metrics.map((m, i) => (
+              <div key={i} className="py-12 md:py-20 px-8 flex flex-col items-center justify-center text-center">
+                <span className="text-4xl md:text-6xl font-black text-white mb-2 tracking-tighter text-glow">
+                  {m.value}{m.suffix}
+                </span>
+                <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">{m.label}</span>
+              </div>
             ))}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
+      </section>
 
-        {/* Terminal card */}
-        <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="mt-20 mx-auto max-w-3xl"
-        >
-          <div style={{ background: 'rgba(10,10,20,0.9)', border: '1px solid rgba(0,212,255,0.2)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 0 80px rgba(0,212,255,0.08)' }}>
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '12px 16px' }} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/70" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-              <div className="w-3 h-3 rounded-full bg-green-500/70" />
-              <span className="text-xs text-gray-500 ml-3 font-mono">fixr - pipeline monitor</span>
+      <OrbDivider />
+
+      {/* FEATURES GRID */}
+      <section id="features" className="py-[120px] relative z-10" style={{
+        background: `radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,0,0,0.05) 0%, transparent 100%), #131317`,
+        backgroundImage: `radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)`,
+        backgroundSize: `24px 24px`
+      }}>
+        <div className="max-w-[1120px] mx-auto px-10">
+          <div className="mb-24 relative" data-animation="fade-up">
+            <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary/5 blur-3xl rounded-full" />
+            <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] mb-6 block text-glow">Module Configuration</span>
+            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tight leading-[1.0] mb-8">
+              Architectural <br />
+              <span className="text-white/20 italic">Intelligence.</span>
+            </h2>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '24px',
+            alignItems: 'start', // ← KEY FIX: don't stretch to equal height
+          }}>
+            {features.map((f, i) => (
+              <div key={i} className="group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[12px] p-8 flex flex-col gap-5 h-auto transition-all duration-[120ms]">
+                {/* Icon */}
+                <div className="w-11 h-11 bg-[#f5f5f5] group-hover:bg-white/10 rounded-[10px] flex items-center justify-center transition-all duration-[120ms]">
+                  <f.icon size={20} className="text-[#0a0a0a] group-hover:text-primary transition-colors duration-[120ms]" />
+                </div>
+
+                {/* Title */}
+                <h3 className="text-base font-semibold text-[#0a0a0a] group-hover:text-white m-0 tracking-tight transition-colors">
+                  {f.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm text-[#525252] group-hover:text-white/60 m-0 leading-[1.6] transition-colors">
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS - Obsidian Deep Layer */}
+      <section className="py-[120px] bg-[#0e0e11] border-y border-white/5 relative z-10">
+        <div className="max-w-[1120px] mx-auto px-10">
+          <div className="grid md:grid-cols-3 gap-8" data-animation="stagger">
+            {[
+              { name: 'Sarah Chen', role: 'Architect @ TechCorp', quote: 'Protocol resolution dropped from hours to absolute zero.' },
+              { name: 'Marcus J.', role: 'Head of Infra @ Vertex', quote: 'Immediate ROI. Sentinel is the command deck we never had.' },
+              { name: 'Priya P.', role: 'Security Lead @ Orbit', quote: 'Surgical precision. Truly an architectural breakthrough.' },
+            ].map((t, i) => (
+              <div key={i} className="animate-card p-12 relative group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[12px] transition-all duration-[120ms]">
+                <Quote className="h-10 w-10 text-[#0a0a0a] group-hover:text-white/5 mb-12 transition-colors duration-[120ms]" />
+                <p className="text-[18px] text-[#0a0a0a] group-hover:text-white/80 font-medium mb-16 leading-relaxed italic transition-colors duration-[120ms]">"{t.quote}"</p>
+                <div className="flex items-center gap-5 pt-10 border-t border-[#e5e5e5] group-hover:border-white/5 transition-colors duration-[120ms]">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-sm text-primary shadow-glow">
+                    {t.name.split(' ').map(n=>n[0]).join('')}
+                  </div>
+                  <div>
+                    <div className="text-[16px] font-bold text-[#0a0a0a] group-hover:text-white tracking-tight transition-colors duration-[120ms]">{t.name}</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#525252] group-hover:text-white/30 transition-colors duration-[120ms]">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING SECTION - Obsidian Primary Layer */}
+      <section className="py-[120px] bg-[#131317] relative z-10">
+        <div className="max-w-[1120px] mx-auto px-10">
+          <div className="text-center mb-32 max-w-[800px] mx-auto" data-animation="fade-up">
+            <h2 className="text-5xl md:text-8xl font-black text-white tracking-tight mb-8">
+              System <br />
+              <span className="text-white/10 uppercase italic">Availability.</span>
+            </h2>
+            <p className="text-white/40 text-xl font-medium">Automate resolution mapping regardless of infrastructure scale.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto" data-animation="stagger">
+            <div className="animate-card p-16 flex flex-col group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[20px] transition-all duration-[120ms]">
+              <div className="mb-12">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#525252] group-hover:text-white/30 mb-6 block text-glow transition-colors duration-[120ms]">Node Entry</h3>
+                <div className="text-6xl font-black text-[#0a0a0a] group-hover:text-white transition-colors duration-[120ms]">$0<span className="text-xl text-[#525252] group-hover:text-white/20 font-medium ml-2 transition-colors duration-[120ms]">/mo</span></div>
+              </div>
+              <ul className="space-y-8 mb-16 flex-grow">
+                {['3 repositories', 'Deep architectural mapping', 'Core resolution engine', '7-day telemetry'].map(f=>(
+                  <li key={f} className="flex items-center gap-5 text-[15px] text-[#525252] group-hover:text-white/60 font-medium transition-colors">
+                    <CheckCircle className="h-5 w-5 text-primary/50 group-hover:text-primary transition-colors" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/sign-up" className="w-full">
+                <button className="w-full py-4 bg-[#f5f5f5] hover:bg-primary text-[#0a0a0a] border border-[#e5e5e5] hover:border-primary rounded-xl font-black uppercase tracking-widest text-xs transition-colors duration-[120ms]">Initialize Signal</button>
+              </Link>
             </div>
-            <div className="p-6 text-left font-mono text-sm space-y-3">
-              {[
-                { text: '> Watching: jatin12-alt/CodeSense-AI',               color: '#00d4ff' },
-                { text: 'x Build failed: ModuleNotFoundError: react',          color: '#ff6b6b' },
-                { text: '~ AI analyzing failure...',                            color: '#ffd93d' },
-                { text: 'i Root cause: outdated peer dependency',               color: '#00ff88' },
-                { text: '> Applying fix: npm install react@19 --legacy-peer-deps', color: '#8b5cf6' },
-                { text: 'v Pipeline re-triggered - build passing (47s)',        color: '#00ff88' },
-              ].map((line, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.9 + i * 0.2 }}
-                  style={{ color: line.color }}
-                >
-                  {line.text}
-                </motion.div>
-              ))}
+
+            <div className="animate-card p-16 flex flex-col relative group bg-white hover:bg-gradient-to-br hover:from-[#1b1b1f] hover:to-[#0e0e11] border border-[#e5e5e5] hover:border-primary/20 rounded-[40px] shadow-2xl hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] xl:scale-105 transition-all duration-[120ms]">
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-primary text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+                Sentinel Mode
+              </div>
+              <div className="mb-12">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary mb-6 block">Professional Stack</h3>
+                <div className="text-6xl font-black text-[#0a0a0a] group-hover:text-white transition-colors">$49<span className="text-xl text-[#525252] group-hover:text-white/30 font-medium ml-2 transition-colors">/mo</span></div>
+              </div>
+              <ul className="space-y-8 mb-16 flex-grow text-[#525252] group-hover:text-white/80 font-medium transition-colors">
+                {['Unlimited Node connections', 'Unlimited telemetry runs', 'Priority resolution synthesis', '90-day architectural history', 'Autonomous deployment'].map(f=>(
+                  <li key={f} className="flex items-center gap-5 text-[15px]">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/sign-up" className="w-full">
+                <button className="w-full py-4 bg-primary hover:bg-[#00c4ec] text-[#0a0a0a] border-none rounded-xl font-black uppercase tracking-widest text-xs shadow-[0_0_20px_rgba(0,212,255,0.2)] transition-colors duration-[120ms]">Engage Sentinel</button>
+              </Link>
             </div>
           </div>
-        </motion.div>
-      </section>
-
-      {/* STATS */}
-      <section className="container mx-auto px-6 pb-20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { label: 'Pipelines Fixed',   target: 2500,  suffix: '+' },
-            { label: 'Hours Saved',       target: 15000, suffix: '+' },
-            { label: 'Happy Developers',  target: 500,   suffix: '+' },
-            { label: 'Uptime',           target: 99,    suffix: '.9%' },
-          ].map((stat, i) => (
-            <motion.div key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              style={cardBase}
-              className="p-6 text-center"
-            >
-              <div className="text-3xl md:text-4xl font-black mb-1" style={{ color: '#00d4ff' }}>
-                <Counter target={stat.target} suffix={stat.suffix} />
-              </div>
-              <div className="text-xs text-gray-500">{stat.label}</div>
-            </motion.div>
-          ))}
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="container mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-            Everything you need. <span style={{ color: '#00d4ff' }}>Nothing you don't.</span>
-          </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">Six core capabilities that turn pipeline chaos into complete automation.</p>
-        </motion.div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f, i) => (
-            <motion.div key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              style={cardBase}
-              className="p-6"
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(0,212,255,0.05)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,212,255,0.25)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.09)' }}
-            >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4`}>
-                <f.icon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-white font-bold mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="container mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-            From failure to fixed in <span style={{ color: '#00ff88' }}>seconds.</span>
-          </h2>
-          <p className="text-gray-400">Four steps. Fully automated. Zero drama.</p>
-        </motion.div>
-
-        <div className="grid md:grid-cols-4 gap-6">
-          {steps.map((s, i) => (
-            <motion.div key={s.num}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              style={cardBase}
-              className="p-6 text-center relative"
-            >
-              <div className="text-5xl font-black mb-3" style={{ color: 'rgba(0,212,255,0.15)' }}>{s.num}</div>
-              <h3 className="text-white font-bold mb-2">{s.title}</h3>
-              <p className="text-sm text-gray-500">{s.desc}</p>
-              {i < 3 && (
-                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 items-center justify-center">
-                  <ArrowRight className="h-4 w-4 text-gray-600" />
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="container mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-            Loved by <span style={{ color: '#8b5cf6' }}>real teams.</span>
-          </h2>
-        </motion.div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <motion.div key={t.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              style={cardBase}
-              className="p-6"
-            >
-              <div className="flex mb-3">
-                {[...Array(5)].map((_, j) => <span key={j} className="text-yellow-400 text-sm">star</span>)}
-              </div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-5">"{t.quote}"</p>
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-white text-xs font-bold">{t.avatar}</span>
-                </div>
-                <div>
-                  <div className="text-white text-sm font-semibold">{t.name}</div>
-                  <div className="text-gray-500 text-xs">{t.role}</div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="container mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="rounded-2xl p-12 md:p-20 text-center relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(139,92,246,0.08) 100%)', border: '1px solid rgba(0,212,255,0.2)' }}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 0%, rgba(0,212,255,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
-          <h2 className="text-4xl md:text-6xl font-black text-white mb-4 relative">
-            Ready to <span style={glowText}>never debug again?</span>
-          </h2>
-          <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto relative">
-            Join 500+ developers who ship faster because Fixr handles the boring stuff.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center relative">
+      {/* CTA BANNER - High Energy */}
+      <section className="container mx-auto px-10 py-[120px] mb-0 relative z-10">
+        <div 
+          className="bg-[#0e0e11] border border-white/5 rounded-[50px] p-24 md:p-40 text-center text-white relative overflow-hidden group hover:shadow-[0_0_100px_rgba(0,212,255,0.1)] transition-shadow duration-700">
+          <div className="absolute inset-0 bg-primary/5 blur-[120px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          <div className="relative z-10">
+            <span className="text-[12px] font-black tracking-[0.5em] text-primary/40 uppercase mb-12 block">Terminal Ready</span>
+            <h2 className="text-5xl md:text-[90px] font-black mb-16 tracking-tighter leading-[0.9] text-glow">
+              Initialize your <br /> <span className="text-white/10 uppercase">Security Bridge.</span>
+            </h2>
             <Link href="/sign-up">
-              <Button size="lg" className="text-base px-10 gap-2">
-                Get Started Free
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <MagneticButton>
+                <Button size="lg" className="h-[80px] px-20 text-xl font-bold bg-white text-black hover:bg-primary transition-all rounded-[16px] shadow-2xl">
+                  Access Terminal
+                </Button>
+              </MagneticButton>
             </Link>
-            <a href="https://github.com/jatin12-alt" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg" className="text-base px-8 gap-2">
-                <Github className="h-4 w-4" />
-                View on GitHub
-              </Button>
-            </a>
           </div>
-        </motion.div>
+        </div>
       </section>
     </div>
   )

@@ -2,9 +2,10 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { 
+import { Card } from '@/components/ui/card'
+import {
   Bot, Zap, Shield, GitBranch,
-  BarChart3, Workflow
+  BarChart3, Workflow, CheckCircle
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -12,117 +13,107 @@ export default function FeaturesPage() {
   const features = [
     {
       icon: Bot,
-      title: "AI-Powered Analysis",
-      description: "Advanced machine learning models analyze pipeline failures with 95% accuracy and suggest intelligent fixes.",
-      benefits: ["Pattern recognition", "Smart error detection", "Automated diagnostics", "Learning from history"],
-      color: "from-blue-500 to-cyan-400",
+      title: "Neural Analysis",
+      description: "Proprietary AI synthesis translates raw build logs into prioritized resolution protocols with 95% accuracy.",
+      benefits: ["Pattern recognition", "Synchronized detection", "Automated synthesis", "Historical cross-referencing"],
     },
     {
       icon: Zap,
-      title: "Lightning Fast Response",
-      description: "Sub-second detection with real-time WebSocket updates. Your team knows about issues before they escalate.",
-      benefits: ["Real-time monitoring", "Instant notifications", "Zero-delay alerts", "Proactive detection"],
-      color: "from-yellow-500 to-orange-400",
+      title: "Sub-Second Pulse",
+      description: "Real-time telemetry via architectural WebSocket tunnels. Your stack remains illuminated 24/7.",
+      benefits: ["Stream monitoring", "Signal alerts", "Zero-latency detection", "Continuous health-check"],
     },
     {
       icon: Shield,
-      title: "Enterprise Security",
-      description: "Military-grade security with encrypted data transmission and audit trails for compliance requirements.",
-      benefits: ["End-to-end encryption", "Audit logs", "SOC 2 compliance", "Access controls"],
-      color: "from-green-500 to-emerald-400",
+      title: "Hardened Security",
+      description: "Military-grade encryption for all metadata transit. Zero-trust architecture ensures your logic remains private.",
+      benefits: ["TLS 1.3 encryption", "Full Audit Telemetry", "SOC 2 Type II", "Role-based staging"],
     },
     {
       icon: GitBranch,
-      title: "GitHub Integration",
-      description: "Seamless integration with GitHub repositories, webhooks, and Actions for comprehensive pipeline monitoring.",
-      benefits: ["One-click setup", "Webhook automation", "Branch protection", "PR analysis"],
-      color: "from-purple-500 to-violet-400",
+      title: "GitHub Tunneling",
+      description: "High-bandwidth integration with repository structures, automated webhooks, and Action monitoring.",
+      benefits: ["One-click OAuth", "Webhook synchro", "Branch protection", "PR synthesis"],
     },
     {
       icon: Workflow,
-      title: "Auto-Fix Deployment",
-      description: "Automatically applies fixes for common issues like import errors, dependency problems, and configuration issues.",
-      benefits: ["Smart fixes", "Version compatibility", "Rollback safety", "Test validation"],
-      color: "from-pink-500 to-rose-400",
+      title: "Auto-Resolution",
+      description: "Surgically apply patches for configuration failures, dependency conflicts, and environment drift.",
+      benefits: ["Adaptive patching", "Drift detection", "Validation staging", "Rollback protocols"],
     },
     {
       icon: BarChart3,
-      title: "Advanced Analytics",
-      description: "Comprehensive dashboards with insights into pipeline performance, failure patterns, and team productivity.",
-      benefits: ["Performance metrics", "Trend analysis", "Custom reports", "Team insights"],
-      color: "from-cyan-500 to-blue-400",
+      title: "Signal Analytics",
+      description: "Luminous command decks provide visibility into architectural health, throughput, and team telemetry.",
+      benefits: ["Telemetry decks", "Heatmap mapping", "Custom signal reports", "Team productivity"],
     },
   ]
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div className="container mx-auto px-6 pt-24 pb-24">
-        {/* Hero */}
+    <div className="min-h-screen bg-[#131317] bg-dot-grid selection:bg-primary selection:text-black">
+      <div className="container mx-auto px-6 pt-40 pb-32">
+        {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-20"
+          className="mb-32 relative text-center"
         >
-          <h1 className="text-5xl md:text-6xl font-bold mb-6"
-            style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
-            POWERFUL FEATURES
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+          <span className="text-[12px] font-black text-primary uppercase tracking-[0.5em] mb-6 block text-glow">Engine Capabilities</span>
+          <h1 className="text-6xl md:text-8xl font-black text-white tracking-tight mb-12">
+            Deep architecture. <br />
+            <span className="text-white/10 italic">Minimal pulse.</span>
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Everything you need to monitor, analyze, and fix your CI/CD pipelines automatically
+          <p className="text-xl text-white/40 max-w-2xl mx-auto font-medium leading-relaxed italic border-x border-white/5 px-12">
+            "Surgical toolsets for architects who demand precision over complexity in their CI/CD automation protocol."
           </p>
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 mb-40">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
-              className="group"
+              transition={{ delay: 0.05 * index }}
             >
-              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '28px', height: '100%', transition: 'all 0.3s ease' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,212,255,0.3)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
-              >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5`}>
-                  <feature.icon className="h-7 w-7 text-white" />
+              <Card className="p-12 h-full glass-card border-white/5 hover:bg-white/[0.03] transition-all duration-700 group relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors" />
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-primary group-hover:text-black transition-all duration-500 shadow-2xl skew-y-1">
+                  <feature.icon className="h-7 w-7" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-gray-400 mb-5 text-sm leading-relaxed">{feature.description}</p>
-                <ul className="space-y-2">
+                <h3 className="text-2xl font-black text-white mb-6 tracking-tight">{feature.title}</h3>
+                <p className="text-white/40 mb-10 text-[15px] leading-relaxed font-medium">{feature.description}</p>
+                <div className="space-y-4 pt-8 border-t border-white/5">
                   {feature.benefits.map(b => (
-                    <li key={b} className="flex items-center text-sm text-gray-500">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0" />
+                    <div key={b} className="flex items-center text-[10px] font-black text-white/20 uppercase tracking-[0.2em] group-hover:text-white/50 transition-colors">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mr-4 flex-shrink-0 group-hover:bg-primary group-hover:shadow-[0_0_10px_rgba(0,212,255,0.5)] transition-all" />
                       {b}
-                    </li>
+                    </div>
                   ))}
-                </ul>
-              </div>
+                </div>
+              </Card>
             </motion.div>
           ))}
         </div>
 
-        {/* CTA */}
+        {/* Closing CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="text-center rounded-2xl p-12"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-[#1b1b1f] to-[#0e0e11] border border-white/5 rounded-[50px] p-24 md:p-40 text-center text-white relative overflow-hidden group"
         >
-          <h2 className="text-3xl font-bold mb-4 text-white">Ready to Transform Your DevOps?</h2>
-          <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-            Join thousands of developers who have already automated their pipeline monitoring with Fixr
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 -skew-x-12 translate-x-1/2 group-hover:translate-x-[40%] transition-transform duration-1000" />
+          <h2 className="text-4xl md:text-6xl font-black mb-10 tracking-tighter leading-none text-glow">Standardize your <br /> <span className="text-white/10">resolution protocol.</span></h2>
+          <p className="text-white/40 mb-16 max-w-xl mx-auto text-lg font-medium italic">
+            "Reduce architectural burnout by automating the repetitive diagnostics of the delivery cycle."
           </p>
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div className="flex flex-wrap gap-6 justify-center">
             <Link href="/sign-up">
-              <Button size="lg">Start Free Trial</Button>
-            </Link>
-            <Link href="/how-it-works">
-              <Button variant="outline" size="lg">Learn More</Button>
+              <Button size="lg" className="h-[72px] px-16 bg-white text-black hover:bg-primary transition-all font-black uppercase tracking-widest text-[11px] rounded-[16px]">
+                Initialize Stack
+              </Button>
             </Link>
           </div>
         </motion.div>
@@ -130,3 +121,4 @@ export default function FeaturesPage() {
     </div>
   )
 }
+
