@@ -51,52 +51,15 @@ export const CustomCursor = () => {
   }, [])
 
   return (
-    <>
+    <div className="hidden lg:block pointer-events-none fixed inset-0 z-[99999]">
       <div 
         ref={dotRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-          zIndex: 99999,
-          backgroundColor: '#fff',
-          mixBlendMode: 'difference',
-          willChange: 'transform',
-        }}
+        className="fixed top-0 left-0 w-2 h-2 rounded-full bg-white mix-blend-difference will-change-transform"
       />
       <div 
         ref={ringRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          border: '1.5px solid #fff',
-          pointerEvents: 'none',
-          zIndex: 99999,
-          mixBlendMode: 'difference',
-          willChange: 'transform',
-        }}
+        className="fixed top-0 left-0 w-8 h-8 rounded-full border-[1.5px] border-white mix-blend-difference opacity-50 will-change-transform"
       />
-      <style jsx global>{`
-        * {
-          cursor: none !important;
-        }
-        @media (max-width: 768px) {
-          * {
-            cursor: auto !important;
-          }
-          .fixed {
-            display: none !important;
-          }
-        }
-      `}</style>
-    </>
+    </div>
   )
 }

@@ -57,37 +57,44 @@ export function useNotifications() {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
-        
-        if (data.type === 'connected') {
-          return
-        }
+        if (data.type === 'connected') return
 
-        // New notification received
         setNotifications(prev => [data, ...prev])
         if (!data.read) {
           setUnreadCount(prev => prev + 1)
         }
       } catch (error) {
-        console.error('Failed to parse notification:', error)
+        console.error('Sentinel Monitor: Parse failure:', error)
       }
     }
 
-    eventSource.onerror = () => {
+    eventSource.onerror = async () => {
       setIsConnected(false)
       eventSource.close()
 
-      // Exponential backoff reconnection
-      if (reconnectAttempts < 5) {
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
-        setTimeout(() => {
-          setReconnectAttempts(prev => prev + 1)
-          connectStream()
-        }, delay)
+      // On error, check if the token is the culprit by forcing a refresh
+      try {
+        console.log('Sentinel Monitor: Pulsing identity for reconnection...')
+        await user.getIdToken(true)
+      } catch (e) {
+        console.error('Sentinel Monitor: Identity pulse failed:', e)
       }
+
+      // Exponential backoff reconnection
+      setReconnectAttempts(prev => {
+        const next = prev + 1
+        if (next <= 5) {
+          const delay = Math.min(1000 * Math.pow(2, prev), 30000)
+          setTimeout(() => {
+            connectStream()
+          }, delay)
+        }
+        return next
+      })
     }
 
     return eventSource
-  }, [user, reconnectAttempts])
+  }, [user]) // Removed reconnectAttempts
 
   // Mark notification as read
   const markAsRead = useCallback(async (ids: string[]) => {

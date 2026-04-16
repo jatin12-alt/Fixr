@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     if (state !== storedState) {
       console.error("OAuth callback: State mismatch")
-      const response = NextResponse.redirect(`${appUrl}/repos?error=state_mismatch`)
+      const response = NextResponse.redirect(`${appUrl}/dashboard/repos?error=state_mismatch`)
       response.cookies.delete('github_oauth_state')
       return response
     }
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     
     if (tokenData.error || !tokenData.access_token) {
       console.error('GitHub token error:', tokenData)
-      const response = NextResponse.redirect(`${appUrl}/repos?error=token_failed`)
+      const response = NextResponse.redirect(`${appUrl}/dashboard/repos?error=token_failed`)
       response.cookies.delete('github_oauth_state')
       return response
     }
@@ -170,17 +170,17 @@ export async function GET(request: NextRequest) {
       console.log("OAuth callback: Insert completed, new ID:", insertResult[0]?.id)
     }
 
-    console.log("OAuth callback: Token saved successfully, redirecting to /repos")
+    console.log("OAuth callback: Token saved successfully, redirecting to /dashboard/repos")
     
     // Small delay to ensure DB write is complete
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    const response = NextResponse.redirect(`${appUrl}/repos`)
+    const response = NextResponse.redirect(`${appUrl}/dashboard/repos`)
     response.cookies.delete('github_oauth_state')
     return response
   } catch (error) {
   console.error("🔥 OAUTH_ERROR:", error instanceof Error ? error.message : 'Unknown error');
-  const response = NextResponse.redirect(`${appUrl}/repos?error=${encodeURIComponent(error instanceof Error ? error.message : 'unknown')}`)
+  const response = NextResponse.redirect(`${appUrl}/dashboard/repos?error=${encodeURIComponent(error instanceof Error ? error.message : 'unknown')}`)
   response.cookies.delete('github_oauth_state')
   return response
 }

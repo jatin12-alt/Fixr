@@ -1,48 +1,43 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Routes that require authentication
-const protectedRoutes = [
-  '/dashboard',
-  '/repos',
-  '/teams',
-  '/analytics',
-  '/notifications',
-  '/settings'
-]
+/**
+ * Sentinel Edge Middleware
+ * Validates session residency and manages navigational logic.
+ */
+export function middleware(req: NextRequest) {
+  const token = req.cookies.get('firebase_token')?.value
+  const { pathname } = req.nextUrl
 
-// Routes that should only be accessible when NOT authenticated
-const authStatusRoutes = [
-  '/sign-in',
-  '/sign-up'
-]
+  const isAuthPage = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')
+  const isProtectedPage = pathname.startsWith('/dashboard') || 
+                          pathname.startsWith('/teams') || 
+                          pathname.startsWith('/analytics')
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const token = request.cookies.get('firebase_token')?.value
-
-  // Check if it's a protected route
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-  
-  // Check if it's an auth status route (sign-in/sign-up)
-  const isAuthStatusRoute = authStatusRoutes.some(route => pathname.startsWith(route))
-
-  if (isProtectedRoute && !token) {
-    // Redirect to sign-in if no token and trying to access a protected route
-    const url = new URL('/sign-in', request.url)
+  // 1. Guard Protected Routes
+  if (isProtectedPage && !token) {
+    const url = new URL('/sign-in', req.url)
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
   }
 
-  if (isAuthStatusRoute && token) {
-    // Redirect to dashboard if logged in and trying to access sign-in/sign-up
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // 2. Prevent Re-Authentication
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  // Pattern to include/exclude routes
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }

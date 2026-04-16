@@ -26,7 +26,7 @@ interface MonitoredRepo {
 
 export default function ReposPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [connected, setConnected] = useState<boolean | null>(null)
   const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([])
   const [monitoredRepos, setMonitoredRepos] = useState<MonitoredRepo[]>([])
@@ -38,8 +38,10 @@ export default function ReposPage() {
   useEffect(() => {
     if (user) {
       checkGitHubStatus()
+    } else if (!authLoading) {
+      setLoading(false)
     }
-  }, [user])
+  }, [user, authLoading])
 
   async function checkGitHubStatus() {
     if (!user) return
@@ -175,18 +177,18 @@ export default function ReposPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#131317] p-10 selection:bg-primary selection:text-black">
+    <div className="py-24 lg:py-16 selection:bg-primary selection:text-black">
       <div className="max-w-[1120px] mx-auto relative">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 lg:mb-16 gap-8">
           <div>
-            <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] mb-4 block text-glow">Node Discovery</span>
-            <h1 className="text-5xl font-black text-white tracking-tighter">
+            <span className="text-[9px] lg:text-[11px] font-black text-primary uppercase tracking-[0.4em] mb-3 lg:mb-4 block text-glow">Node Discovery</span>
+            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tighter leading-none">
               Repository <span className="text-white/10 italic">Manifests.</span>
             </h1>
-            <p className="text-white/30 mt-6 font-medium italic border-l border-primary/20 pl-8">
+            <p className="text-white/30 mt-6 lg:mt-8 font-medium italic border-l border-primary/20 pl-8 text-sm lg:text-base">
               {githubRepos.length} discovered units · {monitoredRepos.length} active nodes
             </p>
           </div>
@@ -218,7 +220,7 @@ export default function ReposPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="glass-card border-white/5 rounded-[24px] p-8 hover:bg-white/[0.03] hover:border-primary/20 transition-all duration-700 group relative overflow-hidden"
+              className="glass-card border-white/5 rounded-[24px] p-6 md:p-8 hover:bg-white/[0.03] hover:border-primary/20 transition-all duration-700 group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-all" />
               <div className="flex items-start justify-between mb-6">

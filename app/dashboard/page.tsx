@@ -28,9 +28,9 @@ import { useAuth } from '@/lib/providers/FirebaseAuthProvider'
 import { cn } from '@/lib/utils'
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const authFetcher = useAuthFetcher()
-  const { data, isLoading } = useSWR<DashboardData & { analytics: any[] }>(
+  const { data, isLoading: swrLoading } = useSWR<DashboardData & { analytics: any[] }>(
     user ? '/api/dashboard' : null,
     authFetcher,
     { refreshInterval: 30000 }
@@ -63,7 +63,8 @@ export default function DashboardPage() {
     )
   }, [data, searchQuery])
 
-  if (isLoading) return <DashboardSkeleton />
+  if (authLoading || (user && swrLoading)) return <DashboardSkeleton />
+  if (!user) return null // Let middleware handle this or return empty if needed
   if (!data || data.repos.length === 0) return <DashboardEmptyState />
 
   const getStatusIcon = (status: string) => {
@@ -91,18 +92,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-10 bg-[#131317] min-h-screen selection:bg-primary selection:text-black">
+    <div className="py-24 lg:py-16 selection:bg-primary selection:text-black">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-10 relative">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 lg:mb-16 gap-8 relative">
         <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 blur-3xl pointer-events-none" />
         <div>
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-3">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-glow" />
-            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/40">
+            <span className="text-[9px] lg:text-[11px] font-black uppercase tracking-[0.4em] text-primary/40">
               Neural Telemetry Active
             </span>
           </div>
-          <h1 className="text-5xl font-black text-white tracking-tighter">Command <span className="text-white/10 italic">Deck.</span></h1>
+          <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tighter leading-none">Command <span className="text-white/10 italic">Deck.</span></h1>
         </div>
 
         <div className="relative group max-w-sm w-full z-10">
@@ -219,17 +220,17 @@ export default function DashboardPage() {
 
 function ROICard({ label, value, icon: Icon, sub, unit, isPrefix = false }: any) {
   return (
-    <Card className="p-8 glass-card border-white/5 hover:bg-white/[0.03] transition-all duration-500 group relative overflow-hidden">
+    <Card className="p-6 md:p-8 glass-card border-white/5 hover:bg-white/[0.03] transition-all duration-500 group relative overflow-hidden">
       <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-all" />
-      <p className="text-[10px] font-black tracking-[0.3em] text-white/20 uppercase mb-3 text-glow-none">{label}</p>
+      <p className="text-[9px] md:text-[10px] font-black tracking-[0.3em] text-white/20 uppercase mb-3 text-glow-none">{label}</p>
       <div className="flex items-baseline gap-2">
-        <span className="text-4xl font-black text-white tracking-tighter text-glow-subtle">
+        <span className="text-3xl md:text-4xl font-black text-white tracking-tighter text-glow-subtle">
           {isPrefix && unit}{value}{!isPrefix && unit}
         </span>
-        <span className="text-[10px] text-primary/40 font-black uppercase tracking-widest">{sub}</span>
+        <span className="text-[9px] md:text-[10px] text-primary/40 font-black uppercase tracking-widest">{sub}</span>
       </div>
-      <div className="absolute right-6 bottom-6 text-white/5 group-hover:text-primary/10 transition-all">
-        <Icon size={40} strokeWidth={1.5} />
+      <div className="absolute right-4 md:right-6 bottom-4 md:bottom-6 text-white/5 group-hover:text-primary/10 transition-all">
+        <Icon className="w-8 h-8 md:w-10 md:h-10" strokeWidth={1.5} />
       </div>
     </Card>
   )
@@ -246,22 +247,22 @@ function PulseItem({ run, isHovered, onHoverChange, getStatusIcon, getStatusLabe
       onMouseLeave={() => onHoverChange(false)}
     >
       <Card className={cn(
-        "p-6 transition-all duration-500 glass-card border-white/5 group",
+        "p-5 md:p-6 transition-all duration-500 glass-card border-white/5 group",
         isHovered && "bg-white/[0.04] border-primary/20 scale-[1.01]"
       )}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-6">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-primary group-hover:text-black transition-all shadow-2xl skew-x-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-primary group-hover:text-black transition-all shadow-2xl skew-x-1">
               <GitBranch className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-[15px] font-black text-white mb-1 group-hover:text-primary transition-colors">{run.repo?.name}</h3>
-              <p className="text-[9px] text-white/20 font-black uppercase tracking-[0.3em]">Telemetry ID: {run.githubRunId}</p>
+              <h3 className="text-sm md:text-[15px] font-black text-white mb-1 group-hover:text-primary transition-colors">{run.repo?.name}</h3>
+              <p className="text-[8px] md:text-[9px] text-white/20 font-black uppercase tracking-[0.3em]">Telemetry ID: {run.githubRunId}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/5 group-hover:border-primary/20 transition-all">
+          <div className="flex items-center self-start sm:self-auto gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/5 group-hover:border-primary/20 transition-all">
             {getStatusIcon(run.status)}
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{getStatusLabel(run.status)}</span>
+            <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-white/40">{getStatusLabel(run.status)}</span>
           </div>
         </div>
         <div className="pt-6 border-t border-white/5">
@@ -330,23 +331,23 @@ function ProjectCard({ repo }: any) {
 
 function DashboardSkeleton() {
   return (
-    <div className="p-10 space-y-12 bg-[#131317] min-h-screen">
-      <div className="flex justify-between items-end">
-        <div className="space-y-6">
+    <div className="py-24 lg:py-16 space-y-12 min-h-screen">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+        <div className="space-y-4">
           <Skeleton className="h-4 w-40 bg-white/5" />
-          <Skeleton className="h-14 w-80 bg-white/5" />
+          <Skeleton className="h-12 lg:h-14 w-64 lg:w-80 bg-white/5" />
         </div>
-        <Skeleton className="h-14 w-80 bg-white/5 rounded-xl" />
+        <Skeleton className="h-12 lg:h-14 w-full md:w-80 bg-white/5 rounded-xl" />
       </div>
-      <div className="grid grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {[1,2,3,4].map(i=><Skeleton key={i} className="h-32 bg-white/5 rounded-[24px]" />)}
       </div>
-      <div className="grid grid-cols-3 gap-12">
-        <div className="col-span-2 space-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="lg:col-span-2 space-y-12">
           <Skeleton className="h-[400px] bg-white/5 rounded-[32px]" />
           <Skeleton className="h-80 bg-white/5 rounded-[24px]" />
         </div>
-        <Skeleton className="h-[600px] bg-white/5 rounded-[32px]" />
+        <Skeleton className="h-[400px] lg:h-[600px] bg-white/5 rounded-[32px]" />
       </div>
     </div>
   )

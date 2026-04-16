@@ -10,10 +10,6 @@ export function Footer() {
   const pathname = usePathname()
   const [showBackToTop, setShowBackToTop] = useState(false)
 
-  if (pathname?.startsWith('/dashboard')) {
-    return null
-  }
-
   useEffect(() => {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 400)
@@ -21,6 +17,10 @@ export function Footer() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  if (pathname?.startsWith('/dashboard')) {
+    return null
+  }
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -53,8 +53,8 @@ export function Footer() {
     <>
       <footer className="bg-[#0e0e11] border-t border-white/5 mt-0 relative overflow-hidden">
         <div className="absolute bottom-0 left-0 w-full h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none translate-y-1/2" />
-        <div className="container pt-[80px] pb-0 relative z-10">
-          <div className="grid md:grid-cols-12 gap-16 lg:gap-24 pb-24">
+        <div className="max-w-[1120px] mx-auto px-6 lg:px-10 pt-[80px] pb-0 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16 lg:gap-24 pb-24">
             {/* COLUMN 1 — Brand (wider, ~30%) */}
             <div className="md:col-span-4 lg:col-span-5">
               <Link href="/" className="inline-block group mb-8">
@@ -155,10 +155,10 @@ export function Footer() {
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-12 right-12 z-50 w-16 h-16 bg-white text-black rounded-[20px] flex items-center justify-center shadow-2xl hover:bg-primary transition-all duration-500 hover:-translate-y-2 group"
+          className="fixed bottom-6 right-6 md:bottom-12 md:right-12 z-50 w-12 h-12 md:w-16 md:h-16 bg-white text-black rounded-xl md:rounded-[20px] flex items-center justify-center shadow-2xl hover:bg-primary transition-all duration-500 hover:-translate-y-2 group"
           aria-label="Back to top"
         >
-          <ArrowUp className="h-6 w-6 group-hover:scale-125 transition-transform" />
+          <ArrowUp className="h-5 w-5 md:h-6 md:w-6 group-hover:scale-125 transition-transform" />
         </button>
       )}
     </>

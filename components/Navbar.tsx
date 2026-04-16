@@ -62,7 +62,7 @@ export function Navbar() {
       }}
     >
       <nav className="w-full">
-        <div className="container">
+        <div className="max-w-[1120px] mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0 flex items-center gap-2 group">

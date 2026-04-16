@@ -3,8 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  @media (min-width: 768px) {
   *, *::before, *::after {
-  cursor: none !important;
+    cursor: none !important;
+  }
 }
 
 button, a {
@@ -86,6 +88,30 @@ button, a {
 
   .shadow-glow-subtle {
     box-shadow: 0 0 20px -5px rgba(0, 212, 255, 0.2);
+  }
+
+  .mobile-scroll-container {
+    @apply flex overflow-x-auto snap-x snap-mandatory pb-8 -mx-5 px-5 gap-6;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mobile-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-scroll-item {
+    @apply flex-shrink-0 snap-center;
+    width: calc(100% - 40px);
+  }
+
+  @screen md {
+    .mobile-scroll-container {
+      @apply grid mx-0 px-0 pb-0 overflow-visible snap-none;
+    }
+    .mobile-scroll-item {
+      @apply w-full flex-shrink;
+    }
   }
 }
 

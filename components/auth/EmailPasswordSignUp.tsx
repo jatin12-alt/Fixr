@@ -72,45 +72,45 @@ export function EmailPasswordSignUp() {
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-[20px] w-full">
+    <form onSubmit={handleSignUp} className="space-y-6 w-full">
       {error && (
-        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">
+        <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider border border-red-500/20">
           {error}
         </div>
       )}
 
-      <div className="space-y-[6px]">
-        <label className="block text-[13px] font-medium text-[#0a0a0a]">Email Address</label>
+      <div className="space-y-2">
+        <label className="block text-[9px] font-black uppercase tracking-[0.25em] text-white/30">Protocol Identifier</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full h-[44px] px-4 bg-white border border-[#e5e5e5] rounded-[6px] text-black placeholder-[#a3a3a3] focus:border-black focus:outline-none transition-all"
-          placeholder="name@company.com"
+          className="w-full h-12 px-4 bg-white/5 border border-white/5 rounded-xl text-white placeholder-white/10 focus:border-primary/30 focus:outline-none transition-all font-bold text-sm"
+          placeholder="name@sentinel.io"
           required
         />
       </div>
 
-      <div className="space-y-[6px]">
-        <label className="block text-[13px] font-medium text-[#0a0a0a]">Create Password</label>
+      <div className="space-y-2">
+        <label className="block text-[9px] font-black uppercase tracking-[0.25em] text-white/30">Initialization Key</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full h-[44px] px-4 bg-white border border-[#e5e5e5] rounded-[6px] text-black placeholder-[#a3a3a3] focus:border-black focus:outline-none transition-all"
-          placeholder="Min. 6 characters"
+          className="w-full h-12 px-4 bg-white/5 border border-white/5 rounded-xl text-white placeholder-white/10 focus:border-primary/30 focus:outline-none transition-all font-bold text-sm"
+          placeholder="Min. 8 characters suggested"
           required
         />
       </div>
 
-      <div className="space-y-[6px]">
-        <label className="block text-[13px] font-medium text-[#0a0a0a]">Confirm Password</label>
+      <div className="space-y-2">
+        <label className="block text-[9px] font-black uppercase tracking-[0.25em] text-white/30">Verify Key</label>
         <input
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full h-[44px] px-4 bg-white border border-[#e5e5e5] rounded-[6px] text-black placeholder-[#a3a3a3] focus:border-black focus:outline-none transition-all"
-          placeholder="Repeat password"
+          className="w-full h-12 px-4 bg-white/5 border border-white/5 rounded-xl text-white placeholder-white/10 focus:border-primary/30 focus:outline-none transition-all font-bold text-sm"
+          placeholder="Repeat initialization key"
           required
         />
       </div>
@@ -118,7 +118,7 @@ export function EmailPasswordSignUp() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full h-[44px] bg-black hover:bg-black/90 disabled:opacity-50 text-white font-bold rounded-[6px] transition flex items-center justify-center gap-2"
+        className="w-full h-12 bg-primary hover:bg-white text-black disabled:opacity-50 font-black uppercase tracking-[0.2em] text-[11px] rounded-xl transition-all flex items-center justify-center gap-3 shadow-2xl shadow-primary/10"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Create account <ArrowRight className="h-4 w-4" /></>}
       </button>

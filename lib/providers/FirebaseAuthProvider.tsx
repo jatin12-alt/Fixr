@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { 
-  onAuthStateChanged, 
+  onIdTokenChanged, 
   User as FirebaseUser,
   signInWithPopup,
   GithubAuthProvider,
@@ -36,14 +36,33 @@ export const FirebaseAuthProvider = ({ children }: { children: React.ReactNode }
     // Only run on client side
     if (typeof window === 'undefined') return
     
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let refreshTimer: NodeJS.Timeout
+    
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      console.log('Sentinel Auth: State changed for node:', user?.uid)
+      
       if (user) {
         setUser(user)
         try {
-          const idToken = await user.getIdToken()
-          // Set session cookie for middleware
+          // Get token and update cookie
+          const tokenResult = await user.getIdTokenResult()
+          const idToken = tokenResult.token
+          
           document.cookie = `firebase_token=${idToken}; path=/; max-age=3600; SameSite=Lax`
           
+          // Proactive refresh: Schedule refresh 5 minutes before expiry
+          const expirationTime = new Date(tokenResult.expirationTime).getTime()
+          const currentTime = new Date().getTime()
+          const delay = expirationTime - currentTime - 300000 // 5 minutes before
+          
+          if (refreshTimer) clearTimeout(refreshTimer)
+          if (delay > 0) {
+            refreshTimer = setTimeout(async () => {
+              console.log('Sentinel Auth: Proactive token rotation triggered')
+              await user.getIdToken(true) // Force refresh
+            }, delay)
+          }
+
           await fetch('/api/auth/sync', {
             method: 'POST',
             headers: {
@@ -58,19 +77,20 @@ export const FirebaseAuthProvider = ({ children }: { children: React.ReactNode }
             })
           })
         } catch (error) {
-          console.error('Error syncing user:', error)
+          console.error('Sentinel Auth: Synchronization failure:', error)
         }
       } else {
         setUser(null)
-        // Clear session cookie
-        if (typeof window !== 'undefined') {
-          document.cookie = 'firebase_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
-        }
+        if (refreshTimer) clearTimeout(refreshTimer)
+        document.cookie = 'firebase_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
       }
       setLoading(false)
     })
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribe()
+      if (refreshTimer) clearTimeout(refreshTimer)
+    }
   }, [])
 
   const signInWithGithub = async () => {

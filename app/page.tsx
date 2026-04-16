@@ -74,42 +74,26 @@ export default function HomePage() {
           <HeroScene />
         </div>
 
-        {/* Content — foreground layer, BELOW the particle text visually */}
-        <div style={{
-          position: 'relative',
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-end', // push to bottom portion
-          height: '100%',
-          paddingBottom: '120px',
-          textAlign: 'center',
-        }}>
+        {/* Content — foreground layer */}
+        <div className="relative z-10 flex flex-col items-center justify-center md:justify-end h-full px-6 md:px-10 pb-[100px] md:pb-[120px] text-center max-w-[800px]">
+          <h1 className="text-[clamp(34px,10vw,80px)] font-black text-white tracking-tighter leading-[0.9] mb-8 drop-shadow-2xl">
+            Pure DevOps <br />
+            <span className="text-white/10 italic">Synthesis.</span>
+          </h1>
           
-          <p style={{
-            color: 'rgba(255,255,255,0.5)',
-            fontSize: '18px',
-            maxWidth: '520px',
-            marginBottom: '40px',
-            lineHeight: 1.6,
-          }}>
+          <p className="text-white/50 text-base md:text-[18px] max-w-[520px] mb-10 leading-relaxed font-medium">
             The Digital Architect for your infrastructure. 
             24/7 autonomous monitoring and intelligent resolution.
           </p>
 
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            alignItems: 'center',
-          }}>
-            <Link href="/sign-up">
-              <button className="bg-white hover:bg-primary text-black border-none px-8 py-3.5 rounded-md text-[15px] font-semibold cursor-none transition-colors">
-                Initialize System →
+          <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto">
+            <Link href="/sign-up" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-white hover:bg-primary text-black border-none px-10 py-5 rounded-xl text-[14px] font-black uppercase tracking-widest cursor-none transition-all hover:scale-105 shadow-glow">
+                Initialize System
               </button>
             </Link>
-            <Link href="/how-it-works">
-              <button className="bg-transparent hover:bg-white/10 text-white border border-white/25 px-8 py-3.5 rounded-md text-[15px] font-medium cursor-none transition-colors">
+            <Link href="/how-it-works" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-transparent hover:bg-white/10 text-white border border-white/20 px-10 py-5 rounded-xl text-[14px] font-black uppercase tracking-widest cursor-none transition-all">
                 View Protocol
               </button>
             </Link>
@@ -133,14 +117,14 @@ export default function HomePage() {
 
       {/* METRICS STRIP - Tonal Shift to surface_container_low */}
       <section className="bg-[#1b1b1f] border-y border-white/5 py-0 relative z-10">
-        <div className="max-w-[1120px] mx-auto px-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
+        <div className="max-w-[1120px] mx-auto px-4 md:px-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/5 border-x border-white/5 lg:border-none">
             {metrics.map((m, i) => (
-              <div key={i} className="py-12 md:py-20 px-8 flex flex-col items-center justify-center text-center">
-                <span className="text-4xl md:text-6xl font-black text-white mb-2 tracking-tighter text-glow">
+              <div key={i} className="py-8 md:py-20 px-4 md:px-8 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl md:text-6xl font-black text-white mb-2 tracking-tighter text-glow">
                   {m.value}{m.suffix}
                 </span>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">{m.label}</span>
+                <span className="text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">{m.label}</span>
               </div>
             ))}
           </div>
@@ -165,28 +149,25 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '24px',
-            alignItems: 'start', // ← KEY FIX: don't stretch to equal height
-          }}>
+          <div className="mobile-scroll-container md:grid-cols-3">
             {features.map((f, i) => (
-              <div key={i} className="group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[12px] p-8 flex flex-col gap-5 h-auto transition-all duration-[120ms]">
-                {/* Icon */}
-                <div className="w-11 h-11 bg-[#f5f5f5] group-hover:bg-white/10 rounded-[10px] flex items-center justify-center transition-all duration-[120ms]">
-                  <f.icon size={20} className="text-[#0a0a0a] group-hover:text-primary transition-colors duration-[120ms]" />
+              <div key={i} className="mobile-scroll-item">
+                <div className="group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[12px] p-8 flex flex-col gap-5 h-full transition-all duration-[120ms]">
+                  {/* Icon */}
+                  <div className="w-11 h-11 bg-[#f5f5f5] group-hover:bg-white/10 rounded-[10px] flex items-center justify-center transition-all duration-[120ms]">
+                    <f.icon size={20} className="text-[#0a0a0a] group-hover:text-primary transition-colors duration-[120ms]" />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-base font-semibold text-[#0a0a0a] group-hover:text-white m-0 tracking-tight transition-colors">
+                    {f.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-sm text-[#525252] group-hover:text-white/60 m-0 leading-[1.6] transition-colors">
+                    {f.desc}
+                  </p>
                 </div>
-
-                {/* Title */}
-                <h3 className="text-base font-semibold text-[#0a0a0a] group-hover:text-white m-0 tracking-tight transition-colors">
-                  {f.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-sm text-[#525252] group-hover:text-white/60 m-0 leading-[1.6] transition-colors">
-                  {f.desc}
-                </p>
               </div>
             ))}
           </div>
@@ -196,22 +177,24 @@ export default function HomePage() {
       {/* TESTIMONIALS - Obsidian Deep Layer */}
       <section className="py-[120px] bg-[#0e0e11] border-y border-white/5 relative z-10">
         <div className="max-w-[1120px] mx-auto px-10">
-          <div className="grid md:grid-cols-3 gap-8" data-animation="stagger">
+          <div className="mobile-scroll-container md:grid-cols-3" data-animation="stagger">
             {[
               { name: 'Sarah Chen', role: 'Architect @ TechCorp', quote: 'Protocol resolution dropped from hours to absolute zero.' },
               { name: 'Marcus J.', role: 'Head of Infra @ Vertex', quote: 'Immediate ROI. Sentinel is the command deck we never had.' },
               { name: 'Priya P.', role: 'Security Lead @ Orbit', quote: 'Surgical precision. Truly an architectural breakthrough.' },
             ].map((t, i) => (
-              <div key={i} className="animate-card p-12 relative group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[12px] transition-all duration-[120ms]">
-                <Quote className="h-10 w-10 text-[#0a0a0a] group-hover:text-white/5 mb-12 transition-colors duration-[120ms]" />
-                <p className="text-[18px] text-[#0a0a0a] group-hover:text-white/80 font-medium mb-16 leading-relaxed italic transition-colors duration-[120ms]">"{t.quote}"</p>
-                <div className="flex items-center gap-5 pt-10 border-t border-[#e5e5e5] group-hover:border-white/5 transition-colors duration-[120ms]">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-sm text-primary shadow-glow">
-                    {t.name.split(' ').map(n=>n[0]).join('')}
-                  </div>
-                  <div>
-                    <div className="text-[16px] font-bold text-[#0a0a0a] group-hover:text-white tracking-tight transition-colors duration-[120ms]">{t.name}</div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#525252] group-hover:text-white/30 transition-colors duration-[120ms]">{t.role}</div>
+              <div key={i} className="mobile-scroll-item">
+                <div className="animate-card p-12 relative h-full group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[12px] transition-all duration-[120ms]">
+                  <Quote className="h-10 w-10 text-[#0a0a0a] group-hover:text-white/5 mb-12 transition-colors duration-[120ms]" />
+                  <p className="text-[18px] text-[#0a0a0a] group-hover:text-white/80 font-medium mb-16 leading-relaxed italic transition-colors duration-[120ms]">"{t.quote}"</p>
+                  <div className="flex items-center gap-5 pt-10 border-t border-[#e5e5e5] group-hover:border-white/5 transition-colors duration-[120ms]">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-black text-sm text-primary shadow-glow">
+                      {t.name.split(' ').map(n=>n[0]).join('')}
+                    </div>
+                    <div>
+                      <div className="text-[16px] font-bold text-[#0a0a0a] group-hover:text-white tracking-tight transition-colors duration-[120ms]">{t.name}</div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#525252] group-hover:text-white/30 transition-colors duration-[120ms]">{t.role}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -231,44 +214,48 @@ export default function HomePage() {
             <p className="text-white/40 text-xl font-medium">Automate resolution mapping regardless of infrastructure scale.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto" data-animation="stagger">
-            <div className="animate-card p-16 flex flex-col group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[20px] transition-all duration-[120ms]">
-              <div className="mb-12">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#525252] group-hover:text-white/30 mb-6 block text-glow transition-colors duration-[120ms]">Node Entry</h3>
-                <div className="text-6xl font-black text-[#0a0a0a] group-hover:text-white transition-colors duration-[120ms]">$0<span className="text-xl text-[#525252] group-hover:text-white/20 font-medium ml-2 transition-colors duration-[120ms]">/mo</span></div>
+          <div className="mobile-scroll-container md:grid-cols-2 max-w-5xl mx-auto" data-animation="stagger">
+            <div className="mobile-scroll-item">
+              <div className="animate-card p-16 flex flex-col h-full group bg-white hover:bg-[#131317] border border-[#e5e5e5] hover:border-white/10 rounded-[20px] transition-all duration-[120ms]">
+                <div className="mb-12">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#525252] group-hover:text-white/30 mb-6 block text-glow transition-colors duration-[120ms]">Node Entry</h3>
+                  <div className="text-6xl font-black text-[#0a0a0a] group-hover:text-white transition-colors duration-[120ms]">$0<span className="text-xl text-[#525252] group-hover:text-white/20 font-medium ml-2 transition-colors duration-[120ms]">/mo</span></div>
+                </div>
+                <ul className="space-y-8 mb-16 flex-grow">
+                  {['3 repositories', 'Deep architectural mapping', 'Core resolution engine', '7-day telemetry'].map(f=>(
+                    <li key={f} className="flex items-center gap-5 text-[15px] text-[#525252] group-hover:text-white/60 font-medium transition-colors">
+                      <CheckCircle className="h-5 w-5 text-primary/50 group-hover:text-primary transition-colors" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/sign-up" className="w-full">
+                  <button className="w-full py-4 bg-[#f5f5f5] hover:bg-primary text-[#0a0a0a] border border-[#e5e5e5] hover:border-primary rounded-xl font-black uppercase tracking-widest text-xs transition-colors duration-[120ms]">Initialize Signal</button>
+                </Link>
               </div>
-              <ul className="space-y-8 mb-16 flex-grow">
-                {['3 repositories', 'Deep architectural mapping', 'Core resolution engine', '7-day telemetry'].map(f=>(
-                  <li key={f} className="flex items-center gap-5 text-[15px] text-[#525252] group-hover:text-white/60 font-medium transition-colors">
-                    <CheckCircle className="h-5 w-5 text-primary/50 group-hover:text-primary transition-colors" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/sign-up" className="w-full">
-                <button className="w-full py-4 bg-[#f5f5f5] hover:bg-primary text-[#0a0a0a] border border-[#e5e5e5] hover:border-primary rounded-xl font-black uppercase tracking-widest text-xs transition-colors duration-[120ms]">Initialize Signal</button>
-              </Link>
             </div>
 
-            <div className="animate-card p-16 flex flex-col relative group bg-white hover:bg-gradient-to-br hover:from-[#1b1b1f] hover:to-[#0e0e11] border border-[#e5e5e5] hover:border-primary/20 rounded-[40px] shadow-2xl hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] xl:scale-105 transition-all duration-[120ms]">
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-primary text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full shadow-[0_0_30px_rgba(0,212,255,0.4)]">
-                Sentinel Mode
+            <div className="mobile-scroll-item">
+              <div className="animate-card p-16 flex flex-col h-full relative group bg-white hover:bg-gradient-to-br hover:from-[#1b1b1f] hover:to-[#0e0e11] border border-[#e5e5e5] hover:border-primary/20 rounded-[40px] shadow-2xl hover:shadow-[0_40px_100px_rgba(0,0,0,0.6)] xl:scale-105 transition-all duration-[120ms]">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-primary text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full shadow-[0_0_30px_rgba(0,212,255,0.4)] z-50">
+                  Sentinel Mode
+                </div>
+                <div className="mb-12">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary mb-6 block">Professional Stack</h3>
+                  <div className="text-6xl font-black text-[#0a0a0a] group-hover:text-white transition-colors">$49<span className="text-xl text-[#525252] group-hover:text-white/30 font-medium ml-2 transition-colors">/mo</span></div>
+                </div>
+                <ul className="space-y-8 mb-16 flex-grow text-[#525252] group-hover:text-white/80 font-medium transition-colors">
+                  {['Unlimited Node connections', 'Unlimited telemetry runs', 'Priority resolution synthesis', '90-day architectural history', 'Autonomous deployment'].map(f=>(
+                    <li key={f} className="flex items-center gap-5 text-[15px]">
+                      <CheckCircle className="h-5 w-5 text-primary" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/sign-up" className="w-full">
+                  <button className="w-full py-4 bg-primary hover:bg-[#00c4ec] text-[#0a0a0a] border-none rounded-xl font-black uppercase tracking-widest text-xs shadow-[0_0_20px_rgba(0,212,255,0.2)] transition-colors duration-[120ms]">Engage Sentinel</button>
+                </Link>
               </div>
-              <div className="mb-12">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary mb-6 block">Professional Stack</h3>
-                <div className="text-6xl font-black text-[#0a0a0a] group-hover:text-white transition-colors">$49<span className="text-xl text-[#525252] group-hover:text-white/30 font-medium ml-2 transition-colors">/mo</span></div>
-              </div>
-              <ul className="space-y-8 mb-16 flex-grow text-[#525252] group-hover:text-white/80 font-medium transition-colors">
-                {['Unlimited Node connections', 'Unlimited telemetry runs', 'Priority resolution synthesis', '90-day architectural history', 'Autonomous deployment'].map(f=>(
-                  <li key={f} className="flex items-center gap-5 text-[15px]">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/sign-up" className="w-full">
-                <button className="w-full py-4 bg-primary hover:bg-[#00c4ec] text-[#0a0a0a] border-none rounded-xl font-black uppercase tracking-widest text-xs shadow-[0_0_20px_rgba(0,212,255,0.2)] transition-colors duration-[120ms]">Engage Sentinel</button>
-              </Link>
             </div>
           </div>
         </div>

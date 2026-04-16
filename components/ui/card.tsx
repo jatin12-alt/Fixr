@@ -9,7 +9,7 @@ export function Card({ className = '', hoverLift = false, ...props }: CardProps)
   return (
     <div
       className={cn(
-        "rounded-[10px] border border-[#e5e5e5] bg-white text-[#0a0a0a] shadow-subtle transition-all duration-150",
+        "rounded-[10px] border border-border bg-card text-card-foreground shadow-subtle transition-all duration-150",
         hoverLift && "hover:translateY-[-1px] hover:shadow-hover cursor-default",
         className
       )}
@@ -24,7 +24,7 @@ export function CardHeader({ className = '', ...props }: CardProps) {
 
 export function CardTitle({ className = '', ...props }: CardProps) {
   return (
-    <h3 className={cn("text-xl font-bold leading-none tracking-tight text-[#0a0a0a]", className)} {...props} />
+    <h3 className={cn("text-xl font-bold leading-none tracking-tight text-card-foreground", className)} {...props} />
   )
 }
 

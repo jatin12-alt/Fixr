@@ -8,14 +8,10 @@ export default function SupportLayout({
   children: ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-black text-gray-300">
-      <Navbar />
-      
+    <div className="bg-transparent text-gray-300">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {children}
       </main>
-      
-      <Footer />
     </div>
   )
 }

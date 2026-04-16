@@ -7,7 +7,13 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
-export function GoogleSignInButton() {
+import { cn } from '@/lib/utils'
+
+interface GoogleSignInButtonProps {
+  customClass?: string
+}
+
+export function GoogleSignInButton({ customClass }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -21,14 +27,12 @@ export function GoogleSignInButton() {
 
       if (!user) throw new Error('Failed to get user information')
       
-      // Store token in cookie
       await fetch('/api/auth/set-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: idToken }),
       })
 
-      // Sync user to database
       await fetch('/api/auth/sync', {
         method: 'POST',
         headers: {
@@ -46,41 +50,53 @@ export function GoogleSignInButton() {
       router.push('/dashboard')
     } catch (err: any) {
       console.error('Google sign in error:', err)
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in cancelled')
-      } else if (err.code === 'auth/popup-blocked') {
-        setError('Pop-up blocked. Please allow pop-ups and try again.')
-      } else {
-        setError(err.message || 'Failed to sign in with Google')
-      }
+      setError(err.message || 'Failed to sign in with Google')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div>
+    <div className="w-full">
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
           {error}
         </div>
       )}
       <button
+        type="button"
         onClick={handleGoogleSignIn}
         disabled={loading}
-        className="w-full h-11 flex items-center justify-center gap-3 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-900 font-semibold rounded-lg transition border border-gray-200"
+        className={cn(
+          "w-full h-11 flex items-center justify-center gap-3 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-900 font-semibold rounded-lg transition border border-gray-200",
+          customClass
+        )}
       >
         {loading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
           <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M8.477 12c0-.78.07-1.535.184-2.268H4v4.286h5.137c-.266 1.37-.9 2.53-1.91 3.296v2.637h3.09c1.8-1.657 2.84-4.097 2.84-6.95 0-.62-.054-1.22-.15-1.802H12v2.802h3.285a3.583 3.583 0 0 1-1.585 2.347v2.637h3.09c1.8-1.657 2.84-4.097 2.84-6.95z"/>
-            <path fill="#FBBC04" d="M4 20v-5.286h3.09a3.583 3.583 0 0 0 1.91-3.296H4V8.132h5.137c.266-1.37.9-2.53 1.91-3.296V2.2H8.957C7.157 3.857 6.117 6.297 6.117 12c0 .62.054 1.22.15 1.802H4z"/>
-            <path fill="#4285F4" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.09-2.637a4.321 4.321 0 0 1-2.04.546c-1.334 0-2.478-.356-3.255-.993H4v2.802C5.92 22.268 8.72 23 12 23z"/>
-            <path fill="#34A853" d="M8.477 12c0-.78.07-1.535.184-2.268H4v4.286h5.137c-.266 1.37-.9 2.53-1.91 3.296H4V20c1.92 1.732 4.72 2.802 8 2.802 2.97 0 5.46-.98 7.28-2.66l-3.09-2.637a4.321 4.321 0 0 1-2.04.546c-1.334 0-2.478-.356-3.255-.993"/>
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            />
           </svg>
         )}
-        {loading ? 'Signing in...' : 'Continue with Google'}
+        <span className="truncate">
+          {loading ? 'Transmitting...' : (customClass ? 'Google' : 'Continue with Google')}
+        </span>
       </button>
     </div>
   )

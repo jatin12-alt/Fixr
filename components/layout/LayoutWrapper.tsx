@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { initLenis } from '@/lib/lenis'
 import PageTransition from '@/components/PageTransition'
-import { CustomCursor } from '@/components/CustomCursor'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -52,7 +51,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div ref={wrapperRef} className="flex flex-col min-h-screen">
-      <CustomCursor />
       <main className="flex-grow flex flex-col relative" style={{ paddingBottom: 'var(--footer-height, 400px)' }}>
         <PageTransition>
           {children}

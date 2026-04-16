@@ -33,12 +33,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClientAuthProvider>
-      <html lang="en" suppressHydrationWarning className="antialiased">
-        <body
-          className={`${inter.variable} font-sans bg-[#131317] text-[#e5e1e7] min-h-screen`}
-        >
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <html lang="en" suppressHydrationWarning className="antialiased">
+      <body
+        className={`${inter.variable} font-sans bg-[#131317] text-[#e5e1e7] min-h-screen`}
+      >
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <ClientAuthProvider>
             <CustomCursor />
             <Navbar />
             
@@ -51,11 +51,11 @@ export default function RootLayout({
                 <Footer />
               </ErrorBoundary>
             </ErrorProvider>
-          </ThemeProvider>
+          </ClientAuthProvider>
+        </ThemeProvider>
 
-          <AnalyticsWrapper />
-        </body>
-      </html>
-    </ClientAuthProvider>
+        <AnalyticsWrapper />
+      </body>
+    </html>
   )
 }

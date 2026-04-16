@@ -2,47 +2,61 @@ import { NextRequest } from 'next/server'
 import { getAuth } from '@/lib/auth'
 import { notificationEmitter } from '@/lib/notification-emitter'
 
+/**
+ * Sentinel Notification Stream (SSE)
+ * Provides real-time event telemetry to the architectural dashboard.
+ */
 export async function GET(req: NextRequest) {
-  const { userId } = await getAuth(req)
+  const { userId, error } = await getAuth(req)
   
+  // High-priority rejection for expired/missing tokens
   if (!userId) {
-    return new Response('Unauthorized', { status: 401 })
+    return new Response(
+      JSON.stringify({ error: error === 'TOKEN_EXPIRED' ? 'REAUTH_REQUIRED' : 'UNAUTHORIZED' }), 
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 
-  // Set up SSE headers
+  // SSE Configuration
   const headers = new Headers({
     'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'no-cache, no-transform',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Cache-Control',
+    'X-Accel-Buffering': 'no', // Disable buffering for Nginx/Vercel
   })
 
-  // Create a readable stream
   const stream = new ReadableStream({
-    start(controller) {
-      // Subscribe this user to notifications
+    async start(controller) {
+      const encoder = new TextEncoder()
+
+      // 1. Connection Established
+      const sendEvent = (data: any) => {
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        } catch (e) {
+          // Stream might be closed
+        }
+      }
+
       notificationEmitter.subscribe(userId, controller)
 
-      // Send initial connection message
-      controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-        type: 'connected',
-        message: 'Connected to notification stream'
-      })}\n\n`))
+      // 2. Initial Handshake
+      sendEvent({ type: 'handshake', status: 'connected', identity: userId })
 
-      // Ping every 30 seconds to keep connection alive
-      const pingInterval = setInterval(() => {
+      // 3. Keep-Alive Heartbeat (Critical for Heroku/Vercel 30s timeouts)
+      const heartbeat = setInterval(() => {
         try {
-          controller.enqueue(new TextEncoder().encode(': ping\n\n'))
-        } catch (error) {
-          clearInterval(pingInterval)
+          controller.enqueue(encoder.encode(': heartbeat\n\n'))
+        } catch (e) {
+          clearInterval(heartbeat)
         }
-      }, 30000)
+      }, 15000)
 
-      // Cleanup on disconnect
+      // 4. Cleanup on disconnect
       req.signal.addEventListener('abort', () => {
-        clearInterval(pingInterval)
+        clearInterval(heartbeat)
         notificationEmitter.unsubscribe(userId, controller)
+        console.log(`[Sentinel SSE] Discconnected node: ${userId}`)
       })
     }
   })
